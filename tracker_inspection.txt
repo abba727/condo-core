@@ -1,0 +1,120 @@
+Workbook: /home/ubuntu/condocore_web/ProjectTracker-712Driggs.xlsx
+Sheets: ['Dashboard', 'Team', 'TasksToDo', 'Budget', 'Project Plan', 'Expenses', 'Contracts', 'Insurances & Permits', 'Lookup']
+
+=== SHEET: Dashboard ===
+dimensions: None rows x None cols
+row 1: ['Project Name', '219 Driggs Street', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 2: ['Address', '219 Driggs Street', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 3: ['Project Size', '10000.0', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 7: ['', 'Project Budget', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+
+=== SHEET: Team ===
+dimensions: None rows x None cols
+row 1: ['Contact', 'Company', 'Email', 'Open Tasks', 'In Progress Tasks', 'Completed Tasks', 'Total Tasks', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 2: ['Middleton Environmental | Thomas R. Tompkins', 'Middleton Environmental', 'info@midenv.com', '0', '0', '0', '0', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 3: ['International Office of Architects | Murat Mutlu', 'International Office of Architects', 'murat@in-oa.com', '0', '0', '0', '0', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 4: ['Stroh Engineering Services  | Jeff Roberts', 'Stroh Engineering Services', 'jeff@strohengineering.com', '0', '0', '0', '0', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 5: ['Boyd Consulting | Andrea Boyd', 'Boyd Consulting', 'andrea@boydconsult.com', '0', '0', '0', '0', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 6: ['5 Borough Mapping NY | Raj Kumar', '5 Borough Mapping NY', '5boromapping@gmail.com', '0', '0', '0', '0', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 7: ['Preferred Bank | Sylvia Tseng', 'Preferred Bank', 'Sylvia.Tseng@PreferredBank.com', '0', '0', '0', '0', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 8: ['DGM CPA | George Mataev', 'DGM CPA', 'george@dgmcpany.com', '0', '0', '0', '0', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 9: ['Marcus Attorneys PLLC | Guillermo Santiago', 'Marcus Attorneys PLLC', 'santiago@marcusattorneys.com', '0', '0', '0', '0', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 10: ['MCAI Construction Services | Noel G Muir', 'MCAI Construction Services', 'mcai079@aol.com', '0', '0', '0', '0', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 11: ['Exterior Design Renterings | Andrew Melnikov', 'Exterior Design Renterings', '', '0', '0', '0', '0', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 12: ['Yaker Engineering | Alex Yaker', 'Yaker Engineering', 'ayaker@yakereng.com', '0', '0', '0', '0', '', '', '', '', '', '', '', '', '', '', '', '', '']
+
+=== SHEET: TasksToDo ===
+dimensions: None rows x None cols
+row 1: ['Task #', 'Task Description', 'Owner', 'Start Date', 'Completed On', 'Duration', 'Status', 'Notes', '', '', '', '', '', '', '', '', '', '', '', '']
+row 2: ['1.0', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 3: ['2.0', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 4: ['3.0', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 5: ['4.0', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 6: ['5.0', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 7: ['6.0', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 8: ['7.0', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 9: ['8.0', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 10: ['9.0', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+
+=== SHEET: Budget ===
+dimensions: None rows x None cols
+row 1: ['Type', 'Category', 'Sub-Category', 'Amount', 'PSF', 'Status', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 2: ['Hard Costs', 'General Condition', 'Temp. Facility, Safety, Garbage', '134000.0', '13.4', 'Open', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 3: ['Hard Costs', 'General Condition', 'Sidewalk Shed and Scaffolding', '120000.0', '12', 'Open', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 4: ['Hard Costs', 'General Condition', 'Direct Labor', '200000.0', '20', 'Open', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 5: ['Hard Costs', 'Foundation Site Work', 'Demolition', '225000.0', '22.5', 'Fixed', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 6: ['Hard Costs', 'Foundation Site Work', 'Shoring', '190000.0', '19', 'Fixed', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 7: ['Hard Costs', 'Foundation Site Work', 'Excavation & Soil Disposal', '220000.0', '22', 'Fixed', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 8: ['Hard Costs', 'Foundation Site Work', 'Excavation (Existing Foundation)', '0.0', '0', 'Fixed', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 9: ['Hard Costs', 'Foundation Site Work', 'Footings, foundation Walls', '265000.0', '26.5', 'Fixed', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 10: ['Hard Costs', 'Superstructure', 'Concrete Superstructure', '935000.0', '93.5', 'Fixed', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 11: ['Hard Costs', 'Superstructure', 'Foundation Walls', '50000.0', '5', 'Fixed', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 12: ['Hard Costs', 'Superstructure', 'Foundation Slab', '0.0', '0', 'Fixed', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+
+=== SHEET: Project Plan ===
+dimensions: None rows x None cols
+row 1: ['', 'Project Ghant Chart', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 3: ['', 'PROJECT TITLE', '', '219 Driggs Street', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 4: ['', 'GENERAL CONTRACTOR', '', 'Renovation Group', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 5: ['', 'PROJECT START DATE', '', '2024-05-01 00:00:00', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 6: ['', '', '', '', '', '', '', '', '2024-05-01 00:00:00', '2024-05-08 00:00:00', '2024-05-15 00:00:00', '2024-05-22 00:00:00', '2024-05-29 00:00:00', '2024-06-05 00:00:00', '2024-06-12 00:00:00', '2024-06-19 00:00:00', '2024-06-26 00:00:00', '2024-07-03 00:00:00', '2024-07-10 00:00:00', '2024-07-17 00:00:00']
+row 7: ['', 'WBS NUMBER', 'TASK TITLE', 'TASK OWNER', 'START DATE', 'DUE DATE', 'DURATION (DAYS)', 'PCT OF TASK COMPLETE', '', '', '', '', '', '', '', '', '', '', '', '']
+row 8: ['', '', '', '', '', '', '', '', '1.0', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+row 9: ['', '1.0', 'Planning', '', '2024-05-01 00:00:00', '2025-01-31 00:00:00', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 10: ['', '2.0', 'Contract Execution', '', '2024-05-01 00:00:00', '2024-05-02 00:00:00', '1.0', '1.0', 'X', '', '', '', '', '', '', '', '', '', '', '']
+row 11: ['', '3.0', 'Survey', '', '2024-05-01 00:00:00', '2024-05-22 00:00:00', '21.0', '1.0', 'X', 'X', 'X', 'X', '', '', '', '', '', '', '', '']
+row 12: ['', '4.0', 'Environmental', '', '2024-05-01 00:00:00', '2024-05-29 00:00:00', '28.0', '0.0', 'X', 'X', 'X', 'X', 'X', '', '', '', '', '', '', '']
+row 13: ['', '5.0', 'Architectural Engineering Planning', '', '2023-10-14 00:00:00', '2024-09-28 00:00:00', '350.0', '0.75', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X']
+
+=== SHEET: Expenses ===
+dimensions: None rows x None cols
+row 1: ['Date', 'Type', 'Category', 'Vendor', 'Memo', 'Debit', 'Credit', 'Balance']
+row 2: ['3/10/1023', 'Deposit', '', '', 'Shiraz Contribution', '', '290000.0', '290000']
+row 3: ['2023-03-10 00:00:00', 'CHK', 'Land Costs', '', 'Contract Deposit', '290000.0', '', '0']
+row 4: ['2023-04-28 00:00:00', 'Deposit', '', '', 'NYC Cleaning Contribution', '', '50000.0', '50000']
+row 5: ['2023-04-28 00:00:00', 'Zelle', 'Soft Costs', '5 Borough Mapping NY', '', '750.0', '', '49250']
+row 6: ['2023-05-02 00:00:00', 'Wire', 'Soft Costs', 'International Office of Architects', 'Deposit to Architect', '20000.0', '', '29250']
+row 7: ['2023-05-12 00:00:00', 'ACH', 'Soft Costs', 'Preferred Bank', 'Deposit for Aquisition Loan', '5000.0', '', '24250']
+row 8: ['2023-05-17 00:00:00', 'CHK', 'Soft Costs', 'Middleton Environmental', 'Phase 1', '1800.0', '', '22450']
+row 9: ['2023-05-18 00:00:00', 'ACH', 'Soft Costs', 'Stroh Engineering Services', '', '4500.0', '', '17950']
+row 10: ['2023-05-22 00:00:00', 'ACH', 'Soft Costs', 'DGM CPA', '', '613.0', '', '17337']
+row 11: ['2023-06-15 00:00:00', 'ACH', 'Soft Costs', 'DGM CPA', 'LLC Creation', '375.0', '', '16962']
+row 12: ['2023-06-15 00:00:00', 'ACH', 'Soft Costs', 'DGM CPA', 'LLC Creation', '375.0', '', '16587']
+
+=== SHEET: Contracts ===
+dimensions: None rows x None cols
+row 1: ['Date', 'Vendor', 'Contract Total', 'Total Paid', 'Total Remaining']
+row 2: ['2023-05-01 00:00:00', 'Stroh Engineering Services', '9000.0', '4500', '4500']
+row 3: ['2023-04-28 00:00:00', 'International Office of Architects', '100000.0', '90677', '9323']
+row 4: ['2023-10-29 00:00:00', 'Yaker Engineering', '28650.0', '16650', '12000']
+row 5: ['2024-01-05 00:00:00', 'WJY MEP Consulting Services, Inc', '15000.0', '4000.0', '11000']
+
+=== SHEET: Insurances & Permits ===
+dimensions: None rows x None cols
+row 2: ['Insurances & Contracts', '', '', '', '', '', '', '', '', '', '']
+row 3: ['Company', 'Subcontractor', 'Contract Signed', 'Subcontractor Rider', 'Additional Insured', 'Workers Comp', 'General Liability', 'Workers Comp Expiration', 'Workers Comp Expiration (d)', 'General Liability Expiration', 'General Liability Expiration(d)']
+row 4: ['Trysler', 'Mason', 'YES', 'YES', 'YES', 'YES', 'State Farm Fire & Casulty', '2022-11-01 00:00:00', '-1283', '2023-02-04 00:00:00', '-1188']
+row 5: ['First Choice Pl', 'Sewer', 'YES', 'NO', 'NO', 'NO', '', '', '', '', '']
+row 6: ['Greenstar Electrical', 'Electrician', 'YES', 'YES', 'YES', 'YES', 'Trisura Specialty Insurance Company', '2022-08-06 00:00:00', '-1370', '2022-08-06 00:00:00', '-1370']
+row 7: ['Otis Elevator', 'Elevator', 'YES', 'NO', 'YES', 'YES', '', '', '', '', '']
+row 8: ['Raymond Plumber', 'Plumber', 'YES', 'NO', '', '', '', '', '', '', '']
+row 9: ['Capri Construction Corp', 'Foundation', 'NO', 'NO', 'YES', 'YES', 'Accredited Surety and Casualty Company, Inc.', '2023-01-01 00:00:00', '-1222', '2022-09-24 00:00:00', '-1321']
+row 14: ['Permits', '', '', '', '', '', '', '', '']
+row 15: ['Address', 'Permit Type', 'Agency', 'Permit Number', 'Contractor', 'Contact', 'Superintendent', 'Expiration', 'Number of Days Left']
+row 17: ['74-76 Congress Street', 'Fence', 'DOB', 'B00340452-I1-FN', 'GIRON CONTRACTING INC', '718-690-1370', '', '2022-11-01 00:00:00', '-1283']
+row 18: ['74-76 Congress Street', 'Structural', 'DOB', 'B00340502-I1-ST', 'GIRON CONTRACTING INC', '718-690-1370', '', '2022-11-01 00:00:00', '-1283']
+
+=== SHEET: Lookup ===
+dimensions: None rows x None cols
+row 1: ['Company | Name', 'Name', 'Company Name', 'Office', 'Mobile', 'Email', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 2: ['Brookside Environmental | Richard Taylor', 'Richard Taylor', 'Brookside Environmental', '(631) 608-8810', '516-852-1631', 'rtaylor@brooksideweb.com', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 3: ['Design Studio Associates NY Inc. | Renzo Bolarte', 'Renzo Bolarte', 'Design Studio Associates NY Inc.', '(718) 569-2112', '(516) 642-6960', 'renzo@dsany.com', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 4: ['Engineering Solutions | Jeffrey Spivak', 'Jeffrey Spivak', 'Engineering Solutions', '212-840-1030 x204', '', 'jeff@engsolu.com', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 5: ['Greenworks Lending from Nuveen | Crystal Smith', 'Crystal Smith', 'Greenworks Lending from Nuveen', '(212) 731-2717', '', 'crystal.smith@nuveen.com', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 6: ['International Office of Architects | Murat Mutlu', 'Murat Mutlu', 'International Office of Architects', '(212) 564-0094', '(607) 262-0368', 'murat@in-oa.com', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 7: ['IRL Systems | Brendan Lally', 'Brendan Lally', 'IRL Systems', '', '', 'brendanl@irlsystems.com', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 8: ['Middleton Environmental | Thomas R. Tompkins', 'Thomas R. Tompkins', 'Middleton Environmental', '(631) 321-4300', '', 'info@midenv.com', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 9: ['One Concrete | Izzy Lubart', 'Izzy Lubart', 'One Concrete', '', '', 'Izzy@Oneconcrete.net', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 10: ['Peerless Products | Jamie McKnight', 'Jamie McKnight', 'Peerless Products', '401-487-6686', '', 'repmcknight33@gmail.com', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 11: ['Pella Windows | Leo Zonenshein', 'Leo Zonenshein', 'Pella Windows', '646-773-6405', '', 'LZonenshein@pellactny.com', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
+row 12: ['Renovation Group | Daniel Kaykov', 'Daniel Kaykov', 'Renovation Group', '', '(718) 690-1370', 'dan@renovationgroup.com', '', '', '', '', '', '', '', '', '', '', '', '', '', '']

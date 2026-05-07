@@ -1,0 +1,36 @@
+Workbook sheets: Dashboard, Team, TasksToDo, Budget, Project Plan, Expenses, Contracts, Insurances & Permits, Lookup
+Dashboard project name in workbook: 219 Driggs Street
+Dashboard address in workbook: 219 Driggs Street
+Project Plan title in workbook: 219 Driggs Street
+Project Plan GC: Renovation Group
+Project Plan start: 2024-05-01T00:00:00
+Project Plan tasks extracted: 72
+Project Plan gantt weeks extracted: 141
+Team contacts extracted: 12
+Budget rows extracted: 64
+Expense rows extracted: 25
+Contract rows extracted: 4
+Insurance rows extracted: 6
+Permit rows extracted: 12
+
+First 20 plan tasks:
+- 1 | Planning | 2024-05-01T00:00:00 -> 2025-01-31T00:00:00 | pct=None | marks=0
+- 2 | Contract Execution | 2024-05-01T00:00:00 -> 2024-05-02T00:00:00 | pct=1 | marks=1
+- 3 | Survey | 2024-05-01T00:00:00 -> 2024-05-22T00:00:00 | pct=1 | marks=4
+- 4 | Environmental | 2024-05-01T00:00:00 -> 2024-05-29T00:00:00 | pct=0 | marks=5
+- 5 | Architectural Engineering Planning | 2023-10-14T00:00:00 -> 2024-09-28T00:00:00 | pct=0.75 | marks=22
+- None | Architectural Plans | 2024-05-01T00:00:00 -> 2025-01-31T00:00:00 | pct=0.9 | marks=40
+- None | Structural Plans | 2024-05-01T00:00:00 -> 2025-01-31T00:00:00 | pct=0.9 | marks=40
+- None | Fire Protection Plans (Sprinklers) | 2024-05-01T00:00:00 -> 2025-01-31T00:00:00 | pct=0.9 | marks=40
+- None | MEP Plans | 2024-05-01T00:00:00 -> 2025-01-31T00:00:00 | pct=0.9 | marks=40
+- None | Plumbing Plans | 2024-05-01T00:00:00 -> 2025-01-31T00:00:00 | pct=0.9 | marks=40
+- None | SD1 and SD2 | 2024-05-01T00:00:00 -> 2025-01-31T00:00:00 | pct=0.9 | marks=40
+- 6 | Soil Borings | 2024-06-15T00:00:00 -> 2024-07-13T00:00:00 | pct=1 | marks=4
+- 7 | Demolition Plans | 2024-01-22T00:00:00 -> 2024-01-22T00:00:00 | pct=1 | marks=0
+- 8 | Aquisition Financing | 2024-01-22T00:00:00 -> 2024-01-22T00:00:00 | pct=1 | marks=0
+- 9 | Secure Equity | 2024-05-01T00:00:00 -> 2024-05-01T00:00:00 | pct=1 | marks=1
+- 10 | Construction Loan | 2024-09-18T00:00:00 -> 2024-11-17T00:00:00 | pct=0 | marks=9
+- 11 | DOB Approvals | 2024-09-28T00:00:00 -> 2024-09-29T00:00:00 | pct=0 | marks=0
+- None | Architectural Plans | None -> None | pct=None | marks=0
+- None | Structural Plans | None -> None | pct=None | marks=0
+- None | SD1 and SD2 | None -> None | pct=None | marks=0

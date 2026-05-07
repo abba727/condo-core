@@ -1,0 +1,5824 @@
+{
+  "source_file": "/home/ubuntu/condocore_web/ProjectTracker-712Driggs.xlsx",
+  "sheets": [
+    "Dashboard",
+    "Team",
+    "TasksToDo",
+    "Budget",
+    "Project Plan",
+    "Expenses",
+    "Contracts",
+    "Insurances & Permits",
+    "Lookup"
+  ],
+  "dashboard": {
+    "Project Name": "219 Driggs Street",
+    "Address": "219 Driggs Street",
+    "Project Size": 10000
+  },
+  "team": [
+    {
+      "Contact": "Middleton Environmental | Thomas R. Tompkins",
+      "Company": "Middleton Environmental",
+      "Email": "info@midenv.com",
+      "Open Tasks": 0,
+      "In Progress Tasks": 0,
+      "Completed Tasks": 0,
+      "Total Tasks": 0
+    },
+    {
+      "Contact": "International Office of Architects | Murat Mutlu",
+      "Company": "International Office of Architects",
+      "Email": "murat@in-oa.com",
+      "Open Tasks": 0,
+      "In Progress Tasks": 0,
+      "Completed Tasks": 0,
+      "Total Tasks": 0
+    },
+    {
+      "Contact": "Stroh Engineering Services  | Jeff Roberts",
+      "Company": "Stroh Engineering Services",
+      "Email": "jeff@strohengineering.com",
+      "Open Tasks": 0,
+      "In Progress Tasks": 0,
+      "Completed Tasks": 0,
+      "Total Tasks": 0
+    },
+    {
+      "Contact": "Boyd Consulting | Andrea Boyd",
+      "Company": "Boyd Consulting",
+      "Email": "andrea@boydconsult.com",
+      "Open Tasks": 0,
+      "In Progress Tasks": 0,
+      "Completed Tasks": 0,
+      "Total Tasks": 0
+    },
+    {
+      "Contact": "5 Borough Mapping NY | Raj Kumar",
+      "Company": "5 Borough Mapping NY",
+      "Email": "5boromapping@gmail.com",
+      "Open Tasks": 0,
+      "In Progress Tasks": 0,
+      "Completed Tasks": 0,
+      "Total Tasks": 0
+    },
+    {
+      "Contact": "Preferred Bank | Sylvia Tseng",
+      "Company": "Preferred Bank",
+      "Email": "Sylvia.Tseng@PreferredBank.com",
+      "Open Tasks": 0,
+      "In Progress Tasks": 0,
+      "Completed Tasks": 0,
+      "Total Tasks": 0
+    },
+    {
+      "Contact": "DGM CPA | George Mataev",
+      "Company": "DGM CPA",
+      "Email": "george@dgmcpany.com",
+      "Open Tasks": 0,
+      "In Progress Tasks": 0,
+      "Completed Tasks": 0,
+      "Total Tasks": 0
+    },
+    {
+      "Contact": "Marcus Attorneys PLLC | Guillermo Santiago",
+      "Company": "Marcus Attorneys PLLC",
+      "Email": "santiago@marcusattorneys.com",
+      "Open Tasks": 0,
+      "In Progress Tasks": 0,
+      "Completed Tasks": 0,
+      "Total Tasks": 0
+    },
+    {
+      "Contact": "MCAI Construction Services | Noel G Muir",
+      "Company": "MCAI Construction Services",
+      "Email": "mcai079@aol.com",
+      "Open Tasks": 0,
+      "In Progress Tasks": 0,
+      "Completed Tasks": 0,
+      "Total Tasks": 0
+    },
+    {
+      "Contact": "Exterior Design Renterings | Andrew Melnikov",
+      "Company": "Exterior Design Renterings",
+      "Email": null,
+      "Open Tasks": 0,
+      "In Progress Tasks": 0,
+      "Completed Tasks": 0,
+      "Total Tasks": 0
+    },
+    {
+      "Contact": "Yaker Engineering | Alex Yaker",
+      "Company": "Yaker Engineering",
+      "Email": "ayaker@yakereng.com",
+      "Open Tasks": 0,
+      "In Progress Tasks": 0,
+      "Completed Tasks": 0,
+      "Total Tasks": 0
+    },
+    {
+      "Contact": "WJY MEP Consulting Services, Inc | Wei Wang",
+      "Company": "WJY MEP Consulting Services, Inc",
+      "Email": "weiwilliamworld@yahoo.com",
+      "Open Tasks": 0,
+      "In Progress Tasks": 0,
+      "Completed Tasks": 0,
+      "Total Tasks": 0
+    }
+  ],
+  "budget": [
+    {
+      "Type": "Hard Costs",
+      "Category": "General Condition",
+      "Sub-Category": "Temp. Facility, Safety, Garbage",
+      "Amount": 134000,
+      "PSF": 13.4,
+      "Status": "Open"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "General Condition",
+      "Sub-Category": "Sidewalk Shed and Scaffolding",
+      "Amount": 120000,
+      "PSF": 12,
+      "Status": "Open"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "General Condition",
+      "Sub-Category": "Direct Labor",
+      "Amount": 200000,
+      "PSF": 20,
+      "Status": "Open"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Foundation Site Work",
+      "Sub-Category": "Demolition",
+      "Amount": 225000,
+      "PSF": 22.5,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Foundation Site Work",
+      "Sub-Category": "Shoring",
+      "Amount": 190000,
+      "PSF": 19,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Foundation Site Work",
+      "Sub-Category": "Excavation & Soil Disposal",
+      "Amount": 220000,
+      "PSF": 22,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Foundation Site Work",
+      "Sub-Category": "Excavation (Existing Foundation)",
+      "Amount": 0,
+      "PSF": 0,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Foundation Site Work",
+      "Sub-Category": "Footings, foundation Walls",
+      "Amount": 265000,
+      "PSF": 26.5,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Superstructure",
+      "Sub-Category": "Concrete Superstructure",
+      "Amount": 935000,
+      "PSF": 93.5,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Superstructure",
+      "Sub-Category": "Foundation Walls",
+      "Amount": 50000,
+      "PSF": 5,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Superstructure",
+      "Sub-Category": "Foundation Slab",
+      "Amount": 0,
+      "PSF": 0,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Carpentry",
+      "Sub-Category": "Exterior and Rough Framing",
+      "Amount": 213000,
+      "PSF": 21.3,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Carpentry",
+      "Sub-Category": "Interior Carpentry",
+      "Amount": 400000,
+      "PSF": 40,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Carpentry",
+      "Sub-Category": "Doors",
+      "Amount": 90000,
+      "PSF": 9,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Carpentry",
+      "Sub-Category": "Tile",
+      "Amount": 100000,
+      "PSF": 10,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Carpentry",
+      "Sub-Category": "Molding",
+      "Amount": 25000,
+      "PSF": 2.5,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Carpentry",
+      "Sub-Category": "Installation of Cabinets",
+      "Amount": 30000,
+      "PSF": 3,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Carpentry",
+      "Sub-Category": "Bathroom Accessory Installation",
+      "Amount": 5000,
+      "PSF": 0.5,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Carpentry",
+      "Sub-Category": "Taping & Painting",
+      "Amount": 129000,
+      "PSF": 12.9,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Carpentry",
+      "Sub-Category": "Hardwood",
+      "Amount": 154000,
+      "PSF": 15.4,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Carpentry",
+      "Sub-Category": "Lobby finishes",
+      "Amount": 100000,
+      "PSF": 10,
+      "Status": "Open"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Carpentry",
+      "Sub-Category": "Closet Shelves, Woodwork and Etc.",
+      "Amount": 20000,
+      "PSF": 2,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Windows and Storefront",
+      "Sub-Category": "Windows & Exterior Doors",
+      "Amount": 150000,
+      "PSF": 15,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Windows and Storefront",
+      "Sub-Category": "Storefront",
+      "Amount": 0,
+      "PSF": 0,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Masonry and Stucco",
+      "Sub-Category": "Block and Brick",
+      "Amount": 140000,
+      "PSF": 14,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Masonry and Stucco",
+      "Sub-Category": "Metal Paneling",
+      "Amount": 40000,
+      "PSF": 4,
+      "Status": "Open"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Masonry and Stucco",
+      "Sub-Category": "Insulation",
+      "Amount": 60000,
+      "PSF": 6,
+      "Status": "Open"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Masonry and Stucco",
+      "Sub-Category": "Stucco",
+      "Amount": 60000,
+      "PSF": 6,
+      "Status": "Open"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Roof",
+      "Sub-Category": "Roof",
+      "Amount": 60000,
+      "PSF": 6,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Roof",
+      "Sub-Category": "Green roof",
+      "Amount": 50000,
+      "PSF": 5,
+      "Status": "Open"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Roof",
+      "Sub-Category": "Roof Pavers",
+      "Amount": 30000,
+      "PSF": 3,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Roof",
+      "Sub-Category": "Coping/Cornice",
+      "Amount": 30000,
+      "PSF": 3,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Elevator",
+      "Sub-Category": "Controls, Microprocessor, etc.",
+      "Amount": 100000,
+      "PSF": 10,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Elevator",
+      "Sub-Category": "Entrances, Cabs and Other Materials",
+      "Amount": 100000,
+      "PSF": 10,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Plumbing and Sprinkler",
+      "Sub-Category": "Water and Sewer Main",
+      "Amount": 30000,
+      "PSF": 3,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Plumbing and Sprinkler",
+      "Sub-Category": "Plumbing Underground and Risers",
+      "Amount": 180000,
+      "PSF": 18,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Plumbing and Sprinkler",
+      "Sub-Category": "Gas Risers",
+      "Amount": 56000,
+      "PSF": 5.6,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Plumbing and Sprinkler",
+      "Sub-Category": "Bathroom Fixtures",
+      "Amount": 71000,
+      "PSF": 7.1,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Plumbing and Sprinkler",
+      "Sub-Category": "Installation of Fixtures",
+      "Amount": 25000,
+      "PSF": 2.5,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Plumbing and Sprinkler",
+      "Sub-Category": "Pumps",
+      "Amount": 50000,
+      "PSF": 5,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Plumbing and Sprinkler",
+      "Sub-Category": "Sprinkler",
+      "Amount": 100000,
+      "PSF": 10,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "HVAC",
+      "Sub-Category": "HVAC Equipment",
+      "Amount": 200000,
+      "PSF": 20,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "HVAC",
+      "Sub-Category": "Ductwork and Distribution",
+      "Amount": 100000,
+      "PSF": 10,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Electric",
+      "Sub-Category": "Underground, Temporary, Deckwork",
+      "Amount": 20000,
+      "PSF": 2,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Electric",
+      "Sub-Category": "Common Area",
+      "Amount": 20000,
+      "PSF": 2,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Electric",
+      "Sub-Category": "Service Work and Risers",
+      "Amount": 60000,
+      "PSF": 6,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Electric",
+      "Sub-Category": "Apartment Branch, Panels and Feeders",
+      "Amount": 100000,
+      "PSF": 10,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Electric",
+      "Sub-Category": "Light Fixtures",
+      "Amount": 60000,
+      "PSF": 6,
+      "Status": "Open"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Electric",
+      "Sub-Category": "Fire Alarm",
+      "Amount": 21000,
+      "PSF": 2.1,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Electric",
+      "Sub-Category": "Low Voltage",
+      "Amount": 30000,
+      "PSF": 3,
+      "Status": "Open"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Miscellaneous Site Work",
+      "Sub-Category": "Flatwork",
+      "Amount": 20000,
+      "PSF": 2,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Miscellaneous Site Work",
+      "Sub-Category": "Landscaping",
+      "Amount": 10000,
+      "PSF": 1,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Miscellaneous Site Work",
+      "Sub-Category": "Rear Yard",
+      "Amount": 41000,
+      "PSF": 4.1,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Equipment and Miscellaneous",
+      "Sub-Category": "Trash Compactor and Chutes",
+      "Amount": 28000,
+      "PSF": 2.8,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Equipment and Miscellaneous",
+      "Sub-Category": "Balconies",
+      "Amount": 20000,
+      "PSF": 2,
+      "Status": "Open"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Kitchen, Bathrooms and Fixtures",
+      "Sub-Category": "Cabinets, Countertops, Sinks & Faucets",
+      "Amount": 150000,
+      "PSF": 15,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Kitchen, Bathrooms and Fixtures",
+      "Sub-Category": "Kitchen Appliances",
+      "Amount": 100000,
+      "PSF": 10,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Kitchen, Bathrooms and Fixtures",
+      "Sub-Category": "Shower Doors",
+      "Amount": 20000,
+      "PSF": 2,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Overhead & Profit",
+      "Sub-Category": "Overhead & Profit",
+      "Amount": 450000,
+      "PSF": 45,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Hard Costs",
+      "Category": "Contingencies",
+      "Sub-Category": "Miscellaneous",
+      "Amount": 319350,
+      "PSF": 31.935,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Land Costs",
+      "Category": "Land Costs",
+      "Sub-Category": "Land Costs",
+      "Amount": 5800000,
+      "PSF": 580,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Soft Costs",
+      "Category": "Soft Costs",
+      "Sub-Category": "Soft Costs",
+      "Amount": 1605134,
+      "PSF": 160.5134,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Soft Costs",
+      "Category": "Soft Costs",
+      "Sub-Category": "Interest Reserve",
+      "Amount": 757743,
+      "PSF": 75.7743,
+      "Status": "Fixed"
+    },
+    {
+      "Type": "Soft Costs",
+      "Category": "Soft Costs",
+      "Sub-Category": "Loan Fee",
+      "Amount": 21500,
+      "PSF": 2.15,
+      "Status": "Fixed"
+    }
+  ],
+  "expenses": [
+    {
+      "Date": "3/10/1023",
+      "Type": "Deposit",
+      "Category": null,
+      "Vendor": null,
+      "Memo": "Shiraz Contribution",
+      "Debit": null,
+      "Credit": 290000,
+      "Balance": 290000
+    },
+    {
+      "Date": "2023-03-10T00:00:00",
+      "Type": "CHK",
+      "Category": "Land Costs",
+      "Vendor": null,
+      "Memo": "Contract Deposit",
+      "Debit": 290000,
+      "Credit": null,
+      "Balance": 0
+    },
+    {
+      "Date": "2023-04-28T00:00:00",
+      "Type": "Deposit",
+      "Category": null,
+      "Vendor": null,
+      "Memo": "NYC Cleaning Contribution",
+      "Debit": null,
+      "Credit": 50000,
+      "Balance": 50000
+    },
+    {
+      "Date": "2023-04-28T00:00:00",
+      "Type": "Zelle",
+      "Category": "Soft Costs",
+      "Vendor": "5 Borough Mapping NY",
+      "Memo": null,
+      "Debit": 750,
+      "Credit": null,
+      "Balance": 49250
+    },
+    {
+      "Date": "2023-05-02T00:00:00",
+      "Type": "Wire",
+      "Category": "Soft Costs",
+      "Vendor": "International Office of Architects",
+      "Memo": "Deposit to Architect",
+      "Debit": 20000,
+      "Credit": null,
+      "Balance": 29250
+    },
+    {
+      "Date": "2023-05-12T00:00:00",
+      "Type": "ACH",
+      "Category": "Soft Costs",
+      "Vendor": "Preferred Bank",
+      "Memo": "Deposit for Aquisition Loan",
+      "Debit": 5000,
+      "Credit": null,
+      "Balance": 24250
+    },
+    {
+      "Date": "2023-05-17T00:00:00",
+      "Type": "CHK",
+      "Category": "Soft Costs",
+      "Vendor": "Middleton Environmental",
+      "Memo": "Phase 1",
+      "Debit": 1800,
+      "Credit": null,
+      "Balance": 22450
+    },
+    {
+      "Date": "2023-05-18T00:00:00",
+      "Type": "ACH",
+      "Category": "Soft Costs",
+      "Vendor": "Stroh Engineering Services",
+      "Memo": null,
+      "Debit": 4500,
+      "Credit": null,
+      "Balance": 17950
+    },
+    {
+      "Date": "2023-05-22T00:00:00",
+      "Type": "ACH",
+      "Category": "Soft Costs",
+      "Vendor": "DGM CPA",
+      "Memo": null,
+      "Debit": 613,
+      "Credit": null,
+      "Balance": 17337
+    },
+    {
+      "Date": "2023-06-15T00:00:00",
+      "Type": "ACH",
+      "Category": "Soft Costs",
+      "Vendor": "DGM CPA",
+      "Memo": "LLC Creation",
+      "Debit": 375,
+      "Credit": null,
+      "Balance": 16962
+    },
+    {
+      "Date": "2023-06-15T00:00:00",
+      "Type": "ACH",
+      "Category": "Soft Costs",
+      "Vendor": "DGM CPA",
+      "Memo": "LLC Creation",
+      "Debit": 375,
+      "Credit": null,
+      "Balance": 16587
+    },
+    {
+      "Date": "2023-07-11T00:00:00",
+      "Type": "ACH",
+      "Category": "Soft Costs",
+      "Vendor": "Boyd Consulting",
+      "Memo": "Reimbursed Investmates for payment to Expeditor for Demo",
+      "Debit": 1800,
+      "Credit": null,
+      "Balance": 14787
+    },
+    {
+      "Date": "2023-07-18T00:00:00",
+      "Type": "ACH",
+      "Category": "Soft Costs",
+      "Vendor": "Marcus Attorneys PLLC",
+      "Memo": "Review of Operating Agreement",
+      "Debit": 1080,
+      "Credit": null,
+      "Balance": 13707
+    },
+    {
+      "Date": "2023-08-17T00:00:00",
+      "Type": "ACH",
+      "Category": "Soft Costs",
+      "Vendor": "Preferred Bank",
+      "Memo": "Good Faith Deposit",
+      "Debit": 350,
+      "Credit": null,
+      "Balance": 13357
+    },
+    {
+      "Date": "2023-08-17T00:00:00",
+      "Type": "ACH",
+      "Category": "Soft Costs",
+      "Vendor": "Exterior Design Renterings",
+      "Memo": "Payment for Exterior Rendering",
+      "Debit": 622.99,
+      "Credit": null,
+      "Balance": 12734.01
+    },
+    {
+      "Date": "2023-08-29T00:00:00",
+      "Type": "Deposit",
+      "Category": null,
+      "Vendor": null,
+      "Memo": "NYC Cleaning Contribution",
+      "Debit": null,
+      "Credit": 50000,
+      "Balance": 62734.01
+    },
+    {
+      "Date": "2023-08-29T00:00:00",
+      "Type": "Wire",
+      "Category": "Soft Costs",
+      "Vendor": "International Office of Architects",
+      "Memo": "Second Payment to Architect",
+      "Debit": 14427,
+      "Credit": null,
+      "Balance": 48307.01
+    },
+    {
+      "Date": "2023-10-29T00:00:00",
+      "Type": "ACH",
+      "Category": "Soft Costs",
+      "Vendor": "Yaker Engineering",
+      "Memo": "Deposit for Structural and SSP",
+      "Debit": 16650,
+      "Credit": null,
+      "Balance": 31657.01
+    },
+    {
+      "Date": "2024-01-08T00:00:00",
+      "Type": "Zelle",
+      "Category": "Soft Costs",
+      "Vendor": "WJY MEP Consulting Services, Inc",
+      "Memo": "Deposit for MEP",
+      "Debit": 4000,
+      "Credit": null,
+      "Balance": 27657.01
+    },
+    {
+      "Date": "2024-02-15T00:00:00",
+      "Type": "Deposit",
+      "Category": null,
+      "Vendor": null,
+      "Memo": "NYC Cleaning Contribution",
+      "Debit": null,
+      "Credit": 10000,
+      "Balance": 37657.01
+    },
+    {
+      "Date": "2024-02-15T00:00:00",
+      "Type": "Wire",
+      "Category": "Soft Costs",
+      "Vendor": "International Office of Architects",
+      "Memo": "30% Payment for Design Documents",
+      "Debit": 30000,
+      "Credit": null,
+      "Balance": 7657.01
+    },
+    {
+      "Date": "2024-04-19T00:00:00",
+      "Type": "Deposit",
+      "Category": null,
+      "Vendor": null,
+      "Memo": "Morgan Stanley Interest Income",
+      "Debit": null,
+      "Credit": 2690.17,
+      "Balance": 10347.18
+    },
+    {
+      "Date": "2024-04-19T00:00:00",
+      "Type": "Wire",
+      "Category": null,
+      "Vendor": null,
+      "Memo": "Interest Payment to Solomon Isakov",
+      "Debit": 2540.17,
+      "Credit": null,
+      "Balance": 7807.01
+    },
+    {
+      "Date": "2024-06-18T00:00:00",
+      "Type": "Deposit",
+      "Category": null,
+      "Vendor": null,
+      "Memo": "Shiraz Contribution",
+      "Debit": null,
+      "Credit": 25000,
+      "Balance": 32807.01
+    },
+    {
+      "Date": "2024-06-20T00:00:00",
+      "Type": "Wire",
+      "Category": "Soft Costs",
+      "Vendor": "International Office of Architects",
+      "Memo": "Third Payment",
+      "Debit": 26250,
+      "Credit": null,
+      "Balance": 6557.01
+    }
+  ],
+  "contracts": [
+    {
+      "Date": "2023-05-01T00:00:00",
+      "Vendor": "Stroh Engineering Services",
+      "Contract Total": 9000,
+      "Total Paid": 4500,
+      "Total Remaining": 4500
+    },
+    {
+      "Date": "2023-04-28T00:00:00",
+      "Vendor": "International Office of Architects",
+      "Contract Total": 100000,
+      "Total Paid": 90677,
+      "Total Remaining": 9323
+    },
+    {
+      "Date": "2023-10-29T00:00:00",
+      "Vendor": "Yaker Engineering",
+      "Contract Total": 28650,
+      "Total Paid": 16650,
+      "Total Remaining": 12000
+    },
+    {
+      "Date": "2024-01-05T00:00:00",
+      "Vendor": "WJY MEP Consulting Services, Inc",
+      "Contract Total": 15000,
+      "Total Paid": 4000,
+      "Total Remaining": 11000
+    }
+  ],
+  "lookup": [
+    {
+      "Company | Name": "Brookside Environmental | Richard Taylor",
+      "Name": "Richard Taylor",
+      "Company Name": "Brookside Environmental",
+      "Office": "(631) 608-8810",
+      "Mobile": "516-852-1631",
+      "Email": "rtaylor@brooksideweb.com"
+    },
+    {
+      "Company | Name": "Design Studio Associates NY Inc. | Renzo Bolarte",
+      "Name": "Renzo Bolarte",
+      "Company Name": "Design Studio Associates NY Inc.",
+      "Office": "(718) 569-2112",
+      "Mobile": "(516) 642-6960",
+      "Email": "renzo@dsany.com"
+    },
+    {
+      "Company | Name": "Engineering Solutions | Jeffrey Spivak",
+      "Name": "Jeffrey Spivak",
+      "Company Name": "Engineering Solutions",
+      "Office": "212-840-1030 x204",
+      "Mobile": null,
+      "Email": "jeff@engsolu.com"
+    },
+    {
+      "Company | Name": "Greenworks Lending from Nuveen | Crystal Smith",
+      "Name": "Crystal Smith",
+      "Company Name": "Greenworks Lending from Nuveen",
+      "Office": "(212) 731-2717",
+      "Mobile": null,
+      "Email": "crystal.smith@nuveen.com"
+    },
+    {
+      "Company | Name": "International Office of Architects | Murat Mutlu",
+      "Name": "Murat Mutlu",
+      "Company Name": "International Office of Architects",
+      "Office": "(212) 564-0094",
+      "Mobile": "(607) 262-0368",
+      "Email": "murat@in-oa.com"
+    },
+    {
+      "Company | Name": "IRL Systems | Brendan Lally",
+      "Name": "Brendan Lally",
+      "Company Name": "IRL Systems",
+      "Office": null,
+      "Mobile": null,
+      "Email": "brendanl@irlsystems.com"
+    },
+    {
+      "Company | Name": "Middleton Environmental | Thomas R. Tompkins",
+      "Name": "Thomas R. Tompkins",
+      "Company Name": "Middleton Environmental",
+      "Office": "(631) 321-4300",
+      "Mobile": null,
+      "Email": "info@midenv.com"
+    },
+    {
+      "Company | Name": "One Concrete | Izzy Lubart",
+      "Name": "Izzy Lubart",
+      "Company Name": "One Concrete",
+      "Office": null,
+      "Mobile": null,
+      "Email": "Izzy@Oneconcrete.net"
+    },
+    {
+      "Company | Name": "Peerless Products | Jamie McKnight",
+      "Name": "Jamie McKnight",
+      "Company Name": "Peerless Products",
+      "Office": "401-487-6686",
+      "Mobile": null,
+      "Email": "repmcknight33@gmail.com"
+    },
+    {
+      "Company | Name": "Pella Windows | Leo Zonenshein",
+      "Name": "Leo Zonenshein",
+      "Company Name": "Pella Windows",
+      "Office": "646-773-6405",
+      "Mobile": null,
+      "Email": "LZonenshein@pellactny.com"
+    },
+    {
+      "Company | Name": "Renovation Group | Daniel Kaykov",
+      "Name": "Daniel Kaykov",
+      "Company Name": "Renovation Group",
+      "Office": null,
+      "Mobile": "(718) 690-1370",
+      "Email": "dan@renovationgroup.com"
+    },
+    {
+      "Company | Name": "Rosen Law | Jaime Rosen Esq",
+      "Name": "Jaime Rosen Esq",
+      "Company Name": "Rosen Law",
+      "Office": null,
+      "Mobile": null,
+      "Email": "jaime@rosenlawllc.com"
+    },
+    {
+      "Company | Name": "Soil Safe | James Case",
+      "Name": "James Case",
+      "Company Name": "Soil Safe",
+      "Office": "(516) 605-2110 x30346",
+      "Mobile": "(516) 972-3896",
+      "Email": "james.case@gflenv.com"
+    },
+    {
+      "Company | Name": "StudioGallos Architecture | Frankie Nunez",
+      "Name": "Frankie Nunez",
+      "Company Name": "StudioGallos Architecture",
+      "Office": "(718) 458-1518 x2102",
+      "Mobile": null,
+      "Email": "fnunez@studiogallos.com"
+    },
+    {
+      "Company | Name": "| Mohammad Aftab",
+      "Name": "Mohammad Aftab",
+      "Company Name": null,
+      "Office": "(917) 560-6994",
+      "Mobile": null,
+      "Email": "aftabshahnoc@gmail.com"
+    },
+    {
+      "Company | Name": "Perciballi Industries Inc | Mike Perciballi",
+      "Name": "Mike Perciballi",
+      "Company Name": "Perciballi Industries Inc",
+      "Office": "(347) 825-3781",
+      "Mobile": "(646) 248-2012",
+      "Email": "mikep@perciballiindustriesinc.com"
+    },
+    {
+      "Company | Name": "Celtic Demolition | Mike",
+      "Name": "Mike",
+      "Company Name": "Celtic Demolition",
+      "Office": null,
+      "Mobile": "914-704-5511",
+      "Email": "mike@cltgrp.com"
+    },
+    {
+      "Company | Name": "North East Specialist Group | Nick Sopasoudakis",
+      "Name": "Nick Sopasoudakis",
+      "Company Name": "North East Specialist Group",
+      "Office": null,
+      "Mobile": "347-756-2641",
+      "Email": "nsopas@northeastsg.com"
+    },
+    {
+      "Company | Name": "Stroh Engineering Services  | Jeff Roberts",
+      "Name": "Jeff Roberts",
+      "Company Name": "Stroh Engineering Services",
+      "Office": "631-669-7531",
+      "Mobile": "516-351-2150",
+      "Email": "jeff@strohengineering.com"
+    },
+    {
+      "Company | Name": "Boyd Consulting | Andrea Boyd",
+      "Name": "Andrea Boyd",
+      "Company Name": "Boyd Consulting",
+      "Office": "646-619-3620",
+      "Mobile": null,
+      "Email": "andrea@boydconsult.com"
+    },
+    {
+      "Company | Name": "5 Borough Mapping NY | Raj Kumar",
+      "Name": "Raj Kumar",
+      "Company Name": "5 Borough Mapping NY",
+      "Office": "516-652-9984",
+      "Mobile": null,
+      "Email": "5boromapping@gmail.com"
+    },
+    {
+      "Company | Name": "Preferred Bank | Sylvia Tseng",
+      "Name": "Sylvia Tseng",
+      "Company Name": "Preferred Bank",
+      "Office": "(347) 532-8038",
+      "Mobile": null,
+      "Email": "Sylvia.Tseng@PreferredBank.com"
+    },
+    {
+      "Company | Name": "DGM CPA | George Mataev",
+      "Name": "George Mataev",
+      "Company Name": "DGM CPA",
+      "Office": "718-530-4545",
+      "Mobile": null,
+      "Email": "george@dgmcpany.com"
+    },
+    {
+      "Company | Name": "Marcus Attorneys PLLC | Guillermo Santiago",
+      "Name": "Guillermo Santiago",
+      "Company Name": "Marcus Attorneys PLLC",
+      "Office": "718-233-2564",
+      "Mobile": null,
+      "Email": "santiago@marcusattorneys.com"
+    },
+    {
+      "Company | Name": "MCAI Construction Services | Noel G Muir",
+      "Name": "Noel G Muir",
+      "Company Name": "MCAI Construction Services",
+      "Office": "516-288-8546",
+      "Mobile": null,
+      "Email": "mcai079@aol.com"
+    },
+    {
+      "Company | Name": "Exterior Design Renterings | Andrew Melnikov",
+      "Name": "Andrew Melnikov",
+      "Company Name": "Exterior Design Renterings",
+      "Office": "380\u00a066\u00a0198\u00a07396",
+      "Mobile": null,
+      "Email": null
+    },
+    {
+      "Company | Name": "Yaker Engineering | Alex Yaker",
+      "Name": "Alex Yaker",
+      "Company Name": "Yaker Engineering",
+      "Office": "917-518-2032",
+      "Mobile": null,
+      "Email": "ayaker@yakereng.com"
+    },
+    {
+      "Company | Name": "ADG Engineering | Aamer Islam",
+      "Name": "Aamer Islam",
+      "Company Name": "ADG Engineering",
+      "Office": "212-288-7120",
+      "Mobile": "917-509-4148",
+      "Email": "aislam@axisd.com"
+    },
+    {
+      "Company | Name": "Active Environmental Corp. | Romeo Santos",
+      "Name": "Romeo Santos",
+      "Company Name": "Active Environmental Corp.",
+      "Office": "718-854-1111",
+      "Mobile": null,
+      "Email": "doncarllo@aol.com"
+    },
+    {
+      "Company | Name": "WJY MEP Consulting Services, Inc | Wei Wang",
+      "Name": "Wei Wang",
+      "Company Name": "WJY MEP Consulting Services, Inc",
+      "Office": "917-815-5366",
+      "Mobile": null,
+      "Email": "weiwilliamworld@yahoo.com"
+    },
+    {
+      "Company | Name": "Safari Energy Engineering | Yoichi Chiba",
+      "Name": "Yoichi Chiba",
+      "Company Name": "Safari Energy Engineering",
+      "Office": "347-506-0277",
+      "Mobile": "929-204-9438",
+      "Email": "jack@safariny.com"
+    },
+    {
+      "Company | Name": "Regional Testing Corp | Pamela Fajek",
+      "Name": "Pamela Fajek",
+      "Company Name": "Regional Testing Corp",
+      "Office": "347-221-0110",
+      "Mobile": null,
+      "Email": "pfajek@regionaltestingcorp.com"
+    },
+    {
+      "Company | Name": "|",
+      "Name": null,
+      "Company Name": null,
+      "Office": null,
+      "Mobile": null,
+      "Email": null
+    },
+    {
+      "Company | Name": "|",
+      "Name": null,
+      "Company Name": null,
+      "Office": null,
+      "Mobile": null,
+      "Email": null
+    },
+    {
+      "Company | Name": "|",
+      "Name": null,
+      "Company Name": null,
+      "Office": null,
+      "Mobile": null,
+      "Email": null
+    },
+    {
+      "Company | Name": "|",
+      "Name": null,
+      "Company Name": null,
+      "Office": null,
+      "Mobile": null,
+      "Email": null
+    },
+    {
+      "Company | Name": "|",
+      "Name": null,
+      "Company Name": null,
+      "Office": null,
+      "Mobile": null,
+      "Email": null
+    }
+  ],
+  "project_plan": {
+    "meta": {
+      "project_title": "219 Driggs Street",
+      "general_contractor": "Renovation Group",
+      "project_start_date": "2024-05-01T00:00:00"
+    },
+    "week_dates": [
+      {
+        "column": 9,
+        "date": "2024-05-01T00:00:00",
+        "week_number": 1
+      },
+      {
+        "column": 10,
+        "date": "2024-05-08T00:00:00",
+        "week_number": 2
+      },
+      {
+        "column": 11,
+        "date": "2024-05-15T00:00:00",
+        "week_number": 3
+      },
+      {
+        "column": 12,
+        "date": "2024-05-22T00:00:00",
+        "week_number": 4
+      },
+      {
+        "column": 13,
+        "date": "2024-05-29T00:00:00",
+        "week_number": 5
+      },
+      {
+        "column": 14,
+        "date": "2024-06-05T00:00:00",
+        "week_number": 6
+      },
+      {
+        "column": 15,
+        "date": "2024-06-12T00:00:00",
+        "week_number": 7
+      },
+      {
+        "column": 16,
+        "date": "2024-06-19T00:00:00",
+        "week_number": 8
+      },
+      {
+        "column": 17,
+        "date": "2024-06-26T00:00:00",
+        "week_number": 9
+      },
+      {
+        "column": 18,
+        "date": "2024-07-03T00:00:00",
+        "week_number": 10
+      },
+      {
+        "column": 19,
+        "date": "2024-07-10T00:00:00",
+        "week_number": 11
+      },
+      {
+        "column": 20,
+        "date": "2024-07-17T00:00:00",
+        "week_number": 12
+      },
+      {
+        "column": 21,
+        "date": "2024-07-24T00:00:00",
+        "week_number": 13
+      },
+      {
+        "column": 22,
+        "date": "2024-07-31T00:00:00",
+        "week_number": 14
+      },
+      {
+        "column": 23,
+        "date": "2024-08-07T00:00:00",
+        "week_number": 15
+      },
+      {
+        "column": 24,
+        "date": "2024-08-14T00:00:00",
+        "week_number": 16
+      },
+      {
+        "column": 25,
+        "date": "2024-08-21T00:00:00",
+        "week_number": 17
+      },
+      {
+        "column": 26,
+        "date": "2024-08-28T00:00:00",
+        "week_number": 18
+      },
+      {
+        "column": 27,
+        "date": "2024-09-04T00:00:00",
+        "week_number": 19
+      },
+      {
+        "column": 28,
+        "date": "2024-09-11T00:00:00",
+        "week_number": 20
+      },
+      {
+        "column": 29,
+        "date": "2024-09-18T00:00:00",
+        "week_number": 21
+      },
+      {
+        "column": 30,
+        "date": "2024-09-25T00:00:00",
+        "week_number": 22
+      },
+      {
+        "column": 31,
+        "date": "2024-10-02T00:00:00",
+        "week_number": 23
+      },
+      {
+        "column": 32,
+        "date": "2024-10-09T00:00:00",
+        "week_number": 24
+      },
+      {
+        "column": 33,
+        "date": "2024-10-16T00:00:00",
+        "week_number": 25
+      },
+      {
+        "column": 34,
+        "date": "2024-10-23T00:00:00",
+        "week_number": 26
+      },
+      {
+        "column": 35,
+        "date": "2024-10-30T00:00:00",
+        "week_number": 27
+      },
+      {
+        "column": 36,
+        "date": "2024-11-06T00:00:00",
+        "week_number": 28
+      },
+      {
+        "column": 37,
+        "date": "2024-11-13T00:00:00",
+        "week_number": 29
+      },
+      {
+        "column": 38,
+        "date": "2024-11-20T00:00:00",
+        "week_number": 30
+      },
+      {
+        "column": 39,
+        "date": "2024-11-27T00:00:00",
+        "week_number": 31
+      },
+      {
+        "column": 40,
+        "date": "2024-12-04T00:00:00",
+        "week_number": 32
+      },
+      {
+        "column": 41,
+        "date": "2024-12-11T00:00:00",
+        "week_number": 33
+      },
+      {
+        "column": 42,
+        "date": "2024-12-18T00:00:00",
+        "week_number": 34
+      },
+      {
+        "column": 43,
+        "date": "2024-12-25T00:00:00",
+        "week_number": 35
+      },
+      {
+        "column": 44,
+        "date": "2025-01-01T00:00:00",
+        "week_number": 36
+      },
+      {
+        "column": 45,
+        "date": "2025-01-08T00:00:00",
+        "week_number": 37
+      },
+      {
+        "column": 46,
+        "date": "2025-01-15T00:00:00",
+        "week_number": 38
+      },
+      {
+        "column": 47,
+        "date": "2025-01-22T00:00:00",
+        "week_number": 39
+      },
+      {
+        "column": 48,
+        "date": "2025-01-29T00:00:00",
+        "week_number": 40
+      },
+      {
+        "column": 49,
+        "date": "2025-02-05T00:00:00",
+        "week_number": 41
+      },
+      {
+        "column": 50,
+        "date": "2025-02-12T00:00:00",
+        "week_number": 42
+      },
+      {
+        "column": 51,
+        "date": "2025-02-19T00:00:00",
+        "week_number": 43
+      },
+      {
+        "column": 52,
+        "date": "2025-02-26T00:00:00",
+        "week_number": 44
+      },
+      {
+        "column": 53,
+        "date": "2025-03-05T00:00:00",
+        "week_number": 45
+      },
+      {
+        "column": 54,
+        "date": "2025-03-12T00:00:00",
+        "week_number": 46
+      },
+      {
+        "column": 55,
+        "date": "2025-03-19T00:00:00",
+        "week_number": 47
+      },
+      {
+        "column": 56,
+        "date": "2025-03-26T00:00:00",
+        "week_number": 48
+      },
+      {
+        "column": 57,
+        "date": "2025-04-02T00:00:00",
+        "week_number": 49
+      },
+      {
+        "column": 58,
+        "date": "2025-04-09T00:00:00",
+        "week_number": 50
+      },
+      {
+        "column": 59,
+        "date": "2025-04-16T00:00:00",
+        "week_number": 51
+      },
+      {
+        "column": 60,
+        "date": "2025-04-23T00:00:00",
+        "week_number": 52
+      },
+      {
+        "column": 61,
+        "date": "2025-04-30T00:00:00",
+        "week_number": 53
+      },
+      {
+        "column": 62,
+        "date": "2025-05-07T00:00:00",
+        "week_number": 54
+      },
+      {
+        "column": 63,
+        "date": "2025-05-14T00:00:00",
+        "week_number": 55
+      },
+      {
+        "column": 64,
+        "date": "2025-05-21T00:00:00",
+        "week_number": 56
+      },
+      {
+        "column": 65,
+        "date": "2025-05-28T00:00:00",
+        "week_number": 57
+      },
+      {
+        "column": 66,
+        "date": "2025-06-04T00:00:00",
+        "week_number": 58
+      },
+      {
+        "column": 67,
+        "date": "2025-06-11T00:00:00",
+        "week_number": 59
+      },
+      {
+        "column": 68,
+        "date": "2025-06-18T00:00:00",
+        "week_number": 60
+      },
+      {
+        "column": 69,
+        "date": "2025-06-25T00:00:00",
+        "week_number": 61
+      },
+      {
+        "column": 70,
+        "date": "2025-07-02T00:00:00",
+        "week_number": 62
+      },
+      {
+        "column": 71,
+        "date": "2025-07-09T00:00:00",
+        "week_number": 63
+      },
+      {
+        "column": 72,
+        "date": "2025-07-16T00:00:00",
+        "week_number": 64
+      },
+      {
+        "column": 73,
+        "date": "2025-07-23T00:00:00",
+        "week_number": 65
+      },
+      {
+        "column": 74,
+        "date": "2025-07-30T00:00:00",
+        "week_number": 66
+      },
+      {
+        "column": 75,
+        "date": "2025-08-06T00:00:00",
+        "week_number": 67
+      },
+      {
+        "column": 76,
+        "date": "2025-08-13T00:00:00",
+        "week_number": 68
+      },
+      {
+        "column": 77,
+        "date": "2025-08-20T00:00:00",
+        "week_number": 69
+      },
+      {
+        "column": 78,
+        "date": "2025-08-27T00:00:00",
+        "week_number": 70
+      },
+      {
+        "column": 79,
+        "date": "2025-09-03T00:00:00",
+        "week_number": 71
+      },
+      {
+        "column": 80,
+        "date": "2025-09-10T00:00:00",
+        "week_number": 72
+      },
+      {
+        "column": 81,
+        "date": "2025-09-17T00:00:00",
+        "week_number": 73
+      },
+      {
+        "column": 82,
+        "date": "2025-09-24T00:00:00",
+        "week_number": 74
+      },
+      {
+        "column": 83,
+        "date": "2025-10-01T00:00:00",
+        "week_number": 75
+      },
+      {
+        "column": 84,
+        "date": "2025-10-08T00:00:00",
+        "week_number": 76
+      },
+      {
+        "column": 85,
+        "date": "2025-10-15T00:00:00",
+        "week_number": 77
+      },
+      {
+        "column": 86,
+        "date": "2025-10-22T00:00:00",
+        "week_number": 78
+      },
+      {
+        "column": 87,
+        "date": "2025-10-29T00:00:00",
+        "week_number": 79
+      },
+      {
+        "column": 88,
+        "date": "2025-11-05T00:00:00",
+        "week_number": 80
+      },
+      {
+        "column": 89,
+        "date": "2025-11-12T00:00:00",
+        "week_number": 81
+      },
+      {
+        "column": 90,
+        "date": "2025-11-19T00:00:00",
+        "week_number": 82
+      },
+      {
+        "column": 91,
+        "date": "2025-11-26T00:00:00",
+        "week_number": 83
+      },
+      {
+        "column": 92,
+        "date": "2025-12-03T00:00:00",
+        "week_number": 84
+      },
+      {
+        "column": 93,
+        "date": "2025-12-10T00:00:00",
+        "week_number": 85
+      },
+      {
+        "column": 94,
+        "date": "2025-12-17T00:00:00",
+        "week_number": 86
+      },
+      {
+        "column": 95,
+        "date": "2025-12-24T00:00:00",
+        "week_number": 87
+      },
+      {
+        "column": 96,
+        "date": "2025-12-31T00:00:00",
+        "week_number": 88
+      },
+      {
+        "column": 97,
+        "date": "2026-01-07T00:00:00",
+        "week_number": 89
+      },
+      {
+        "column": 98,
+        "date": "2026-01-14T00:00:00",
+        "week_number": 90
+      },
+      {
+        "column": 99,
+        "date": "2026-01-21T00:00:00",
+        "week_number": 91
+      },
+      {
+        "column": 100,
+        "date": "2026-01-28T00:00:00",
+        "week_number": 92
+      },
+      {
+        "column": 101,
+        "date": "2026-02-04T00:00:00",
+        "week_number": 93
+      },
+      {
+        "column": 102,
+        "date": "2026-02-11T00:00:00",
+        "week_number": 94
+      },
+      {
+        "column": 103,
+        "date": "2026-02-18T00:00:00",
+        "week_number": 95
+      },
+      {
+        "column": 104,
+        "date": "2026-02-25T00:00:00",
+        "week_number": 96
+      },
+      {
+        "column": 105,
+        "date": "2026-03-04T00:00:00",
+        "week_number": 97
+      },
+      {
+        "column": 106,
+        "date": "2026-03-11T00:00:00",
+        "week_number": 98
+      },
+      {
+        "column": 107,
+        "date": "2026-03-18T00:00:00",
+        "week_number": 99
+      },
+      {
+        "column": 108,
+        "date": "2026-03-25T00:00:00",
+        "week_number": 100
+      },
+      {
+        "column": 109,
+        "date": "2026-04-01T00:00:00",
+        "week_number": 101
+      },
+      {
+        "column": 110,
+        "date": "2026-04-08T00:00:00",
+        "week_number": 102
+      },
+      {
+        "column": 111,
+        "date": "2026-04-15T00:00:00",
+        "week_number": 103
+      },
+      {
+        "column": 112,
+        "date": "2026-04-22T00:00:00",
+        "week_number": 104
+      },
+      {
+        "column": 113,
+        "date": "2026-04-29T00:00:00",
+        "week_number": 105
+      },
+      {
+        "column": 114,
+        "date": "2026-05-06T00:00:00",
+        "week_number": 106
+      },
+      {
+        "column": 115,
+        "date": "2026-05-13T00:00:00",
+        "week_number": 107
+      },
+      {
+        "column": 116,
+        "date": "2026-05-20T00:00:00",
+        "week_number": 108
+      },
+      {
+        "column": 117,
+        "date": "2026-05-27T00:00:00",
+        "week_number": 109
+      },
+      {
+        "column": 118,
+        "date": "2026-06-03T00:00:00",
+        "week_number": 110
+      },
+      {
+        "column": 119,
+        "date": "2026-06-10T00:00:00",
+        "week_number": 111
+      },
+      {
+        "column": 120,
+        "date": "2026-06-17T00:00:00",
+        "week_number": 112
+      },
+      {
+        "column": 121,
+        "date": "2026-06-24T00:00:00",
+        "week_number": 113
+      },
+      {
+        "column": 122,
+        "date": "2026-07-01T00:00:00",
+        "week_number": 114
+      },
+      {
+        "column": 123,
+        "date": "2026-07-08T00:00:00",
+        "week_number": 115
+      },
+      {
+        "column": 124,
+        "date": "2026-07-15T00:00:00",
+        "week_number": 116
+      },
+      {
+        "column": 125,
+        "date": "2026-07-22T00:00:00",
+        "week_number": 117
+      },
+      {
+        "column": 126,
+        "date": "2026-07-29T00:00:00",
+        "week_number": 118
+      },
+      {
+        "column": 127,
+        "date": "2026-08-05T00:00:00",
+        "week_number": 119
+      },
+      {
+        "column": 128,
+        "date": "2026-08-12T00:00:00",
+        "week_number": 120
+      },
+      {
+        "column": 129,
+        "date": "2026-08-19T00:00:00",
+        "week_number": 121
+      },
+      {
+        "column": 130,
+        "date": "2026-08-26T00:00:00",
+        "week_number": 122
+      },
+      {
+        "column": 131,
+        "date": "2026-09-02T00:00:00",
+        "week_number": 123
+      },
+      {
+        "column": 132,
+        "date": "2026-09-09T00:00:00",
+        "week_number": 124
+      },
+      {
+        "column": 133,
+        "date": "2026-09-16T00:00:00",
+        "week_number": 125
+      },
+      {
+        "column": 134,
+        "date": "2026-09-23T00:00:00",
+        "week_number": 126
+      },
+      {
+        "column": 135,
+        "date": "2026-09-30T00:00:00",
+        "week_number": 127
+      },
+      {
+        "column": 136,
+        "date": "2026-10-07T00:00:00",
+        "week_number": 128
+      },
+      {
+        "column": 137,
+        "date": "2026-10-14T00:00:00",
+        "week_number": 129
+      },
+      {
+        "column": 138,
+        "date": "2026-10-21T00:00:00",
+        "week_number": 130
+      },
+      {
+        "column": 139,
+        "date": "2026-10-28T00:00:00",
+        "week_number": 131
+      },
+      {
+        "column": 140,
+        "date": "2026-11-04T00:00:00",
+        "week_number": 132
+      },
+      {
+        "column": 141,
+        "date": "2026-11-11T00:00:00",
+        "week_number": 133
+      },
+      {
+        "column": 142,
+        "date": "2026-11-18T00:00:00",
+        "week_number": 134
+      },
+      {
+        "column": 143,
+        "date": "2026-11-25T00:00:00",
+        "week_number": 135
+      },
+      {
+        "column": 144,
+        "date": "2026-12-02T00:00:00",
+        "week_number": 136
+      },
+      {
+        "column": 145,
+        "date": "2026-12-09T00:00:00",
+        "week_number": 137
+      },
+      {
+        "column": 146,
+        "date": "2026-12-16T00:00:00",
+        "week_number": 138
+      },
+      {
+        "column": 147,
+        "date": "2026-12-23T00:00:00",
+        "week_number": 139
+      },
+      {
+        "column": 148,
+        "date": "2026-12-30T00:00:00",
+        "week_number": 140
+      },
+      {
+        "column": 149,
+        "date": "2027-01-06T00:00:00",
+        "week_number": 141
+      }
+    ],
+    "tasks": [
+      {
+        "row": 9,
+        "wbs": "1",
+        "title": "Planning",
+        "owner": null,
+        "start_date": "2024-05-01T00:00:00",
+        "due_date": "2025-01-31T00:00:00",
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 10,
+        "wbs": "2",
+        "title": "Contract Execution",
+        "owner": null,
+        "start_date": "2024-05-01T00:00:00",
+        "due_date": "2024-05-02T00:00:00",
+        "duration_days": 1,
+        "pct_complete": 1,
+        "gantt_marks": [
+          {
+            "week_number": 1,
+            "date": "2024-05-01T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 11,
+        "wbs": "3",
+        "title": "Survey",
+        "owner": null,
+        "start_date": "2024-05-01T00:00:00",
+        "due_date": "2024-05-22T00:00:00",
+        "duration_days": 21,
+        "pct_complete": 1,
+        "gantt_marks": [
+          {
+            "week_number": 1,
+            "date": "2024-05-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 2,
+            "date": "2024-05-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 3,
+            "date": "2024-05-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 4,
+            "date": "2024-05-22T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 12,
+        "wbs": "4",
+        "title": "Environmental",
+        "owner": null,
+        "start_date": "2024-05-01T00:00:00",
+        "due_date": "2024-05-29T00:00:00",
+        "duration_days": 28,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 1,
+            "date": "2024-05-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 2,
+            "date": "2024-05-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 3,
+            "date": "2024-05-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 4,
+            "date": "2024-05-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 5,
+            "date": "2024-05-29T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 13,
+        "wbs": "5",
+        "title": "Architectural Engineering Planning",
+        "owner": null,
+        "start_date": "2023-10-14T00:00:00",
+        "due_date": "2024-09-28T00:00:00",
+        "duration_days": 350,
+        "pct_complete": 0.75,
+        "gantt_marks": [
+          {
+            "week_number": 1,
+            "date": "2024-05-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 2,
+            "date": "2024-05-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 3,
+            "date": "2024-05-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 4,
+            "date": "2024-05-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 5,
+            "date": "2024-05-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 6,
+            "date": "2024-06-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 7,
+            "date": "2024-06-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 8,
+            "date": "2024-06-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 9,
+            "date": "2024-06-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 10,
+            "date": "2024-07-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 11,
+            "date": "2024-07-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 12,
+            "date": "2024-07-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 13,
+            "date": "2024-07-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 14,
+            "date": "2024-07-31T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 15,
+            "date": "2024-08-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 16,
+            "date": "2024-08-14T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 17,
+            "date": "2024-08-21T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 18,
+            "date": "2024-08-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 19,
+            "date": "2024-09-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 20,
+            "date": "2024-09-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 21,
+            "date": "2024-09-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 22,
+            "date": "2024-09-25T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 14,
+        "wbs": null,
+        "title": "Architectural Plans",
+        "owner": null,
+        "start_date": "2024-05-01T00:00:00",
+        "due_date": "2025-01-31T00:00:00",
+        "duration_days": 275,
+        "pct_complete": 0.9,
+        "gantt_marks": [
+          {
+            "week_number": 1,
+            "date": "2024-05-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 2,
+            "date": "2024-05-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 3,
+            "date": "2024-05-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 4,
+            "date": "2024-05-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 5,
+            "date": "2024-05-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 6,
+            "date": "2024-06-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 7,
+            "date": "2024-06-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 8,
+            "date": "2024-06-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 9,
+            "date": "2024-06-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 10,
+            "date": "2024-07-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 11,
+            "date": "2024-07-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 12,
+            "date": "2024-07-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 13,
+            "date": "2024-07-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 14,
+            "date": "2024-07-31T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 15,
+            "date": "2024-08-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 16,
+            "date": "2024-08-14T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 17,
+            "date": "2024-08-21T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 18,
+            "date": "2024-08-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 19,
+            "date": "2024-09-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 20,
+            "date": "2024-09-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 21,
+            "date": "2024-09-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 22,
+            "date": "2024-09-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 23,
+            "date": "2024-10-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 24,
+            "date": "2024-10-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 25,
+            "date": "2024-10-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 26,
+            "date": "2024-10-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 27,
+            "date": "2024-10-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 28,
+            "date": "2024-11-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 29,
+            "date": "2024-11-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 30,
+            "date": "2024-11-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 31,
+            "date": "2024-11-27T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 32,
+            "date": "2024-12-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 33,
+            "date": "2024-12-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 34,
+            "date": "2024-12-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 35,
+            "date": "2024-12-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 36,
+            "date": "2025-01-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 37,
+            "date": "2025-01-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 38,
+            "date": "2025-01-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 39,
+            "date": "2025-01-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 40,
+            "date": "2025-01-29T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 15,
+        "wbs": null,
+        "title": "Structural Plans",
+        "owner": null,
+        "start_date": "2024-05-01T00:00:00",
+        "due_date": "2025-01-31T00:00:00",
+        "duration_days": 275,
+        "pct_complete": 0.9,
+        "gantt_marks": [
+          {
+            "week_number": 1,
+            "date": "2024-05-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 2,
+            "date": "2024-05-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 3,
+            "date": "2024-05-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 4,
+            "date": "2024-05-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 5,
+            "date": "2024-05-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 6,
+            "date": "2024-06-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 7,
+            "date": "2024-06-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 8,
+            "date": "2024-06-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 9,
+            "date": "2024-06-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 10,
+            "date": "2024-07-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 11,
+            "date": "2024-07-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 12,
+            "date": "2024-07-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 13,
+            "date": "2024-07-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 14,
+            "date": "2024-07-31T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 15,
+            "date": "2024-08-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 16,
+            "date": "2024-08-14T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 17,
+            "date": "2024-08-21T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 18,
+            "date": "2024-08-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 19,
+            "date": "2024-09-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 20,
+            "date": "2024-09-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 21,
+            "date": "2024-09-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 22,
+            "date": "2024-09-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 23,
+            "date": "2024-10-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 24,
+            "date": "2024-10-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 25,
+            "date": "2024-10-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 26,
+            "date": "2024-10-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 27,
+            "date": "2024-10-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 28,
+            "date": "2024-11-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 29,
+            "date": "2024-11-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 30,
+            "date": "2024-11-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 31,
+            "date": "2024-11-27T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 32,
+            "date": "2024-12-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 33,
+            "date": "2024-12-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 34,
+            "date": "2024-12-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 35,
+            "date": "2024-12-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 36,
+            "date": "2025-01-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 37,
+            "date": "2025-01-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 38,
+            "date": "2025-01-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 39,
+            "date": "2025-01-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 40,
+            "date": "2025-01-29T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 16,
+        "wbs": null,
+        "title": "Fire Protection Plans (Sprinklers)",
+        "owner": null,
+        "start_date": "2024-05-01T00:00:00",
+        "due_date": "2025-01-31T00:00:00",
+        "duration_days": 275,
+        "pct_complete": 0.9,
+        "gantt_marks": [
+          {
+            "week_number": 1,
+            "date": "2024-05-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 2,
+            "date": "2024-05-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 3,
+            "date": "2024-05-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 4,
+            "date": "2024-05-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 5,
+            "date": "2024-05-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 6,
+            "date": "2024-06-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 7,
+            "date": "2024-06-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 8,
+            "date": "2024-06-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 9,
+            "date": "2024-06-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 10,
+            "date": "2024-07-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 11,
+            "date": "2024-07-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 12,
+            "date": "2024-07-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 13,
+            "date": "2024-07-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 14,
+            "date": "2024-07-31T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 15,
+            "date": "2024-08-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 16,
+            "date": "2024-08-14T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 17,
+            "date": "2024-08-21T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 18,
+            "date": "2024-08-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 19,
+            "date": "2024-09-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 20,
+            "date": "2024-09-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 21,
+            "date": "2024-09-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 22,
+            "date": "2024-09-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 23,
+            "date": "2024-10-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 24,
+            "date": "2024-10-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 25,
+            "date": "2024-10-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 26,
+            "date": "2024-10-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 27,
+            "date": "2024-10-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 28,
+            "date": "2024-11-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 29,
+            "date": "2024-11-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 30,
+            "date": "2024-11-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 31,
+            "date": "2024-11-27T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 32,
+            "date": "2024-12-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 33,
+            "date": "2024-12-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 34,
+            "date": "2024-12-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 35,
+            "date": "2024-12-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 36,
+            "date": "2025-01-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 37,
+            "date": "2025-01-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 38,
+            "date": "2025-01-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 39,
+            "date": "2025-01-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 40,
+            "date": "2025-01-29T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 17,
+        "wbs": null,
+        "title": "MEP Plans",
+        "owner": null,
+        "start_date": "2024-05-01T00:00:00",
+        "due_date": "2025-01-31T00:00:00",
+        "duration_days": 275,
+        "pct_complete": 0.9,
+        "gantt_marks": [
+          {
+            "week_number": 1,
+            "date": "2024-05-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 2,
+            "date": "2024-05-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 3,
+            "date": "2024-05-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 4,
+            "date": "2024-05-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 5,
+            "date": "2024-05-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 6,
+            "date": "2024-06-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 7,
+            "date": "2024-06-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 8,
+            "date": "2024-06-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 9,
+            "date": "2024-06-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 10,
+            "date": "2024-07-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 11,
+            "date": "2024-07-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 12,
+            "date": "2024-07-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 13,
+            "date": "2024-07-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 14,
+            "date": "2024-07-31T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 15,
+            "date": "2024-08-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 16,
+            "date": "2024-08-14T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 17,
+            "date": "2024-08-21T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 18,
+            "date": "2024-08-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 19,
+            "date": "2024-09-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 20,
+            "date": "2024-09-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 21,
+            "date": "2024-09-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 22,
+            "date": "2024-09-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 23,
+            "date": "2024-10-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 24,
+            "date": "2024-10-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 25,
+            "date": "2024-10-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 26,
+            "date": "2024-10-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 27,
+            "date": "2024-10-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 28,
+            "date": "2024-11-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 29,
+            "date": "2024-11-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 30,
+            "date": "2024-11-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 31,
+            "date": "2024-11-27T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 32,
+            "date": "2024-12-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 33,
+            "date": "2024-12-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 34,
+            "date": "2024-12-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 35,
+            "date": "2024-12-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 36,
+            "date": "2025-01-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 37,
+            "date": "2025-01-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 38,
+            "date": "2025-01-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 39,
+            "date": "2025-01-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 40,
+            "date": "2025-01-29T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 18,
+        "wbs": null,
+        "title": "Plumbing Plans",
+        "owner": null,
+        "start_date": "2024-05-01T00:00:00",
+        "due_date": "2025-01-31T00:00:00",
+        "duration_days": 275,
+        "pct_complete": 0.9,
+        "gantt_marks": [
+          {
+            "week_number": 1,
+            "date": "2024-05-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 2,
+            "date": "2024-05-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 3,
+            "date": "2024-05-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 4,
+            "date": "2024-05-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 5,
+            "date": "2024-05-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 6,
+            "date": "2024-06-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 7,
+            "date": "2024-06-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 8,
+            "date": "2024-06-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 9,
+            "date": "2024-06-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 10,
+            "date": "2024-07-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 11,
+            "date": "2024-07-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 12,
+            "date": "2024-07-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 13,
+            "date": "2024-07-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 14,
+            "date": "2024-07-31T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 15,
+            "date": "2024-08-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 16,
+            "date": "2024-08-14T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 17,
+            "date": "2024-08-21T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 18,
+            "date": "2024-08-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 19,
+            "date": "2024-09-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 20,
+            "date": "2024-09-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 21,
+            "date": "2024-09-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 22,
+            "date": "2024-09-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 23,
+            "date": "2024-10-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 24,
+            "date": "2024-10-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 25,
+            "date": "2024-10-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 26,
+            "date": "2024-10-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 27,
+            "date": "2024-10-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 28,
+            "date": "2024-11-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 29,
+            "date": "2024-11-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 30,
+            "date": "2024-11-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 31,
+            "date": "2024-11-27T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 32,
+            "date": "2024-12-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 33,
+            "date": "2024-12-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 34,
+            "date": "2024-12-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 35,
+            "date": "2024-12-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 36,
+            "date": "2025-01-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 37,
+            "date": "2025-01-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 38,
+            "date": "2025-01-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 39,
+            "date": "2025-01-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 40,
+            "date": "2025-01-29T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 19,
+        "wbs": null,
+        "title": "SD1 and SD2",
+        "owner": null,
+        "start_date": "2024-05-01T00:00:00",
+        "due_date": "2025-01-31T00:00:00",
+        "duration_days": 275,
+        "pct_complete": 0.9,
+        "gantt_marks": [
+          {
+            "week_number": 1,
+            "date": "2024-05-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 2,
+            "date": "2024-05-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 3,
+            "date": "2024-05-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 4,
+            "date": "2024-05-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 5,
+            "date": "2024-05-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 6,
+            "date": "2024-06-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 7,
+            "date": "2024-06-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 8,
+            "date": "2024-06-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 9,
+            "date": "2024-06-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 10,
+            "date": "2024-07-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 11,
+            "date": "2024-07-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 12,
+            "date": "2024-07-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 13,
+            "date": "2024-07-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 14,
+            "date": "2024-07-31T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 15,
+            "date": "2024-08-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 16,
+            "date": "2024-08-14T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 17,
+            "date": "2024-08-21T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 18,
+            "date": "2024-08-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 19,
+            "date": "2024-09-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 20,
+            "date": "2024-09-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 21,
+            "date": "2024-09-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 22,
+            "date": "2024-09-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 23,
+            "date": "2024-10-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 24,
+            "date": "2024-10-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 25,
+            "date": "2024-10-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 26,
+            "date": "2024-10-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 27,
+            "date": "2024-10-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 28,
+            "date": "2024-11-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 29,
+            "date": "2024-11-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 30,
+            "date": "2024-11-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 31,
+            "date": "2024-11-27T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 32,
+            "date": "2024-12-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 33,
+            "date": "2024-12-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 34,
+            "date": "2024-12-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 35,
+            "date": "2024-12-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 36,
+            "date": "2025-01-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 37,
+            "date": "2025-01-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 38,
+            "date": "2025-01-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 39,
+            "date": "2025-01-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 40,
+            "date": "2025-01-29T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 20,
+        "wbs": "6",
+        "title": "Soil Borings",
+        "owner": null,
+        "start_date": "2024-06-15T00:00:00",
+        "due_date": "2024-07-13T00:00:00",
+        "duration_days": 28,
+        "pct_complete": 1,
+        "gantt_marks": [
+          {
+            "week_number": 8,
+            "date": "2024-06-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 9,
+            "date": "2024-06-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 10,
+            "date": "2024-07-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 11,
+            "date": "2024-07-10T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 21,
+        "wbs": "7",
+        "title": "Demolition Plans",
+        "owner": null,
+        "start_date": "2024-01-22T00:00:00",
+        "due_date": "2024-01-22T00:00:00",
+        "duration_days": 0,
+        "pct_complete": 1,
+        "gantt_marks": []
+      },
+      {
+        "row": 22,
+        "wbs": "8",
+        "title": "Aquisition Financing",
+        "owner": null,
+        "start_date": "2024-01-22T00:00:00",
+        "due_date": "2024-01-22T00:00:00",
+        "duration_days": 0,
+        "pct_complete": 1,
+        "gantt_marks": []
+      },
+      {
+        "row": 23,
+        "wbs": "9",
+        "title": "Secure Equity",
+        "owner": null,
+        "start_date": "2024-05-01T00:00:00",
+        "due_date": "2024-05-01T00:00:00",
+        "duration_days": 0,
+        "pct_complete": 1,
+        "gantt_marks": [
+          {
+            "week_number": 1,
+            "date": "2024-05-01T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 24,
+        "wbs": "10",
+        "title": "Construction Loan",
+        "owner": null,
+        "start_date": "2024-09-18T00:00:00",
+        "due_date": "2024-11-17T00:00:00",
+        "duration_days": 60,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 21,
+            "date": "2024-09-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 22,
+            "date": "2024-09-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 23,
+            "date": "2024-10-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 24,
+            "date": "2024-10-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 25,
+            "date": "2024-10-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 26,
+            "date": "2024-10-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 27,
+            "date": "2024-10-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 28,
+            "date": "2024-11-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 29,
+            "date": "2024-11-13T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 25,
+        "wbs": "11",
+        "title": "DOB Approvals",
+        "owner": null,
+        "start_date": "2024-09-28T00:00:00",
+        "due_date": "2024-09-29T00:00:00",
+        "duration_days": 1,
+        "pct_complete": 0,
+        "gantt_marks": []
+      },
+      {
+        "row": 26,
+        "wbs": null,
+        "title": "Architectural Plans",
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 27,
+        "wbs": null,
+        "title": "Structural Plans",
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 28,
+        "wbs": null,
+        "title": "SD1 and SD2",
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 29,
+        "wbs": null,
+        "title": "Fire Protection Plans",
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 30,
+        "wbs": null,
+        "title": "DOB Permits (BIN: 3811217)",
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 31,
+        "wbs": null,
+        "title": "Fence Permit",
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 32,
+        "wbs": null,
+        "title": "Demolition Permit",
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 33,
+        "wbs": null,
+        "title": "New Building Permit",
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 34,
+        "wbs": null,
+        "title": "Plumbing Permit",
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 35,
+        "wbs": null,
+        "title": "Electrical Permit",
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 36,
+        "wbs": "12",
+        "title": "Access Agreements",
+        "owner": null,
+        "start_date": "2024-05-01T00:00:00",
+        "due_date": "2024-11-17T00:00:00",
+        "duration_days": 200,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 1,
+            "date": "2024-05-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 2,
+            "date": "2024-05-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 3,
+            "date": "2024-05-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 4,
+            "date": "2024-05-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 5,
+            "date": "2024-05-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 6,
+            "date": "2024-06-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 7,
+            "date": "2024-06-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 8,
+            "date": "2024-06-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 9,
+            "date": "2024-06-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 10,
+            "date": "2024-07-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 11,
+            "date": "2024-07-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 12,
+            "date": "2024-07-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 13,
+            "date": "2024-07-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 14,
+            "date": "2024-07-31T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 15,
+            "date": "2024-08-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 16,
+            "date": "2024-08-14T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 17,
+            "date": "2024-08-21T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 18,
+            "date": "2024-08-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 19,
+            "date": "2024-09-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 20,
+            "date": "2024-09-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 21,
+            "date": "2024-09-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 22,
+            "date": "2024-09-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 23,
+            "date": "2024-10-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 24,
+            "date": "2024-10-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 25,
+            "date": "2024-10-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 26,
+            "date": "2024-10-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 27,
+            "date": "2024-10-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 28,
+            "date": "2024-11-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 29,
+            "date": "2024-11-13T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 37,
+        "wbs": "13",
+        "title": "Project Definition and Planning",
+        "owner": null,
+        "start_date": "2024-09-29T00:00:00",
+        "due_date": "2025-02-06T00:00:00",
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 38,
+        "wbs": "14",
+        "title": "Demolition",
+        "owner": null,
+        "start_date": "2024-11-17T00:00:00",
+        "due_date": "2024-11-17T00:00:00",
+        "duration_days": 0,
+        "pct_complete": 1,
+        "gantt_marks": []
+      },
+      {
+        "row": 39,
+        "wbs": "15",
+        "title": "Excavation / Shoring / Foundation",
+        "owner": null,
+        "start_date": "2024-09-29T00:00:00",
+        "due_date": "2024-12-08T00:00:00",
+        "duration_days": 70,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 23,
+            "date": "2024-10-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 24,
+            "date": "2024-10-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 25,
+            "date": "2024-10-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 26,
+            "date": "2024-10-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 27,
+            "date": "2024-10-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 28,
+            "date": "2024-11-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 29,
+            "date": "2024-11-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 30,
+            "date": "2024-11-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 31,
+            "date": "2024-11-27T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 32,
+            "date": "2024-12-04T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 40,
+        "wbs": "16",
+        "title": "Water Proofing & Concrete Insulation",
+        "owner": null,
+        "start_date": "2024-09-29T00:00:00",
+        "due_date": "2024-10-29T00:00:00",
+        "duration_days": 30,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 23,
+            "date": "2024-10-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 24,
+            "date": "2024-10-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 25,
+            "date": "2024-10-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 26,
+            "date": "2024-10-23T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 41,
+        "wbs": "17",
+        "title": "Super Structure",
+        "owner": null,
+        "start_date": "2024-12-08T00:00:00",
+        "due_date": "2025-02-06T00:00:00",
+        "duration_days": 60,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 33,
+            "date": "2024-12-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 34,
+            "date": "2024-12-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 35,
+            "date": "2024-12-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 36,
+            "date": "2025-01-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 37,
+            "date": "2025-01-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 38,
+            "date": "2025-01-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 39,
+            "date": "2025-01-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 40,
+            "date": "2025-01-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 41,
+            "date": "2025-02-05T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 42,
+        "wbs": "18",
+        "title": "CMU",
+        "owner": null,
+        "start_date": "2024-12-29T00:00:00",
+        "due_date": "2025-03-29T00:00:00",
+        "duration_days": 90,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 36,
+            "date": "2025-01-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 37,
+            "date": "2025-01-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 38,
+            "date": "2025-01-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 39,
+            "date": "2025-01-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 40,
+            "date": "2025-01-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 41,
+            "date": "2025-02-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 42,
+            "date": "2025-02-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 43,
+            "date": "2025-02-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 44,
+            "date": "2025-02-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 45,
+            "date": "2025-03-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 46,
+            "date": "2025-03-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 47,
+            "date": "2025-03-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 48,
+            "date": "2025-03-26T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 43,
+        "wbs": "19",
+        "title": "Elevator",
+        "owner": null,
+        "start_date": "2025-04-28T00:00:00",
+        "due_date": "2025-09-25T00:00:00",
+        "duration_days": 150,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 53,
+            "date": "2025-04-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 54,
+            "date": "2025-05-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 55,
+            "date": "2025-05-14T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 56,
+            "date": "2025-05-21T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 57,
+            "date": "2025-05-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 58,
+            "date": "2025-06-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 59,
+            "date": "2025-06-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 60,
+            "date": "2025-06-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 61,
+            "date": "2025-06-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 62,
+            "date": "2025-07-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 63,
+            "date": "2025-07-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 64,
+            "date": "2025-07-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 65,
+            "date": "2025-07-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 66,
+            "date": "2025-07-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 67,
+            "date": "2025-08-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 68,
+            "date": "2025-08-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 69,
+            "date": "2025-08-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 70,
+            "date": "2025-08-27T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 71,
+            "date": "2025-09-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 72,
+            "date": "2025-09-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 73,
+            "date": "2025-09-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 74,
+            "date": "2025-09-24T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 44,
+        "wbs": "20",
+        "title": "Exterior Framing",
+        "owner": null,
+        "start_date": "2025-01-07T00:00:00",
+        "due_date": "2025-03-23T00:00:00",
+        "duration_days": 75,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 37,
+            "date": "2025-01-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 38,
+            "date": "2025-01-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 39,
+            "date": "2025-01-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 40,
+            "date": "2025-01-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 41,
+            "date": "2025-02-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 42,
+            "date": "2025-02-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 43,
+            "date": "2025-02-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 44,
+            "date": "2025-02-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 45,
+            "date": "2025-03-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 46,
+            "date": "2025-03-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 47,
+            "date": "2025-03-19T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 45,
+        "wbs": "21",
+        "title": "Water Proofing Facade",
+        "owner": null,
+        "start_date": "2025-03-23T00:00:00",
+        "due_date": "2025-04-06T00:00:00",
+        "duration_days": 14,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 48,
+            "date": "2025-03-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 49,
+            "date": "2025-04-02T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 46,
+        "wbs": "22",
+        "title": "Installation Exterior Doors / Windows",
+        "owner": null,
+        "start_date": "2025-04-06T00:00:00",
+        "due_date": "2025-04-20T00:00:00",
+        "duration_days": 14,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 50,
+            "date": "2025-04-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 51,
+            "date": "2025-04-16T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 47,
+        "wbs": "23",
+        "title": "Masonry Work Brick",
+        "owner": null,
+        "start_date": "2025-04-20T00:00:00",
+        "due_date": "2025-07-19T00:00:00",
+        "duration_days": 90,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 52,
+            "date": "2025-04-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 53,
+            "date": "2025-04-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 54,
+            "date": "2025-05-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 55,
+            "date": "2025-05-14T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 56,
+            "date": "2025-05-21T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 57,
+            "date": "2025-05-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 58,
+            "date": "2025-06-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 59,
+            "date": "2025-06-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 60,
+            "date": "2025-06-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 61,
+            "date": "2025-06-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 62,
+            "date": "2025-07-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 63,
+            "date": "2025-07-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 64,
+            "date": "2025-07-16T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 48,
+        "wbs": "24",
+        "title": "Roofing",
+        "owner": null,
+        "start_date": "2025-07-19T00:00:00",
+        "due_date": "2025-11-16T00:00:00",
+        "duration_days": 120,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 65,
+            "date": "2025-07-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 66,
+            "date": "2025-07-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 67,
+            "date": "2025-08-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 68,
+            "date": "2025-08-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 69,
+            "date": "2025-08-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 70,
+            "date": "2025-08-27T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 71,
+            "date": "2025-09-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 72,
+            "date": "2025-09-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 73,
+            "date": "2025-09-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 74,
+            "date": "2025-09-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 75,
+            "date": "2025-10-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 76,
+            "date": "2025-10-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 77,
+            "date": "2025-10-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 78,
+            "date": "2025-10-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 79,
+            "date": "2025-10-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 80,
+            "date": "2025-11-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 81,
+            "date": "2025-11-12T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 49,
+        "wbs": "25",
+        "title": "Interior Framing",
+        "owner": null,
+        "start_date": "2025-03-23T00:00:00",
+        "due_date": "2025-05-22T00:00:00",
+        "duration_days": 60,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 48,
+            "date": "2025-03-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 49,
+            "date": "2025-04-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 50,
+            "date": "2025-04-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 51,
+            "date": "2025-04-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 52,
+            "date": "2025-04-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 53,
+            "date": "2025-04-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 54,
+            "date": "2025-05-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 55,
+            "date": "2025-05-14T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 56,
+            "date": "2025-05-21T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 50,
+        "wbs": "26",
+        "title": "Insulation",
+        "owner": null,
+        "start_date": "2025-05-22T00:00:00",
+        "due_date": "2025-06-06T00:00:00",
+        "duration_days": 15,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 57,
+            "date": "2025-05-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 58,
+            "date": "2025-06-04T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 51,
+        "wbs": "27",
+        "title": "Plumbing",
+        "owner": null,
+        "start_date": "2025-04-02T00:00:00",
+        "due_date": "2025-08-30T00:00:00",
+        "duration_days": 150,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 49,
+            "date": "2025-04-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 50,
+            "date": "2025-04-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 51,
+            "date": "2025-04-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 52,
+            "date": "2025-04-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 53,
+            "date": "2025-04-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 54,
+            "date": "2025-05-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 55,
+            "date": "2025-05-14T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 56,
+            "date": "2025-05-21T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 57,
+            "date": "2025-05-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 58,
+            "date": "2025-06-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 59,
+            "date": "2025-06-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 60,
+            "date": "2025-06-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 61,
+            "date": "2025-06-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 62,
+            "date": "2025-07-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 63,
+            "date": "2025-07-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 64,
+            "date": "2025-07-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 65,
+            "date": "2025-07-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 66,
+            "date": "2025-07-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 67,
+            "date": "2025-08-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 68,
+            "date": "2025-08-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 69,
+            "date": "2025-08-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 70,
+            "date": "2025-08-27T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 52,
+        "wbs": "28",
+        "title": "Sprinkler",
+        "owner": null,
+        "start_date": "2025-05-22T00:00:00",
+        "due_date": "2025-07-10T00:00:00",
+        "duration_days": 49,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 57,
+            "date": "2025-05-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 58,
+            "date": "2025-06-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 59,
+            "date": "2025-06-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 60,
+            "date": "2025-06-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 61,
+            "date": "2025-06-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 62,
+            "date": "2025-07-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 63,
+            "date": "2025-07-09T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 53,
+        "wbs": "29",
+        "title": "Electrical",
+        "owner": null,
+        "start_date": "2025-05-22T00:00:00",
+        "due_date": "2025-09-19T00:00:00",
+        "duration_days": 120,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 57,
+            "date": "2025-05-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 58,
+            "date": "2025-06-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 59,
+            "date": "2025-06-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 60,
+            "date": "2025-06-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 61,
+            "date": "2025-06-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 62,
+            "date": "2025-07-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 63,
+            "date": "2025-07-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 64,
+            "date": "2025-07-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 65,
+            "date": "2025-07-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 66,
+            "date": "2025-07-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 67,
+            "date": "2025-08-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 68,
+            "date": "2025-08-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 69,
+            "date": "2025-08-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 70,
+            "date": "2025-08-27T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 71,
+            "date": "2025-09-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 72,
+            "date": "2025-09-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 73,
+            "date": "2025-09-17T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 54,
+        "wbs": "30",
+        "title": "Fire Alarm",
+        "owner": null,
+        "start_date": "2025-05-22T00:00:00",
+        "due_date": "2025-08-30T00:00:00",
+        "duration_days": 100,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 57,
+            "date": "2025-05-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 58,
+            "date": "2025-06-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 59,
+            "date": "2025-06-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 60,
+            "date": "2025-06-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 61,
+            "date": "2025-06-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 62,
+            "date": "2025-07-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 63,
+            "date": "2025-07-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 64,
+            "date": "2025-07-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 65,
+            "date": "2025-07-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 66,
+            "date": "2025-07-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 67,
+            "date": "2025-08-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 68,
+            "date": "2025-08-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 69,
+            "date": "2025-08-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 70,
+            "date": "2025-08-27T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 55,
+        "wbs": "31",
+        "title": "Low Voltage",
+        "owner": null,
+        "start_date": "2025-09-19T00:00:00",
+        "due_date": "2025-10-03T00:00:00",
+        "duration_days": 14,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 74,
+            "date": "2025-09-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 75,
+            "date": "2025-10-01T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 56,
+        "wbs": "32",
+        "title": "AC",
+        "owner": null,
+        "start_date": "2025-05-22T00:00:00",
+        "due_date": "2025-08-30T00:00:00",
+        "duration_days": 100,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 57,
+            "date": "2025-05-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 58,
+            "date": "2025-06-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 59,
+            "date": "2025-06-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 60,
+            "date": "2025-06-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 61,
+            "date": "2025-06-25T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 62,
+            "date": "2025-07-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 63,
+            "date": "2025-07-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 64,
+            "date": "2025-07-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 65,
+            "date": "2025-07-23T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 66,
+            "date": "2025-07-30T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 67,
+            "date": "2025-08-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 68,
+            "date": "2025-08-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 69,
+            "date": "2025-08-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 70,
+            "date": "2025-08-27T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 57,
+        "wbs": "33",
+        "title": "Sheetrock",
+        "owner": null,
+        "start_date": "2025-05-22T00:00:00",
+        "due_date": "2025-06-26T00:00:00",
+        "duration_days": 35,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 57,
+            "date": "2025-05-28T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 58,
+            "date": "2025-06-04T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 59,
+            "date": "2025-06-11T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 60,
+            "date": "2025-06-18T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 61,
+            "date": "2025-06-25T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 58,
+        "wbs": "34",
+        "title": "Plaster & Primer",
+        "owner": null,
+        "start_date": "2025-06-26T00:00:00",
+        "due_date": "2025-07-24T00:00:00",
+        "duration_days": 28,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 62,
+            "date": "2025-07-02T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 63,
+            "date": "2025-07-09T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 64,
+            "date": "2025-07-16T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 65,
+            "date": "2025-07-23T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 59,
+        "wbs": "35",
+        "title": "Tiles",
+        "owner": null,
+        "start_date": "2025-07-31T00:00:00",
+        "due_date": "2025-08-30T00:00:00",
+        "duration_days": 30,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 67,
+            "date": "2025-08-06T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 68,
+            "date": "2025-08-13T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 69,
+            "date": "2025-08-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 70,
+            "date": "2025-08-27T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 60,
+        "wbs": "36",
+        "title": "Floors",
+        "owner": null,
+        "start_date": "2025-08-16T00:00:00",
+        "due_date": "2025-09-13T00:00:00",
+        "duration_days": 28,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 69,
+            "date": "2025-08-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 70,
+            "date": "2025-08-27T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 71,
+            "date": "2025-09-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 72,
+            "date": "2025-09-10T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 61,
+        "wbs": "37",
+        "title": "Carpentry",
+        "owner": null,
+        "start_date": "2025-08-14T00:00:00",
+        "due_date": "2025-10-16T00:00:00",
+        "duration_days": 63,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 69,
+            "date": "2025-08-20T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 70,
+            "date": "2025-08-27T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 71,
+            "date": "2025-09-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 72,
+            "date": "2025-09-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 73,
+            "date": "2025-09-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 74,
+            "date": "2025-09-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 75,
+            "date": "2025-10-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 76,
+            "date": "2025-10-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 77,
+            "date": "2025-10-15T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 62,
+        "wbs": "38",
+        "title": "Interior Doors",
+        "owner": null,
+        "start_date": "2025-09-13T00:00:00",
+        "due_date": "2025-10-13T00:00:00",
+        "duration_days": 30,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 73,
+            "date": "2025-09-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 74,
+            "date": "2025-09-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 75,
+            "date": "2025-10-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 76,
+            "date": "2025-10-08T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 63,
+        "wbs": "39",
+        "title": "Kitchen Cabinetry",
+        "owner": null,
+        "start_date": "2025-09-13T00:00:00",
+        "due_date": "2025-10-25T00:00:00",
+        "duration_days": 42,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 73,
+            "date": "2025-09-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 74,
+            "date": "2025-09-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 75,
+            "date": "2025-10-01T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 76,
+            "date": "2025-10-08T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 77,
+            "date": "2025-10-15T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 78,
+            "date": "2025-10-22T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 64,
+        "wbs": "40",
+        "title": "Bathroom Fixtures",
+        "owner": null,
+        "start_date": "2025-08-30T00:00:00",
+        "due_date": "2025-09-13T00:00:00",
+        "duration_days": 14,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 71,
+            "date": "2025-09-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 72,
+            "date": "2025-09-10T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 65,
+        "wbs": "41",
+        "title": "Shower Doors",
+        "owner": null,
+        "start_date": "2025-09-13T00:00:00",
+        "due_date": "2025-09-27T00:00:00",
+        "duration_days": 14,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 73,
+            "date": "2025-09-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 74,
+            "date": "2025-09-24T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 66,
+        "wbs": "42",
+        "title": "Paintinng",
+        "owner": null,
+        "start_date": "2025-10-16T00:00:00",
+        "due_date": "2025-11-20T00:00:00",
+        "duration_days": 35,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 78,
+            "date": "2025-10-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 79,
+            "date": "2025-10-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 80,
+            "date": "2025-11-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 81,
+            "date": "2025-11-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 82,
+            "date": "2025-11-19T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 67,
+        "wbs": "43",
+        "title": "Sidewalk and Asphalt for BPP",
+        "owner": null,
+        "start_date": "2025-10-16T00:00:00",
+        "due_date": "2025-11-15T00:00:00",
+        "duration_days": 30,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 78,
+            "date": "2025-10-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 79,
+            "date": "2025-10-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 80,
+            "date": "2025-11-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 81,
+            "date": "2025-11-12T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 68,
+        "wbs": "44",
+        "title": "Sign Off / Misc / Touch ups",
+        "owner": null,
+        "start_date": "2025-10-16T00:00:00",
+        "due_date": "2026-01-14T00:00:00",
+        "duration_days": 90,
+        "pct_complete": 0,
+        "gantt_marks": [
+          {
+            "week_number": 78,
+            "date": "2025-10-22T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 79,
+            "date": "2025-10-29T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 80,
+            "date": "2025-11-05T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 81,
+            "date": "2025-11-12T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 82,
+            "date": "2025-11-19T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 83,
+            "date": "2025-11-26T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 84,
+            "date": "2025-12-03T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 85,
+            "date": "2025-12-10T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 86,
+            "date": "2025-12-17T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 87,
+            "date": "2025-12-24T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 88,
+            "date": "2025-12-31T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 89,
+            "date": "2026-01-07T00:00:00",
+            "mark": "X"
+          },
+          {
+            "week_number": 90,
+            "date": "2026-01-14T00:00:00",
+            "mark": "X"
+          }
+        ]
+      },
+      {
+        "row": 69,
+        "wbs": "45",
+        "title": null,
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 70,
+        "wbs": "46",
+        "title": null,
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 71,
+        "wbs": "47",
+        "title": null,
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 72,
+        "wbs": "48",
+        "title": null,
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 73,
+        "wbs": "49",
+        "title": null,
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 74,
+        "wbs": "50",
+        "title": null,
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 75,
+        "wbs": "51",
+        "title": null,
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 76,
+        "wbs": "52",
+        "title": null,
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 77,
+        "wbs": "53",
+        "title": null,
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 78,
+        "wbs": "54",
+        "title": null,
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 79,
+        "wbs": "55",
+        "title": null,
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      },
+      {
+        "row": 80,
+        "wbs": "56",
+        "title": null,
+        "owner": null,
+        "start_date": null,
+        "due_date": null,
+        "duration_days": null,
+        "pct_complete": null,
+        "gantt_marks": []
+      }
+    ]
+  },
+  "insurances": [
+    {
+      "Company": "Trysler",
+      "Subcontractor": "Mason",
+      "Contract Signed": "YES",
+      "Subcontractor Rider": "YES",
+      "Additional Insured": "YES",
+      "Workers Comp": "YES",
+      "General Liability": "State Farm Fire & Casulty",
+      "Workers Comp Expiration": "2022-11-01T00:00:00",
+      "Workers Comp Expiration (d)": -1283,
+      "General Liability Expiration": "2023-02-04T00:00:00",
+      "General Liability Expiration(d)": -1188
+    },
+    {
+      "Company": "First Choice Pl",
+      "Subcontractor": "Sewer",
+      "Contract Signed": "YES",
+      "Subcontractor Rider": "NO",
+      "Additional Insured": "NO",
+      "Workers Comp": "NO",
+      "General Liability": null,
+      "Workers Comp Expiration": null,
+      "Workers Comp Expiration (d)": null,
+      "General Liability Expiration": null,
+      "General Liability Expiration(d)": null
+    },
+    {
+      "Company": "Greenstar Electrical",
+      "Subcontractor": "Electrician",
+      "Contract Signed": "YES",
+      "Subcontractor Rider": "YES",
+      "Additional Insured": "YES",
+      "Workers Comp": "YES",
+      "General Liability": "Trisura Specialty Insurance Company",
+      "Workers Comp Expiration": "2022-08-06T00:00:00",
+      "Workers Comp Expiration (d)": -1370,
+      "General Liability Expiration": "2022-08-06T00:00:00",
+      "General Liability Expiration(d)": -1370
+    },
+    {
+      "Company": "Otis Elevator",
+      "Subcontractor": "Elevator",
+      "Contract Signed": "YES",
+      "Subcontractor Rider": "NO",
+      "Additional Insured": "YES",
+      "Workers Comp": "YES",
+      "General Liability": null,
+      "Workers Comp Expiration": null,
+      "Workers Comp Expiration (d)": null,
+      "General Liability Expiration": null,
+      "General Liability Expiration(d)": null
+    },
+    {
+      "Company": "Raymond Plumber",
+      "Subcontractor": "Plumber",
+      "Contract Signed": "YES",
+      "Subcontractor Rider": "NO",
+      "Additional Insured": null,
+      "Workers Comp": null,
+      "General Liability": null,
+      "Workers Comp Expiration": null,
+      "Workers Comp Expiration (d)": null,
+      "General Liability Expiration": null,
+      "General Liability Expiration(d)": null
+    },
+    {
+      "Company": "Capri Construction Corp",
+      "Subcontractor": "Foundation",
+      "Contract Signed": "NO",
+      "Subcontractor Rider": "NO",
+      "Additional Insured": "YES",
+      "Workers Comp": "YES",
+      "General Liability": "Accredited Surety and Casualty Company, Inc.",
+      "Workers Comp Expiration": "2023-01-01T00:00:00",
+      "Workers Comp Expiration (d)": -1222,
+      "General Liability Expiration": "2022-09-24T00:00:00",
+      "General Liability Expiration(d)": -1321
+    }
+  ],
+  "permits": [
+    {
+      "Address": "74-76 Congress Street",
+      "Permit Type": "Fence",
+      "Agency": "DOB",
+      "Permit Number": "B00340452-I1-FN",
+      "Contractor": "GIRON CONTRACTING INC",
+      "Contact": "718-690-1370",
+      "Superintendent": null,
+      "Expiration": "2022-11-01T00:00:00",
+      "Number of Days Left": -1283
+    },
+    {
+      "Address": "74-76 Congress Street",
+      "Permit Type": "Structural",
+      "Agency": "DOB",
+      "Permit Number": "B00340502-I1-ST",
+      "Contractor": "GIRON CONTRACTING INC",
+      "Contact": "718-690-1370",
+      "Superintendent": null,
+      "Expiration": "2022-11-01T00:00:00",
+      "Number of Days Left": -1283
+    },
+    {
+      "Address": "74-76 Congress Street",
+      "Permit Type": "Sidewalk Shed & Wiring and Lights",
+      "Agency": "DOB",
+      "Permit Number": "B00542874-I1-EL",
+      "Contractor": "V.VASS ELECTRIC CORP",
+      "Contact": "347-662-4896",
+      "Superintendent": null,
+      "Expiration": "2022-07-20T00:00:00",
+      "Number of Days Left": -1387
+    },
+    {
+      "Address": "74-76 Congress Street",
+      "Permit Type": "Temporary Pipe Scaffold Per Plan",
+      "Agency": "DOB",
+      "Permit Number": "B00542374-I1-SF",
+      "Contractor": "CORE SCAFFOLD SYSTEMS INC",
+      "Contact": "347-662-4896",
+      "Superintendent": null,
+      "Expiration": "2022-06-21T00:00:00",
+      "Number of Days Left": -1416
+    },
+    {
+      "Address": "74-76 Congress Street",
+      "Permit Type": "Temporary Sidewalk Shed",
+      "Agency": "DOB",
+      "Permit Number": "B00542355-I1-SH",
+      "Contractor": "CORE SCAFFOLD SYSTEMS INC",
+      "Contact": "347-662-4896",
+      "Superintendent": null,
+      "Expiration": "2022-06-21T00:00:00",
+      "Number of Days Left": -1416
+    },
+    {
+      "Address": "74-76 Congress Street",
+      "Permit Type": "Temporary Electrical on Job site",
+      "Agency": "DOB",
+      "Permit Number": "B00705224-I1-EL",
+      "Contractor": "GREEN STAR ELECTRICAL",
+      "Contact": "347-683-9222",
+      "Superintendent": null,
+      "Expiration": "2022-08-06T00:00:00",
+      "Number of Days Left": -1370
+    },
+    {
+      "Address": "74-76 Congress Street",
+      "Permit Type": "0132 - INSTALL FENCE",
+      "Agency": "DOT",
+      "Permit Number": "B01-2022059-A00",
+      "Contractor": "GIRON CONTRACTING INC",
+      "Contact": "718-690-1370",
+      "Superintendent": null,
+      "Expiration": "2022-03-26T00:00:00",
+      "Number of Days Left": -1503
+    },
+    {
+      "Address": "74-76 Congress Street",
+      "Permit Type": "0201 - PLACE MATERIAL ON STREET",
+      "Agency": "DOT",
+      "Permit Number": "B02-2022059-A00",
+      "Contractor": "GIRON CONTRACTING INC",
+      "Contact": "718-690-1370",
+      "Superintendent": null,
+      "Expiration": "2022-05-17T00:00:00",
+      "Number of Days Left": -1451
+    },
+    {
+      "Address": "74-76 Congress Street",
+      "Permit Type": "0202 - CROSSING SIDEWALK",
+      "Agency": "DOT",
+      "Permit Number": "B02-2022059-A01",
+      "Contractor": "GIRON CONTRACTING INC",
+      "Contact": "718-690-1370",
+      "Superintendent": null,
+      "Expiration": "2022-05-17T00:00:00",
+      "Number of Days Left": -1451
+    },
+    {
+      "Address": "74-76 Congress Street",
+      "Permit Type": "0215 - OCCUPANCY OF SIDEWALK AS STIPULATED",
+      "Agency": "DOT",
+      "Permit Number": "B02-2022059-A02",
+      "Contractor": "GIRON CONTRACTING INC",
+      "Contact": "718-690-1370",
+      "Superintendent": null,
+      "Expiration": "2022-06-10T00:00:00",
+      "Number of Days Left": -1427
+    },
+    {
+      "Address": "74-76 Congress Street",
+      "Permit Type": "0221 - TEMP. CONST. SIGNS/MARKINGS",
+      "Agency": "DOT",
+      "Permit Number": "B02-2022147-D00",
+      "Contractor": "GIRON CONTRACTING INC",
+      "Contact": "718-690-1370",
+      "Superintendent": null,
+      "Expiration": "2022-08-17T00:00:00",
+      "Number of Days Left": -1359
+    },
+    {
+      "Address": "74-76 Congress Street",
+      "Permit Type": "0204 - PLACE EQUIPMENT OTHER THAN CRANE OR",
+      "Agency": "DOT",
+      "Permit Number": "B02-2022059-A04",
+      "Contractor": "GIRON CONTRACTING INC",
+      "Contact": "718-690-1370",
+      "Superintendent": null,
+      "Expiration": "2022-05-17T00:00:00",
+      "Number of Days Left": -1451
+    }
+  ]
+}

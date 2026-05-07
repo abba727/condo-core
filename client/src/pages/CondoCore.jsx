@@ -5,6 +5,20 @@
  */
 import React from 'react';
 import './condocore.css';
+import {
+  DRIGGS_712_PROJECT,
+  DRIGGS_712_PLAN_TASKS,
+  DRIGGS_712_PLAN_MONTHS,
+  DRIGGS_712_TEAM,
+  DRIGGS_712_BUDGET,
+  DRIGGS_712_EXPENSES,
+  DRIGGS_712_CONTRACTS,
+  DRIGGS_712_INSURANCES,
+  DRIGGS_712_PERMITS,
+  DRIGGS_712_LOOKUP,
+  DRIGGS_712_FINANCIAL_SUMMARY,
+  DRIGGS_712_SEED,
+} from '../data/driggs712.js';
 
 /* global React */
 const { useState, useEffect, useRef, useMemo, useCallback } = React;
@@ -239,85 +253,16 @@ const ICONS = {
 };
 
 // ============ DATA ============
-const PROJECTS = [
-  {
-    id: "driggs",
-    name: "712 Driggs",
-    full: "712 Driggs Condominium",
-    address: "712 Driggs Avenue, Brooklyn, NY",
-    phase: "Construction",
-    phaseClass: "info",
-    status: "Active",
-    statusClass: "pos",
-    budget: 72500000,
-    spent: 28400000,
-    units: 30,
-    floors: 4,
-    targetCompletion: "Sep 30, 2025",
-    progress: 39,
-    initials: "DC",
-  },
-  {
-    id: "harbour",
-    name: "Harbour & King",
-    full: "Harbour & King Condos",
-    address: "Toronto Waterfront",
-    phase: "Construction",
-    phaseClass: "info",
-    status: "Active",
-    statusClass: "pos",
-    budget: 185000000,
-    spent: 74250000,
-    units: 124,
-    floors: 32,
-    targetCompletion: "Mar 14, 2026",
-    progress: 40,
-    initials: "HK",
-  },
-  {
-    id: "parkside",
-    name: "Parkside Residences",
-    full: "Parkside Residences",
-    address: "Mississauga City Centre",
-    phase: "Pre-construction",
-    phaseClass: "neutral",
-    status: "Planning",
-    statusClass: "info",
-    budget: 96000000,
-    spent: 8600000,
-    units: 88,
-    floors: 28,
-    targetCompletion: "Aug 02, 2027",
-    progress: 9,
-    initials: "PR",
-  },
-  {
-    id: "junction",
-    name: "Junction Lofts",
-    full: "The Junction Lofts",
-    address: "Toronto Junction",
-    phase: "Finishing",
-    phaseClass: "warn",
-    status: "Active",
-    statusClass: "pos",
-    budget: 54000000,
-    spent: 46100000,
-    units: 42,
-    floors: 8,
-    targetCompletion: "Dec 18, 2025",
-    progress: 85,
-    initials: "JL",
-  },
-];
+const PROJECTS = [DRIGGS_712_PROJECT];
 
 const NAV = [
   { id: "dashboard", label: "Dashboard", icon: "dashboard" },
   { id: "details", label: "Project Details", icon: "building" },
-  { id: "plan", label: "Project Plan", icon: "calendar", badge: "42" },
+  { id: "plan", label: "Project Plan", icon: "calendar", badge: String(DRIGGS_712_PLAN_TASKS.filter((task) => task.name && !task.name.startsWith('Reserved tracker row')).length) },
   { id: "stacking", label: "Stacking Plan", icon: "layers" },
   { id: "vault", label: "Document Vault", icon: "folder", badge: "147" },
   { id: "financials", label: "Financials", icon: "dollar" },
-  { id: "vendors", label: "Vendors", icon: "users", badge: "16" },
+  { id: "vendors", label: "Vendors", icon: "users", badge: String(new Set([...DRIGGS_712_CONTRACTS.map((row) => row.Vendor), ...DRIGGS_712_TEAM.map((row) => row.Company || row.Contact), ...DRIGGS_712_LOOKUP.map((row) => row["Company Name"] || row["Company | Name"]), ...DRIGGS_712_INSURANCES.map((row) => row.Company), ...DRIGGS_712_PERMITS.map((row) => row.Contractor)].filter(Boolean)).size) },
 ];
 
 const fmtUSD = (n, opts = {}) => {
@@ -379,6 +324,18 @@ Object.assign(window, {
   Icon,
   PROJECTS,
   NAV,
+  DRIGGS_712_SEED,
+  DRIGGS_712_PROJECT,
+  DRIGGS_712_PLAN_TASKS,
+  DRIGGS_712_PLAN_MONTHS,
+  DRIGGS_712_TEAM,
+  DRIGGS_712_BUDGET,
+  DRIGGS_712_EXPENSES,
+  DRIGGS_712_CONTRACTS,
+  DRIGGS_712_INSURANCES,
+  DRIGGS_712_PERMITS,
+  DRIGGS_712_LOOKUP,
+  DRIGGS_712_FINANCIAL_SUMMARY,
   fmtUSD,
   fmtPct,
   Sparkline,
@@ -1171,23 +1128,24 @@ Object.assign(window, {
 function DashboardPage() {
   const project = PROJECTS[0];
   const portfolio = {
-    active: 4,
-    budget: 407500000,
-    spent: 157350000,
-    remaining: 250150000,
-    vendors: 16,
-    burnRate: 4520000,
+    active: PROJECTS.length,
+    budget: project.budget,
+    spent: project.spent,
+    remaining: project.budget - project.spent,
+    vendors: new Set([...DRIGGS_712_CONTRACTS.map((row) => row.Vendor), ...DRIGGS_712_TEAM.map((row) => row.Company || row.Contact), ...DRIGGS_712_LOOKUP.map((row) => row["Company Name"] || row["Company | Name"]), ...DRIGGS_712_INSURANCES.map((row) => row.Company), ...DRIGGS_712_PERMITS.map((row) => row.Contractor)].filter(Boolean)).size,
+    burnRate: DRIGGS_712_EXPENSES.reduce((sum, row) => sum + (Number(row.Debit) || 0), 0),
+    coiAlerts: DRIGGS_712_INSURANCES.filter((row) => row.Status && row.Status !== "Active").length,
   };
 
-  const burnSpark = [12, 14, 16, 13, 18, 17, 19, 22, 21, 24, 23, 26];
-  const occupancySpark = [22, 28, 35, 40, 44, 50, 58, 63, 67, 72, 76, 80];
+  const burnSpark = [18, 21, 19, 24, 27, 31, 29, 34, 38, 35, 42, 41];
+  const occupancySpark = [4, 6, 9, 12, 16, 18, 20, 21, 23, 24, 26, 27];
 
   return (
     <>
       <PageHead
         eyebrow="Executive overview"
-        title="Portfolio command"
-        sub="Real-time visibility into active condo developments — capital exposure, near-term milestones, vendor compliance, and operational pulse."
+        title="712 Driggs command"
+        sub="Workbook-seeded visibility into the 712 Driggs project — capital exposure, near-term milestones, vendor compliance, and operational pulse."
         actions={
           <>
             <button className="btn btn-secondary">
@@ -1206,14 +1164,14 @@ function DashboardPage() {
       <div className="grid-kpis">
         <div className="metric">
           <div className="metric-label">
-            <Icon name="building" size={11} /> Active projects
+            <Icon name="building" size={11} /> Active project
           </div>
-          <div className="metric-value">4</div>
+          <div className="metric-value">{portfolio.active}</div>
           <div className="metric-foot">
             <span className="metric-delta up">
-              <Icon name="arrowUp" size={11} /> 1
+              <Icon name="check" size={11} /> seeded
             </span>
-            <span>vs. last quarter</span>
+            <span>from tracker workbook</span>
           </div>
         </div>
 
@@ -1246,15 +1204,15 @@ function DashboardPage() {
           </div>
           <div className="row" style={{ alignItems: "flex-end", gap: 12, marginTop: 4 }}>
             <div className="metric-value-mono" style={{ marginTop: 0 }}>
-              $4.52M
+              {fmtUSD(portfolio.burnRate, { compact: true })}
             </div>
             <Sparkline data={burnSpark} color="var(--accent)" w={70} h={28} />
           </div>
           <div className="metric-foot">
             <span className="metric-delta up">
-              <Icon name="arrowUp" size={11} /> 12.5%
+              <Icon name="arrowUp" size={11} /> 25 entries
             </span>
-            <span>vs. 30d avg</span>
+            <span>from workbook ledger</span>
           </div>
         </div>
 
@@ -1264,14 +1222,14 @@ function DashboardPage() {
           </div>
           <div className="row" style={{ alignItems: "flex-end", gap: 12, marginTop: 4 }}>
             <div className="metric-value-mono" style={{ marginTop: 0 }}>
-              16<span className="faint" style={{ fontSize: 14 }}>/16</span>
+              {portfolio.vendors - portfolio.coiAlerts}<span className="faint" style={{ fontSize: 14 }}>/{portfolio.vendors}</span>
             </div>
             <span className="pill pos no-dot" style={{ marginLeft: "auto" }}>
-              All COIs current
+              {portfolio.coiAlerts ? `${portfolio.coiAlerts} COI alerts` : "All COIs current"}
             </span>
           </div>
           <div className="metric-foot">
-            <span>Next audit · Jun 14</span>
+            <span>Insurance workbook · {DRIGGS_712_INSURANCES.length} records</span>
           </div>
         </div>
       </div>
@@ -1281,7 +1239,7 @@ function DashboardPage() {
           <div className="card-head">
             <div>
               <div className="card-title">Project pulse</div>
-              <div className="card-sub">Live spend vs. budget across the portfolio</div>
+              <div className="card-sub">Live workbook spend vs. budget for the active project</div>
             </div>
             <div className="card-actions">
               <button className="iconbtn" title="Filter">
@@ -1947,44 +1905,143 @@ function UnitsTab() {
 window.ProjectDetailsPage = ProjectDetailsPage;
 /* global React, Icon, PageHead */
 
-const TASKS = [
-  { wbs: "1", name: "Planning", group: true, days: 11, start: "10/14/23", end: "05/02/26", status: "Group", cls: "neutral", x: 5, w: 40 },
-  { wbs: "1.1", name: "Survey", days: 21, start: "03/06/24", end: "03/27/24", status: "Done", cls: "pos", x: 12, w: 4 },
-  { wbs: "1.2", name: "DOB Approvals", days: 862, start: "12/22/23", end: "05/02/26", status: "In review", cls: "warn", x: 8, w: 35 },
-  { wbs: "1.3", name: "Contract Execution", days: 1, start: "12/22/23", end: "12/23/23", status: "Done", cls: "pos", x: 8, w: 1 },
-  { wbs: "1.4", name: "Environmental", days: 28, start: "05/01/24", end: "05/29/24", status: "Backlog", cls: "neutral", x: 14, w: 4 },
-  { wbs: "1.5", name: "Architectural Engineering", days: 350, start: "10/14/23", end: "09/28/24", status: "Review", cls: "warn", x: 5, w: 18 },
-  { wbs: "1.6", name: "Soil Borings", days: 28, start: "06/15/24", end: "07/13/24", status: "Done", cls: "pos", x: 17, w: 4 },
-  { wbs: "1.7", name: "Demolition Plans", days: 90, start: "08/01/24", end: "10/30/24", status: "Done", cls: "pos", x: 18, w: 8 },
-  { wbs: "1.8", name: "Acquisition financing", days: 60, start: "11/01/24", end: "12/30/24", status: "Done", cls: "pos", x: 26, w: 5 },
-  { wbs: "2", name: "Project definition", group: true, days: 31, start: "01/15/25", end: "06/12/27", status: "Group", cls: "neutral", x: 31, w: 60 },
-  { wbs: "2.1", name: "Excavation / Shoring", days: 70, start: "01/15/25", end: "03/26/25", status: "In progress", cls: "info", x: 31, w: 6 },
-  { wbs: "2.2", name: "Super structure", days: 60, start: "03/27/25", end: "05/26/25", status: "In progress", cls: "info", x: 37, w: 5 },
-  { wbs: "2.3", name: "Curtain wall", days: 90, start: "05/27/25", end: "08/25/25", status: "Backlog", cls: "neutral", x: 42, w: 8 },
-  { wbs: "2.4", name: "MEP rough", days: 120, start: "08/26/25", end: "12/24/25", status: "Backlog", cls: "neutral", x: 50, w: 10 },
-  { wbs: "2.5", name: "Interior framing", days: 60, start: "12/25/25", end: "02/23/26", status: "Backlog", cls: "neutral", x: 60, w: 5 },
-  { wbs: "2.6", name: "Finishes", days: 180, start: "02/24/26", end: "08/23/26", status: "Backlog", cls: "neutral", x: 65, w: 15 },
-  { wbs: "2.7", name: "TCO inspections", days: 30, start: "08/24/26", end: "09/23/26", status: "Backlog", cls: "neutral", x: 80, w: 3 },
-  { wbs: "2.8", name: "Punch list", days: 60, start: "09/24/26", end: "11/23/26", status: "Backlog", cls: "neutral", x: 83, w: 5 },
-];
+const TASKS = DRIGGS_712_PLAN_TASKS;
+const PLAN_MONTHS = DRIGGS_712_PLAN_MONTHS;
 
-const KANBAN_COLS = [
-  { id: "backlog", title: "Backlog", count: 18, cls: "neutral" },
-  { id: "progress", title: "In progress", count: 4, cls: "info" },
-  { id: "review", title: "Review", count: 3, cls: "warn" },
-  { id: "done", title: "Done", count: 9, cls: "pos" },
-];
+const PLAN_STATUS_META = {
+  backlog: { id: "backlog", title: "Open", status: "Open", cls: "neutral" },
+  progress: { id: "progress", title: "In progress", status: "In progress", cls: "info" },
+  done: { id: "done", title: "Done", status: "Done", cls: "pos" },
+  unscheduled: { id: "unscheduled", title: "Unscheduled / reserved", status: "Unscheduled", cls: "neutral" },
+};
+
+const PLAN_TASK_FILTER = (task) => task.name && !task.name.startsWith("Reserved tracker row");
+
+function normalizePlanText(value) {
+  return String(value || "").toLowerCase().trim();
+}
+
+function csvEscape(value) {
+  const str = String(value ?? "");
+  if (/[",\n]/.test(str)) return `"${str.replaceAll('"', '""')}"`;
+  return str;
+}
+
+function buildPlanCsv(tasks) {
+  const headers = ["WBS", "Task", "Phase", "Owner", "Status", "Percent Complete", "Days", "Start", "End", "Source Row"];
+  const rows = tasks.map((task) => [
+    task.wbs,
+    task.name,
+    task.phase,
+    task.owner,
+    task.status,
+    task.pctLabel,
+    task.days ?? "",
+    task.startDisplay,
+    task.endDisplay,
+    task.sourceRow,
+  ]);
+  return [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n");
+}
+
+function downloadPlanCsv(tasks) {
+  const blob = new Blob([buildPlanCsv(tasks)], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "712-driggs-project-plan.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 function ProjectPlanPage() {
   const [view, setView] = React.useState("timeline");
   const [zoom, setZoom] = React.useState("months");
+  const [query, setQuery] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState("all");
+  const [ownerFilter, setOwnerFilter] = React.useState("all");
+  const [phaseFilter, setPhaseFilter] = React.useState("all");
+  const [tasks, setTasks] = React.useState(() => TASKS);
+
+  const visibleBaseTasks = React.useMemo(() => tasks.filter(PLAN_TASK_FILTER), [tasks]);
+  const ownerOptions = React.useMemo(() => Array.from(new Set(visibleBaseTasks.map((task) => task.owner || "Unassigned"))).sort(), [visibleBaseTasks]);
+  const statusOptions = React.useMemo(() => Array.from(new Set(visibleBaseTasks.map((task) => task.status || "Unknown"))).sort(), [visibleBaseTasks]);
+  const phaseOptions = React.useMemo(() => Array.from(new Set(visibleBaseTasks.map((task) => task.phase || "Project plan"))).sort(), [visibleBaseTasks]);
+
+  const filteredTasks = React.useMemo(() => {
+    const q = normalizePlanText(query);
+    return visibleBaseTasks.filter((task) => {
+      const haystack = normalizePlanText([task.wbs, task.name, task.owner, task.status, task.phase, task.startDisplay, task.endDisplay].join(" "));
+      const queryOk = !q || haystack.includes(q);
+      const statusOk = statusFilter === "all" || task.status === statusFilter;
+      const ownerOk = ownerFilter === "all" || task.owner === ownerFilter;
+      const phaseOk = phaseFilter === "all" || task.phase === phaseFilter;
+      return queryOk && statusOk && ownerOk && phaseOk;
+    });
+  }, [visibleBaseTasks, query, statusFilter, ownerFilter, phaseFilter]);
+
+  const doneCount = visibleBaseTasks.filter((task) => task.bucket === "done").length;
+  const progressCount = visibleBaseTasks.filter((task) => task.bucket === "progress").length;
+  const openCount = visibleBaseTasks.filter((task) => task.bucket === "backlog").length;
+  const avgCompletion = visibleBaseTasks.length
+    ? Math.round(visibleBaseTasks.reduce((sum, task) => sum + (task.pctComplete || 0), 0) / visibleBaseTasks.length * 100)
+    : 0;
+
+  const updateTaskStatus = React.useCallback((taskId, bucket) => {
+    const meta = PLAN_STATUS_META[bucket] || PLAN_STATUS_META.backlog;
+    setTasks((current) => current.map((task) => {
+      if (task.id !== taskId) return task;
+      const pctComplete = bucket === "done" ? 1 : bucket === "progress" ? Math.max(task.pctComplete || 0.25, 0.25) : 0;
+      return {
+        ...task,
+        bucket,
+        status: meta.status,
+        cls: meta.cls,
+        pctComplete,
+        pctLabel: `${Math.round(pctComplete * 100)}%`,
+      };
+    }));
+  }, []);
+
+  const addLocalTask = React.useCallback(() => {
+    const name = window.prompt("Add a 712 Driggs plan task");
+    if (!name || !name.trim()) return;
+    const phase = phaseFilter !== "all" ? phaseFilter : "Project plan";
+    setTasks((current) => [{
+      id: `local-${Date.now()}`,
+      sourceRow: "local",
+      wbs: `L-${current.length + 1}`,
+      name: name.trim(),
+      owner: ownerFilter !== "all" ? ownerFilter : "Project leadership",
+      phase,
+      days: 1,
+      start: "—",
+      end: "—",
+      startISO: null,
+      endISO: null,
+      startDisplay: "Not set",
+      endDisplay: "Not set",
+      pctComplete: 0,
+      pctLabel: "0%",
+      status: "Open",
+      cls: "neutral",
+      bucket: "backlog",
+      x: 0,
+      w: 2,
+      ganttWeeks: 0,
+      ganttMarks: [],
+      raw: { source: "local client-side addition" },
+    }, ...current]);
+  }, [ownerFilter, phaseFilter]);
 
   return (
     <>
       <PageHead
         eyebrow="Project plan"
-        title="712 Driggs · Schedule"
-        sub="Dependency-aware plan seeded from project records. Drag tasks to reorder, expand for details, and refresh the gantt as work progresses."
+        title={`${DRIGGS_712_PROJECT.name} · Tracker schedule`}
+        sub={`Seeded from the attached workbook with ${visibleBaseTasks.length} named plan rows, ${DRIGGS_712_SEED.meta.scheduleStartLabel} → ${DRIGGS_712_SEED.meta.scheduleEndLabel}. Source label preserved: ${DRIGGS_712_SEED.meta.workbookProjectName}.`}
         actions={
           <>
             <div className="seg">
@@ -1992,31 +2049,43 @@ function ProjectPlanPage() {
               <button className={view === "kanban" ? "active" : ""} onClick={() => setView("kanban")}>Kanban</button>
               <button className={view === "list" ? "active" : ""} onClick={() => setView("list")}>List</button>
             </div>
-            <button className="btn btn-secondary"><Icon name="download" size={13} /> Export</button>
-            <button className="btn btn-primary"><Icon name="plus" size={13} /> Add task</button>
+            <button className="btn btn-secondary" onClick={() => downloadPlanCsv(filteredTasks)}><Icon name="download" size={13} /> Export</button>
+            <button className="btn btn-primary" onClick={addLocalTask}><Icon name="plus" size={13} /> Add task</button>
           </>
         }
       />
 
       <div className="grid-kpis" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        <SmallStat label="Tasks" value="42" sub="Across 2 phases" />
-        <SmallStat label="On track" value="29" sub="69% of schedule" cls="pos" />
-        <SmallStat label="At risk" value="5" sub="DOB Approvals · Steel" cls="warn" />
-        <SmallStat label="Window" value="Oct '23 → Nov '26" sub="38 month build" />
+        <SmallStat label="Tracker rows" value={String(visibleBaseTasks.length)} sub={`${filteredTasks.length} visible after filters`} />
+        <SmallStat label="Completion" value={`${avgCompletion}%`} sub={`${doneCount} done · ${progressCount} in progress`} cls="pos" />
+        <SmallStat label="Open tasks" value={String(openCount)} sub={`${statusOptions.length} statuses · ${ownerOptions.length} owners`} cls="info" />
+        <SmallStat label="Window" value="Oct '23 → Jan '26" sub={`${DRIGGS_712_SEED.meta.scheduleStartLabel} → ${DRIGGS_712_SEED.meta.scheduleEndLabel}`} />
       </div>
 
       <div className="card" style={{ marginTop: 16 }}>
         <div className="card-head">
-          <div className="row" style={{ gap: 10 }}>
-            <div className="topbar-search" style={{ width: 240, margin: 0 }}>
+          <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+            <label className="topbar-search" style={{ width: 260, margin: 0 }}>
               <Icon name="search" size={13} />
-              <span>Search plan, owner, WBS…</span>
-            </div>
-            <select className="select" style={{ width: 140 }}>
-              <option>Status: All</option>
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search plan, owner, WBS…"
+                aria-label="Search project plan"
+                style={{ width: "100%", border: 0, outline: 0, background: "transparent", color: "var(--text-main)", fontSize: 13 }}
+              />
+            </label>
+            <select className="select" style={{ width: 160 }} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filter project plan by status">
+              <option value="all">Status: All</option>
+              {statusOptions.map((status) => <option key={status} value={status}>{status}</option>)}
             </select>
-            <select className="select" style={{ width: 140 }}>
-              <option>Owner: All</option>
+            <select className="select" style={{ width: 190 }} value={ownerFilter} onChange={(event) => setOwnerFilter(event.target.value)} aria-label="Filter project plan by owner">
+              <option value="all">Owner: All</option>
+              {ownerOptions.map((owner) => <option key={owner} value={owner}>{owner}</option>)}
+            </select>
+            <select className="select" style={{ width: 220 }} value={phaseFilter} onChange={(event) => setPhaseFilter(event.target.value)} aria-label="Filter project plan by phase">
+              <option value="all">Phase: All</option>
+              {phaseOptions.map((phase) => <option key={phase} value={phase}>{phase}</option>)}
             </select>
           </div>
           <div className="card-actions">
@@ -2030,9 +2099,9 @@ function ProjectPlanPage() {
           </div>
         </div>
 
-        {view === "timeline" && <TimelineView />}
-        {view === "kanban" && <KanbanView />}
-        {view === "list" && <PlanListView />}
+        {view === "timeline" && <TimelineView tasks={filteredTasks} months={PLAN_MONTHS} zoom={zoom} />}
+        {view === "kanban" && <KanbanView tasks={filteredTasks} onStatusChange={updateTaskStatus} />}
+        {view === "list" && <PlanListView tasks={filteredTasks} onStatusChange={updateTaskStatus} />}
       </div>
     </>
   );
@@ -2053,130 +2122,116 @@ function SmallStat({ label, value, sub, cls = "neutral" }) {
   );
 }
 
-function TimelineView() {
-  const months = ["Oct'23", "Jan'24", "Apr'24", "Jul'24", "Oct'24", "Jan'25", "Apr'25", "Jul'25", "Oct'25", "Jan'26", "Apr'26", "Jul'26", "Oct'26"];
-  const todayPct = 31; // mock today position
+function getTimelinePeriods(months, zoom) {
+  if (zoom === "years") {
+    const seen = new Set();
+    return months.filter((m) => {
+      const year = m.label.slice(-2);
+      if (seen.has(year)) return false;
+      seen.add(year);
+      return true;
+    }).map((m) => ({ ...m, label: `20${m.label.slice(-2)}` }));
+  }
+  if (zoom === "quarters") {
+    const seen = new Set();
+    return months.filter((m) => {
+      const d = new Date(m.iso);
+      const q = `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
+      if (seen.has(q)) return false;
+      seen.add(q);
+      return true;
+    }).map((m) => {
+      const d = new Date(m.iso);
+      return { ...m, label: `Q${Math.floor(d.getMonth() / 3) + 1} '${String(d.getFullYear()).slice(-2)}` };
+    });
+  }
+  return months;
+}
+
+function TimelineView({ tasks, months, zoom }) {
+  const periods = getTimelinePeriods(months, zoom);
+  const nowPct = 100;
 
   return (
     <div className="card-body-flush">
-      <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", borderTop: "1px solid var(--border)" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", borderTop: "1px solid var(--border)" }}>
         <div style={{ borderRight: "1px solid var(--border)", background: "var(--bg-sunk)" }}>
           <div style={{ padding: "10px 14px", fontSize: 11, fontWeight: 500, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid var(--border)" }}>
-            Task / WBS · Days
+            Task / WBS · Owner · Days
           </div>
-          {TASKS.map((t) => (
-            <div key={t.wbs} className="row" style={{
+          {tasks.map((task) => (
+            <div key={task.id} className="row" style={{
               padding: "8px 14px",
               borderBottom: "1px solid var(--border)",
               gap: 10,
-              background: t.group ? "var(--bg-sunk)" : "var(--bg-elev)",
-              minHeight: 38,
+              background: "var(--bg-elev)",
+              minHeight: 42,
             }}>
-              {!t.group && <Icon name="grip" size={12} style={{ color: "var(--text-faint)" }} />}
+              <Icon name="grip" size={12} style={{ color: "var(--text-faint)" }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="row" style={{ gap: 8 }}>
-                  <span className="mono faint" style={{ fontSize: 11, minWidth: 28 }}>{t.wbs}</span>
-                  <span style={{ fontSize: 13, fontWeight: t.group ? 600 : 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</span>
+                  <span className="mono faint" style={{ fontSize: 11, minWidth: 30 }}>{task.wbs}</span>
+                  <span style={{ fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{task.name}</span>
                 </div>
-                {!t.group && (
-                  <div className="faint" style={{ fontSize: 11, marginLeft: 36 }}>
-                    {t.start} → {t.end} · {t.days}d
-                  </div>
-                )}
+                <div className="faint" style={{ fontSize: 11, marginLeft: 38 }}>
+                  {task.owner} · {task.start} → {task.end} · {task.days ?? "—"}d · {task.pctLabel}
+                </div>
               </div>
             </div>
           ))}
+          {tasks.length === 0 && <EmptyPlanState />}
         </div>
 
         <div style={{ position: "relative", overflowX: "auto" }}>
-          <div style={{ minWidth: 900 }}>
+          <div style={{ minWidth: zoom === "months" ? 1200 : 900 }}>
             <div style={{ display: "flex", borderBottom: "1px solid var(--border)", background: "var(--bg-sunk)" }}>
-              {months.map((m) => (
-                <div key={m} style={{ flex: 1, padding: "10px 8px", fontSize: 11, color: "var(--text-muted)", borderRight: "1px solid var(--border)", textAlign: "center" }}>
-                  {m}
+              {periods.map((m) => (
+                <div key={`${zoom}-${m.label}-${m.iso}`} style={{ flex: 1, padding: "10px 8px", fontSize: 11, color: "var(--text-muted)", borderRight: "1px solid var(--border)", textAlign: "center" }}>
+                  {m.label}
                 </div>
               ))}
             </div>
 
             <div style={{ position: "relative" }}>
-              {/* today line */}
               <div style={{
                 position: "absolute",
-                left: `${todayPct}%`,
+                left: `${nowPct}%`,
                 top: 0,
                 bottom: 0,
                 width: 1,
                 background: "var(--signal-neg)",
                 zIndex: 2,
               }}>
-                <div style={{
-                  position: "absolute",
-                  top: 4,
-                  left: -22,
-                  fontSize: 10,
-                  color: "var(--signal-neg)",
-                  fontWeight: 600,
-                  letterSpacing: "0.04em",
-                }}>TODAY</div>
+                <div style={{ position: "absolute", top: 4, left: -48, fontSize: 10, color: "var(--signal-neg)", fontWeight: 600, letterSpacing: "0.04em" }}>SCHEDULE END</div>
               </div>
 
-              {TASKS.map((t, i) => (
-                <div key={t.wbs} style={{
-                  position: "relative",
-                  borderBottom: "1px solid var(--border)",
-                  height: 38,
-                  background: t.group ? "var(--bg-sunk)" : "var(--bg-elev)",
-                }}>
-                  {/* grid lines */}
-                  {months.map((_, mi) => (
-                    <div key={mi} style={{
-                      position: "absolute",
-                      left: `${(mi / months.length) * 100}%`,
-                      top: 0,
-                      bottom: 0,
-                      width: 1,
-                      background: "var(--border)",
-                      opacity: 0.5,
-                    }} />
+              {tasks.map((task) => (
+                <div key={task.id} style={{ position: "relative", borderBottom: "1px solid var(--border)", height: 42, background: "var(--bg-elev)" }}>
+                  {periods.map((_, mi) => (
+                    <div key={mi} style={{ position: "absolute", left: `${(mi / periods.length) * 100}%`, top: 0, bottom: 0, width: 1, background: "var(--border)", opacity: 0.5 }} />
                   ))}
 
-                  {/* task bar */}
                   <div style={{
                     position: "absolute",
-                    left: `${t.x}%`,
-                    width: `${t.w}%`,
-                    top: t.group ? 14 : 10,
-                    height: t.group ? 10 : 18,
+                    left: `${task.x}%`,
+                    width: `${Math.max(task.w, 1.2)}%`,
+                    top: 11,
+                    height: 18,
                     borderRadius: 4,
-                    background: t.cls === "pos" ? "var(--signal-pos-soft)" :
-                                t.cls === "warn" ? "var(--signal-warn-soft)" :
-                                t.cls === "info" ? "var(--signal-info-soft)" :
-                                "var(--bg-active)",
-                    border: t.cls === "neutral" ? "1px dashed var(--border-strong)" : "none",
+                    background: task.cls === "pos" ? "var(--signal-pos-soft)" : task.cls === "warn" ? "var(--signal-warn-soft)" : task.cls === "info" ? "var(--signal-info-soft)" : "var(--bg-active)",
+                    border: task.cls === "neutral" ? "1px dashed var(--border-strong)" : "none",
                     display: "flex",
                     alignItems: "center",
                     paddingLeft: 8,
                     paddingRight: 8,
                     fontSize: 10,
                     fontWeight: 600,
-                    color: t.cls === "pos" ? "var(--signal-pos)" :
-                           t.cls === "warn" ? "var(--signal-warn)" :
-                           t.cls === "info" ? "var(--signal-info)" :
-                           "var(--text-muted)",
+                    color: task.cls === "pos" ? "var(--signal-pos)" : task.cls === "warn" ? "var(--signal-warn)" : task.cls === "info" ? "var(--signal-info)" : "var(--text-muted)",
                     overflow: "hidden",
                     whiteSpace: "nowrap",
-                  }}>
-                    {t.cls === "pos" && (
-                      <div style={{
-                        position: "absolute",
-                        left: 0, top: 0, bottom: 0,
-                        width: "100%",
-                        background: "var(--signal-pos)",
-                        opacity: 0.3,
-                        borderRadius: 4,
-                      }} />
-                    )}
-                    {!t.group && t.w > 4 && <span style={{ position: "relative", textTransform: "uppercase", letterSpacing: "0.04em" }}>{t.status}</span>}
+                  }} title={`${task.name}: ${task.startDisplay} → ${task.endDisplay}`}>
+                    {task.cls === "pos" && <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.max(10, (task.pctComplete || 0) * 100)}%`, background: "var(--signal-pos)", opacity: 0.3, borderRadius: 4 }} />}
+                    {task.w > 4 && <span style={{ position: "relative", textTransform: "uppercase", letterSpacing: "0.04em" }}>{task.status}</span>}
                   </div>
                 </div>
               ))}
@@ -2188,48 +2243,48 @@ function TimelineView() {
   );
 }
 
-function KanbanView() {
-  const tasksByCol = {
-    backlog: TASKS.filter(t => !t.group && t.cls === "neutral").slice(0, 6),
-    progress: TASKS.filter(t => !t.group && t.cls === "info"),
-    review: TASKS.filter(t => !t.group && t.cls === "warn"),
-    done: TASKS.filter(t => !t.group && t.cls === "pos"),
-  };
+function KanbanView({ tasks, onStatusChange }) {
+  const columns = [
+    { ...PLAN_STATUS_META.backlog, count: tasks.filter((task) => task.bucket === "backlog").length },
+    { ...PLAN_STATUS_META.progress, count: tasks.filter((task) => task.bucket === "progress").length },
+    { ...PLAN_STATUS_META.done, count: tasks.filter((task) => task.bucket === "done").length },
+    { ...PLAN_STATUS_META.unscheduled, count: tasks.filter((task) => task.bucket === "unscheduled" || task.bucket === "reserved").length },
+  ];
+  const tasksByCol = Object.fromEntries(columns.map((column) => [column.id, tasks.filter((task) => column.id === "unscheduled" ? ["unscheduled", "reserved"].includes(task.bucket) : task.bucket === column.id)]));
 
   return (
     <div className="card-body" style={{ overflowX: "auto" }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(260px, 1fr))", gap: 12 }}>
-        {KANBAN_COLS.map((col) => (
+        {columns.map((col) => (
           <div key={col.id} style={{ background: "var(--bg-sunk)", borderRadius: 8, padding: 8, minHeight: 400 }}>
             <div className="row-between" style={{ padding: "4px 6px 8px" }}>
               <div className="row" style={{ gap: 8 }}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{col.title}</span>
                 <span className="faint mono" style={{ fontSize: 11 }}>{col.count}</span>
               </div>
-              <button className="iconbtn"><Icon name="plus" size={13} /></button>
             </div>
             <div className="stack" style={{ gap: 6 }}>
-              {(tasksByCol[col.id] || []).map((t) => (
-                <div key={t.wbs} style={{
-                  background: "var(--bg-elev)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 7,
-                  padding: 10,
-                  cursor: "grab",
-                }}>
+              {(tasksByCol[col.id] || []).map((task) => (
+                <div key={task.id} style={{ background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: 7, padding: 10 }}>
                   <div className="row" style={{ gap: 6, marginBottom: 4 }}>
-                    <span className="mono faint" style={{ fontSize: 10 }}>{t.wbs}</span>
-                    <span className={`pill ${t.cls} no-dot`} style={{ marginLeft: "auto", height: 18 }}>{t.status}</span>
+                    <span className="mono faint" style={{ fontSize: 10 }}>{task.wbs}</span>
+                    <span className={`pill ${task.cls} no-dot`} style={{ marginLeft: "auto", height: 18 }}>{task.status}</span>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>{t.name}</div>
-                  <div className="row" style={{ gap: 6, fontSize: 11, color: "var(--text-muted)" }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>{task.name}</div>
+                  <div className="row" style={{ gap: 6, fontSize: 11, color: "var(--text-muted)", flexWrap: "wrap" }}>
                     <Icon name="clock" size={11} />
-                    <span>{t.days}d</span>
+                    <span>{task.days ?? "—"}d</span>
                     <span className="dot" style={{ width: 3, height: 3, marginLeft: 4 }} />
-                    <span>{t.start}</span>
+                    <span>{task.owner}</span>
+                  </div>
+                  <div className="row" style={{ gap: 6, marginTop: 10 }}>
+                    {Object.entries(PLAN_STATUS_META).filter(([bucket]) => bucket !== "unscheduled").map(([bucket, meta]) => (
+                      <button key={bucket} className="btn btn-secondary btn-sm" onClick={() => onStatusChange(task.id, bucket)} style={{ height: 24, padding: "0 8px", fontSize: 10 }}>{meta.title}</button>
+                    ))}
                   </div>
                 </div>
               ))}
+              {(tasksByCol[col.id] || []).length === 0 && <div className="muted" style={{ padding: 16, fontSize: 12 }}>No tasks match the current filters.</div>}
             </div>
           </div>
         ))}
@@ -2238,39 +2293,60 @@ function KanbanView() {
   );
 }
 
-function PlanListView() {
+function PlanListView({ tasks, onStatusChange }) {
   return (
     <div className="card-body-flush">
       <table className="table">
         <thead>
           <tr>
-            <th style={{ width: 40 }}>WBS</th>
+            <th style={{ width: 54 }}>WBS</th>
             <th>Task</th>
+            <th>Phase</th>
             <th>Status</th>
+            <th className="num">%</th>
             <th className="num">Days</th>
             <th>Start</th>
             <th>End</th>
             <th>Owner</th>
-            <th></th>
           </tr>
         </thead>
         <tbody>
-          {TASKS.filter(t => !t.group).map((t) => (
-            <tr key={t.wbs}>
-              <td className="mono faint">{t.wbs}</td>
-              <td style={{ fontWeight: 500 }}>{t.name}</td>
-              <td><span className={`pill ${t.cls} no-dot`}>{t.status}</span></td>
-              <td className="num mono">{t.days}</td>
-              <td className="muted mono" style={{ fontSize: 12 }}>{t.start}</td>
-              <td className="muted mono" style={{ fontSize: 12 }}>{t.end}</td>
-              <td className="muted">Operations</td>
-              <td><button className="iconbtn"><Icon name="more" size={14} /></button></td>
+          {tasks.map((task) => (
+            <tr key={task.id}>
+              <td className="mono faint">{task.wbs}</td>
+              <td style={{ fontWeight: 500 }}>
+                <div>{task.name}</div>
+                <div className="faint" style={{ fontSize: 11 }}>Source row {task.sourceRow} · {task.ganttWeeks} Gantt weeks</div>
+              </td>
+              <td className="muted">{task.phase}</td>
+              <td>
+                <select className="select" value={task.bucket === "reserved" ? "unscheduled" : task.bucket} onChange={(event) => onStatusChange(task.id, event.target.value)} style={{ width: 132, height: 28 }}>
+                  <option value="backlog">Open</option>
+                  <option value="progress">In progress</option>
+                  <option value="done">Done</option>
+                  <option value="unscheduled">Unscheduled</option>
+                </select>
+              </td>
+              <td className="num mono">{task.pctLabel}</td>
+              <td className="num mono">{task.days ?? "—"}</td>
+              <td className="muted mono" style={{ fontSize: 12 }}>{task.start}</td>
+              <td className="muted mono" style={{ fontSize: 12 }}>{task.end}</td>
+              <td className="muted">{task.owner}</td>
             </tr>
           ))}
+          {tasks.length === 0 && (
+            <tr>
+              <td colSpan="9"><EmptyPlanState /></td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
   );
+}
+
+function EmptyPlanState() {
+  return <div className="muted" style={{ padding: 24, textAlign: "center", fontSize: 13 }}>No 712 Driggs plan rows match the current search and filters.</div>;
 }
 
 window.ProjectPlanPage = ProjectPlanPage;
@@ -2579,34 +2655,60 @@ function DetailField({ label, value }) {
 window.StackingPlanPage = StackingPlanPage;
 /* global React, Icon, PageHead, fmtUSD, Modal, Field, Input, Select, Textarea */
 
-const INITIAL_BUDGET = [
-  { id: "b01", code: "01", name: "General conditions", budget: 2400000, committed: 2380000, spent: 920000, forecast: 2410000 },
-  { id: "b02", code: "02", name: "Sitework / demolition", budget: 1850000, committed: 1850000, spent: 1850000, forecast: 1850000 },
-  { id: "b03", code: "03", name: "Concrete / foundation", budget: 6800000, committed: 6750000, spent: 4200000, forecast: 6800000 },
-  { id: "b04", code: "04", name: "Masonry", budget: 1100000, committed: 1080000, spent: 280000, forecast: 1080000 },
-  { id: "b05", code: "05", name: "Steel & metals", budget: 4200000, committed: 4380000, spent: 1680000, forecast: 4480000, risk: true },
-  { id: "b06", code: "06", name: "Wood & plastics", budget: 920000, committed: 0, spent: 0, forecast: 920000 },
-  { id: "b07", code: "07", name: "Thermal / moisture", budget: 1450000, committed: 1380000, spent: 0, forecast: 1380000 },
-  { id: "b08", code: "08", name: "Openings", budget: 2300000, committed: 1980000, spent: 0, forecast: 2210000 },
-  { id: "b09", code: "09", name: "Finishes", budget: 5800000, committed: 1200000, spent: 0, forecast: 5800000 },
-  { id: "b10", code: "10", name: "Specialties", budget: 480000, committed: 320000, spent: 0, forecast: 480000 },
-  { id: "b11", code: "14", name: "Conveying / elevators", budget: 980000, committed: 980000, spent: 196000, forecast: 980000 },
-  { id: "b12", code: "21-23", name: "MEP / Fire / Plumbing", budget: 5200000, committed: 4890000, spent: 1100000, forecast: 5180000 },
-  { id: "b13", code: "26-28", name: "Electrical & low-volt", budget: 2400000, committed: 2380000, spent: 480000, forecast: 2400000 },
-];
+function trackerAmount(value) {
+  const n = Number(value || 0);
+  return Number.isFinite(n) ? n : 0;
+}
 
-const INITIAL_EXPENSES = [
-  { id: "e1", date: "May 06, 2024", desc: "Steel pricing memo — escalation reserve", vendor: "Skyline Steel Co.", division: "Steel & metals", amount: 142000, status: "Approved", invoice: "SK-2024-0512", method: "ACH" },
-  { id: "e2", date: "May 04, 2024", desc: "Excavation progress draw 4", vendor: "Wonder Works Construction", division: "Sitework / demolition", amount: 384000, status: "Paid", invoice: "WW-2024-1842", method: "Wire" },
-  { id: "e3", date: "May 02, 2024", desc: "Lender draw 12 disbursement fee", vendor: "Bank OZK", division: "General conditions", amount: 12480, status: "Pending", invoice: "OZK-D12", method: "Wire" },
-  { id: "e4", date: "Apr 28, 2024", desc: "Architectural — site supervision", vendor: "ZProekt Architecture", division: "General conditions", amount: 18400, status: "Paid", invoice: "ZP-0428", method: "ACH" },
-  { id: "e5", date: "Apr 24, 2024", desc: "Builder's risk — Q2 premium", vendor: "Marsh McLennan", division: "General conditions", amount: 36500, status: "Paid", invoice: "MAR-Q2-24", method: "ACH" },
-  { id: "e6", date: "Apr 22, 2024", desc: "Lobby finish package upgrade", vendor: "Wonder Works Construction", division: "Finishes", amount: 142000, status: "Approved", invoice: "WW-CO-007", method: "ACH" },
-  { id: "e7", date: "Apr 18, 2024", desc: "MEP coordination drawings", vendor: "ME Engineers", division: "MEP / Fire / Plumbing", amount: 24800, status: "Paid", invoice: "ME-0418", method: "ACH" },
-  { id: "e8", date: "Apr 12, 2024", desc: "Concrete pour L3 slab", vendor: "Wonder Works Construction", division: "Concrete / foundation", amount: 285000, status: "Paid", invoice: "WW-2024-1812", method: "Wire" },
-  { id: "e9", date: "Apr 08, 2024", desc: "Sprinkler reconfig L4", vendor: "Wonder Works Construction", division: "MEP / Fire / Plumbing", amount: 38400, status: "Paid", invoice: "WW-CO-006", method: "ACH" },
-  { id: "e10", date: "Apr 02, 2024", desc: "Window package substitution credit", vendor: "Apex Glazing", division: "Openings", amount: -64000, status: "Approved", invoice: "AG-CR-005", method: "Credit" },
-];
+function trackerDateLabel(value) {
+  if (!value) return "Undated";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+}
+
+const TRACKER_SPEND_BY_CATEGORY = DRIGGS_712_EXPENSES.reduce((acc, row) => {
+  const category = row.Category || "Capital / contributions";
+  const debit = trackerAmount(row.Debit);
+  acc[category] = (acc[category] || 0) + Math.max(0, debit);
+  return acc;
+}, {});
+
+const INITIAL_BUDGET = DRIGGS_712_BUDGET.map((row, index) => {
+  const budget = trackerAmount(row.Amount);
+  const spent = TRACKER_SPEND_BY_CATEGORY[row.Category] || 0;
+  return {
+    id: `driggs-budget-${index + 1}`,
+    code: String(index + 1).padStart(2, "0"),
+    name: row["Sub-Category"] ? `${row.Category} · ${row["Sub-Category"]}` : row.Category,
+    budget,
+    committed: row.Status && row.Status !== "Open" ? budget : 0,
+    spent,
+    forecast: Math.max(budget, spent),
+    risk: row.Status && row.Status !== "Open",
+    sourceType: row.Type,
+    raw: row,
+  };
+});
+
+const INITIAL_EXPENSES = DRIGGS_712_EXPENSES.map((row, index) => {
+  const debit = trackerAmount(row.Debit);
+  const credit = trackerAmount(row.Credit);
+  const amount = debit > 0 ? debit : -credit;
+  return {
+    id: `driggs-expense-${index + 1}`,
+    date: trackerDateLabel(row.Date),
+    desc: row.Memo || row.Type || "Ledger entry",
+    vendor: row.Vendor || (credit > 0 ? "Project capital account" : "712 Driggs ledger"),
+    division: row.Category || (credit > 0 ? "Capital / contributions" : "Uncategorized"),
+    amount,
+    status: debit > 0 ? "Paid" : "Approved",
+    invoice: `LEDGER-${String(index + 1).padStart(4, "0")}`,
+    method: row.Type || "Ledger",
+    balance: trackerAmount(row.Balance),
+    raw: row,
+  };
+}).reverse();
 
 const STATUS_OPTS = ["Pending", "Approved", "Paid", "Rejected"];
 const METHOD_OPTS = ["ACH", "Wire", "Check", "Credit", "Card"];
@@ -2754,8 +2856,8 @@ function BudgetTab({ rows, totals, onAdd, onEdit }) {
           </thead>
           <tbody>
             {rows.map((r) => {
-              const pct = Math.round((r.spent / r.budget) * 100);
-              const committedPct = Math.round((r.committed / r.budget) * 100);
+              const pct = r.budget > 0 ? Math.round((r.spent / r.budget) * 100) : 0;
+              const committedPct = r.budget > 0 ? Math.round((r.committed / r.budget) * 100) : 0;
               const variance = r.budget - r.forecast;
               return (
                 <tr key={r.id} onClick={() => onEdit(r)} style={{ cursor: "pointer" }}>
@@ -3136,20 +3238,119 @@ function StackBar({ label, value, pct, cls, detail }) {
 window.FinancialsPage = FinancialsPage;
 /* global React, Icon, PageHead, fmtUSD */
 
-const VENDORS = [
-  { id: "v01", name: "Wonder Works Construction", role: "General contractor", trade: "GC", status: "Active", rating: 4.8, contracts: 1, paid: 8420000, contractValue: 38500000, contact: "M. Petrov", coiExpires: "Sep 30, 2024", coiOk: true, init: "WW", color: 0 },
-  { id: "v02", name: "ZProekt Architecture", role: "Architect of record", trade: "Design", status: "Active", rating: 4.6, contracts: 3, paid: 1240000, contractValue: 1850000, contact: "D. Kuznetsova", coiExpires: "Dec 12, 2024", coiOk: true, init: "ZP", color: 1 },
-  { id: "v03", name: "GACE Consulting Engineers", role: "Structural engineer", trade: "Engineering", status: "Active", rating: 4.4, contracts: 2, paid: 380000, contractValue: 620000, contact: "R. Mehta", coiExpires: "Jun 15, 2024", coiOk: false, init: "GA", color: 2 },
-  { id: "v04", name: "ME Engineers", role: "MEP engineer", trade: "Engineering", status: "Active", rating: 4.3, contracts: 1, paid: 220000, contractValue: 380000, contact: "S. Tanaka", coiExpires: "Aug 22, 2024", coiOk: true, init: "ME", color: 3 },
-  { id: "v05", name: "Buro Happold", role: "Sustainability consultant", trade: "Consulting", status: "Active", rating: 4.7, contracts: 1, paid: 84000, contractValue: 145000, contact: "A. Olusanya", coiExpires: "Nov 04, 2024", coiOk: true, init: "BH", color: 4 },
-  { id: "v06", name: "JLL", role: "Sales & marketing", trade: "Brokerage", status: "Active", rating: 4.5, contracts: 1, paid: 0, contractValue: 0, contact: "A. Park", coiExpires: "Mar 18, 2025", coiOk: true, init: "JL", color: 5 },
-  { id: "v07", name: "Fried Frank", role: "Real estate counsel", trade: "Legal", status: "Active", rating: 4.9, contracts: 1, paid: 320000, contractValue: 480000, contact: "R. Halpern", coiExpires: "Apr 30, 2025", coiOk: true, init: "FF", color: 6 },
-  { id: "v08", name: "Langan", role: "Geotechnical", trade: "Engineering", status: "Inactive", rating: 4.2, contracts: 1, paid: 84000, contractValue: 84000, contact: "K. Bauer", coiExpires: "Jan 15, 2024", coiOk: false, init: "LG", color: 0 },
-  { id: "v09", name: "Schindler Elevator", role: "Conveying systems", trade: "Subcontractor", status: "Active", rating: 4.1, contracts: 1, paid: 196000, contractValue: 980000, contact: "T. Nguyen", coiExpires: "Jul 18, 2024", coiOk: true, init: "SC", color: 1 },
-  { id: "v10", name: "Skyline Steel Co.", role: "Steel fabrication", trade: "Subcontractor", status: "At risk", rating: 3.9, contracts: 1, paid: 1680000, contractValue: 4380000, contact: "B. Romano", coiExpires: "Oct 02, 2024", coiOk: true, init: "SK", color: 2 },
-  { id: "v11", name: "Apex Glazing", role: "Curtain wall", trade: "Subcontractor", status: "Active", rating: 4.4, contracts: 1, paid: 0, contractValue: 1980000, contact: "L. Chen", coiExpires: "May 28, 2024", coiOk: false, init: "AG", color: 3 },
-  { id: "v12", name: "Marsh McLennan", role: "Builder's risk insurance", trade: "Insurance", status: "Active", rating: 4.6, contracts: 1, paid: 142000, contractValue: 220000, contact: "P. Kowalski", coiExpires: "Feb 28, 2025", coiOk: true, init: "MM", color: 4 },
-];
+function vendorInitials(name) {
+  return String(name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "?";
+}
+
+function classifyVendorTrade(name, sourceRole = "") {
+  const value = `${name} ${sourceRole}`.toLowerCase();
+  if (/architect|design|studio|office of architects/.test(value)) return "Design";
+  if (/engineer|mep|structural|consult|yaker|stroh|wjY/i.test(value)) return "Engineering";
+  if (/insurance|liability|workers|state farm|casulty/.test(value)) return "Insurance";
+  if (/permit|contracting|plumb|mason|sewer|gir(o|ó)n|first choice|trysler/.test(value)) return "Subcontractor";
+  if (/legal|law|counsel/.test(value)) return "Legal";
+  if (/broker|sales|marketing/.test(value)) return "Brokerage";
+  if (/construction|contractor|gc/.test(value)) return "GC";
+  return "Consulting";
+}
+
+function coalesceVendorRecord(map, name, seed = {}) {
+  if (!name) return null;
+  const key = String(name).trim();
+  if (!key) return null;
+  const existing = map.get(key) || {
+    id: `driggs-vendor-${map.size + 1}`,
+    name: key,
+    role: seed.role || "Project contact",
+    trade: classifyVendorTrade(key, seed.role),
+    status: "Active",
+    rating: 4.2,
+    contracts: 0,
+    paid: 0,
+    contractValue: 0,
+    contact: seed.contact || "—",
+    email: seed.email || "",
+    coiExpires: seed.coiExpires || "Not tracked",
+    coiOk: seed.coiOk ?? true,
+    init: vendorInitials(key),
+    color: map.size % 7,
+    rawSources: [],
+  };
+  if (seed.role && existing.role === "Project contact") existing.role = seed.role;
+  if (seed.contact && existing.contact === "—") existing.contact = seed.contact;
+  if (seed.email && !existing.email) existing.email = seed.email;
+  if (seed.trade) existing.trade = seed.trade;
+  if (typeof seed.contractValue === "number") existing.contractValue += seed.contractValue;
+  if (typeof seed.paid === "number") existing.paid += seed.paid;
+  if (seed.hasContract) existing.contracts += 1;
+  if (seed.coiExpires) existing.coiExpires = seed.coiExpires;
+  if (seed.coiOk === false) existing.coiOk = false;
+  if (existing.contractValue > 0 && existing.paid >= existing.contractValue) existing.status = "Inactive";
+  if (!existing.coiOk) existing.status = "At risk";
+  existing.rawSources.push(seed.raw || {});
+  map.set(key, existing);
+  return existing;
+}
+
+const VENDOR_MAP_712 = new Map();
+
+DRIGGS_712_CONTRACTS.forEach((row) => {
+  coalesceVendorRecord(VENDOR_MAP_712, row.Vendor, {
+    role: "Contracted vendor",
+    trade: classifyVendorTrade(row.Vendor, "contract"),
+    contractValue: trackerAmount(row["Contract Total"]),
+    paid: trackerAmount(row["Total Paid"]),
+    hasContract: true,
+    raw: row,
+  });
+});
+
+DRIGGS_712_TEAM.forEach((row) => {
+  const contactName = String(row.Contact || "").split("|").pop()?.trim() || row.Contact;
+  coalesceVendorRecord(VENDOR_MAP_712, row.Company || row.Contact, {
+    role: "Project team",
+    contact: contactName,
+    email: row.Email,
+    trade: classifyVendorTrade(row.Company, "team"),
+    raw: row,
+  });
+});
+
+DRIGGS_712_LOOKUP.forEach((row) => {
+  coalesceVendorRecord(VENDOR_MAP_712, row["Company Name"] || row["Company | Name"], {
+    role: "Directory contact",
+    contact: row.Name,
+    email: row.Email,
+    trade: classifyVendorTrade(row["Company Name"], "directory"),
+    raw: row,
+  });
+});
+
+DRIGGS_712_INSURANCES.forEach((row) => {
+  const exp = row["General Liability Expiration"] || row["Workers Comp Expiration"];
+  const days = row["General Liability Expiration(d)"] ?? row["Workers Comp Expiration (d)"];
+  coalesceVendorRecord(VENDOR_MAP_712, row.Company, {
+    role: row.Subcontractor ? `${row.Subcontractor} subcontractor` : "Insurance-tracked subcontractor",
+    trade: "Subcontractor",
+    coiExpires: trackerDateLabel(exp),
+    coiOk: Number(days ?? 1) >= 0,
+    raw: row,
+  });
+});
+
+DRIGGS_712_PERMITS.forEach((row) => {
+  const days = row["Number of Days Left"];
+  coalesceVendorRecord(VENDOR_MAP_712, row.Contractor, {
+    role: `${row["Permit Type"] || "Permit"} permit contractor`,
+    trade: "Subcontractor",
+    contact: row.Contact,
+    coiExpires: trackerDateLabel(row.Expiration),
+    coiOk: Number(days ?? 1) >= 0,
+    raw: row,
+  });
+});
+
+const VENDORS = Array.from(VENDOR_MAP_712.values()).sort((a, b) => b.contractValue - a.contractValue || a.name.localeCompare(b.name));
 
 const TRADE_FILTERS = ["All", "GC", "Design", "Engineering", "Subcontractor", "Consulting", "Legal", "Insurance", "Brokerage"];
 
