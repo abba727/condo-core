@@ -1495,3 +1495,71 @@ a {
   .page-asset { min-height: 92px; margin-bottom: 12px; }
   .page-asset-caption { left: 12px; bottom: 10px; font-size: 9px; }
 }
+
+/* CondoCore style reminder: Quiet Brutalist Enterprise planner upgrade. Keep planner interactions dense, precise, ledger-like, and visually aligned with warm slate construction-document controls. */
+.planner-card { overflow: hidden; }
+.planner-toolbar { align-items: flex-start; gap: 12px; }
+.planner-timeline-shell { border-top: 1px solid var(--border); max-height: 68vh; overflow: auto; background: var(--bg-elev); }
+.planner-timeline { display: grid; min-width: 1040px; }
+.planner-task-pane { position: sticky; left: 0; z-index: 7; background: var(--bg-elev); border-right: 1px solid var(--border-strong); box-shadow: 10px 0 18px rgba(20, 24, 28, 0.04); }
+.planner-grid-pane { overflow: visible; }
+.planner-grid-inner { position: relative; }
+.planner-sticky-head { position: sticky; top: 0; z-index: 12; height: 38px; background: color-mix(in oklab, var(--bg-sunk) 92%, white 8%); border-bottom: 1px solid var(--border-strong); }
+.planner-task-head { display: flex; align-items: center; padding: 0 14px; font-size: 11px; font-weight: 650; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.planner-period-head { display: grid; }
+.planner-period-cell { display: flex; align-items: center; justify-content: center; min-width: 86px; padding: 0 8px; font-size: 11px; font-weight: 650; color: var(--text-muted); border-right: 1px solid var(--border); text-align: center; text-transform: uppercase; letter-spacing: 0.03em; }
+.planner-bars { position: relative; background-image: repeating-linear-gradient(to right, transparent 0, transparent calc((100% / var(--timeline-cols)) - 1px), color-mix(in oklab, var(--border) 82%, transparent) calc((100% / var(--timeline-cols)) - 1px), color-mix(in oklab, var(--border) 82%, transparent) calc(100% / var(--timeline-cols))); }
+.planner-today-line { position: absolute; left: var(--today-left); top: 0; bottom: 0; width: 2px; z-index: 8; background: var(--signal-neg); box-shadow: 0 0 0 1px color-mix(in oklab, var(--signal-neg) 22%, transparent); pointer-events: none; }
+.planner-today-line span { position: sticky; top: 42px; display: inline-block; margin-left: 7px; padding: 2px 5px; background: var(--signal-neg); color: white; border-radius: 3px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.planner-group-row, .planner-group-grid-row { height: 36px; border-bottom: 1px solid var(--border-strong); background: color-mix(in oklab, var(--bg-sunk) 90%, var(--signal-info-soft) 10%); }
+.planner-group-row { display: flex; align-items: center; justify-content: space-between; padding: 0 12px 0 14px; font-size: 12px; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.045em; }
+.planner-group-row strong { font-size: 12px; }
+.planner-group-row:hover { background: color-mix(in oklab, var(--bg-sunk) 80%, var(--signal-info-soft) 20%); }
+.planner-task-row { height: 48px; display: flex; align-items: center; gap: 10px; padding: 7px 10px 7px 14px; border-bottom: 1px solid var(--border); background: var(--bg-elev); transition: background 160ms ease, opacity 160ms ease, transform 160ms ease; }
+.planner-task-row:hover { background: color-mix(in oklab, var(--bg-elev) 86%, var(--bg-active) 14%); }
+.planner-task-row.is-dragging { opacity: 0.45; background: var(--signal-info-soft); transform: scale(0.995); }
+.planner-task-row.is-done { background: color-mix(in oklab, var(--signal-pos-soft) 48%, var(--bg-elev) 52%); }
+.planner-grip { color: var(--text-faint); cursor: grab; flex: 0 0 auto; }
+.planner-task-row:active .planner-grip { cursor: grabbing; }
+.planner-task-name { font-size: 13px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.planner-task-meta { margin-left: 44px; margin-top: 2px; color: var(--text-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.planner-bar-row { position: relative; height: 48px; border-bottom: 1px solid var(--border); background-image: repeating-linear-gradient(to right, transparent 0, transparent calc((100% / var(--timeline-cols)) - 1px), color-mix(in oklab, var(--border) 72%, transparent) calc((100% / var(--timeline-cols)) - 1px), color-mix(in oklab, var(--border) 72%, transparent) calc(100% / var(--timeline-cols))), linear-gradient(to bottom, transparent 0, transparent 47px, color-mix(in oklab, var(--border) 82%, transparent) 47px, color-mix(in oklab, var(--border) 82%, transparent) 48px); }
+.planner-task-bar { position: absolute; top: 14px; height: 20px; min-width: 18px; border-radius: 3px; background: var(--bg-active); border: 1px dashed var(--border-strong); display: flex; align-items: center; overflow: hidden; color: var(--text-muted); font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.045em; cursor: pointer; box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06); }
+.planner-task-bar::before { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--task-progress); background: color-mix(in oklab, var(--signal-info) 22%, transparent); }
+.planner-task-bar span { position: relative; z-index: 1; padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.planner-task-bar.is-progress { background: var(--signal-info-soft); border-color: color-mix(in oklab, var(--signal-info) 45%, var(--border)); color: var(--signal-info); }
+.planner-task-bar.is-complete { background: var(--signal-pos); border-color: var(--signal-pos); color: white; }
+.planner-task-bar.is-complete::before { background: rgba(255,255,255,0.18); width: 100%; }
+.planner-task-bar.is-unscheduled { background: transparent; border-style: dashed; color: var(--text-faint); }
+.planner-dependency-chip { position: absolute; top: 13px; height: 22px; display: inline-flex; align-items: center; gap: 3px; padding: 0 5px; border-radius: 999px; background: var(--bg-elev); border: 1px solid var(--border-strong); color: var(--text-muted); font-size: 10px; z-index: 4; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08); }
+.planner-icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 1px solid var(--border); background: color-mix(in oklab, var(--bg-elev) 92%, white 8%); color: var(--text-muted); border-radius: 5px; transition: background 160ms ease, color 160ms ease, border-color 160ms ease; }
+.planner-icon-btn:hover { background: var(--bg-active); color: var(--text-main); border-color: var(--border-strong); }
+.planner-kanban-shell { overflow-x: auto; }
+.planner-kanban-grid { display: grid; grid-template-columns: repeat(4, minmax(270px, 1fr)); gap: 12px; min-width: 1080px; }
+.planner-kanban-col { min-height: 440px; padding: 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-sunk); transition: box-shadow 160ms ease, border-color 160ms ease, background 160ms ease; }
+.planner-kanban-col.is-drop-target { border-color: var(--signal-info); background: color-mix(in oklab, var(--signal-info-soft) 34%, var(--bg-sunk) 66%); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--signal-info) 45%, transparent), 0 10px 24px rgba(15, 23, 42, 0.08); }
+.planner-kanban-head { padding: 4px 6px 10px; }
+.planner-kanban-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 7px; padding: 10px; transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease; cursor: grab; }
+.planner-kanban-card:hover { transform: translateY(-1px); border-color: var(--border-strong); box-shadow: 0 10px 20px rgba(15, 23, 42, 0.07); }
+.planner-kanban-card:active { cursor: grabbing; }
+.planner-kanban-card.is-complete { background: color-mix(in oklab, var(--signal-pos-soft) 60%, var(--bg-elev) 40%); border-color: color-mix(in oklab, var(--signal-pos) 35%, var(--border)); }
+.planner-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+.planner-empty-drop { min-height: 76px; display: flex; align-items: center; justify-content: center; padding: 14px; border: 1px dashed var(--border-strong); border-radius: 7px; color: var(--text-muted); font-size: 12px; text-align: center; }
+.planner-list-shell { overflow-x: auto; }
+.planner-list-actions { display: flex; justify-content: flex-end; padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--bg-sunk); }
+.planner-table { min-width: 1120px; }
+.planner-table-group-row td { background: color-mix(in oklab, var(--bg-sunk) 86%, var(--signal-info-soft) 14%); border-top: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-strong); padding: 8px 12px; text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
+.planner-row-complete td { background: color-mix(in oklab, var(--signal-pos-soft) 36%, var(--bg-elev) 64%); }
+.planner-modal-backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(15, 20, 24, 0.48); backdrop-filter: blur(10px); }
+.planner-modal { width: min(760px, 96vw); max-height: min(86vh, 780px); overflow: auto; background: var(--bg-elev); border: 1px solid var(--border-strong); border-radius: 10px; box-shadow: 0 28px 90px rgba(12, 16, 20, 0.32); padding: 18px; }
+.planner-modal-small { width: min(440px, 94vw); }
+.planner-modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.planner-modal-head h3 { margin: 3px 0 0; font-size: 20px; letter-spacing: -0.02em; }
+.planner-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.planner-field { display: flex; flex-direction: column; gap: 6px; }
+.planner-field-wide { grid-column: 1 / -1; }
+.planner-field span { color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.055em; }
+.planner-field input, .planner-field select { height: 34px; border: 1px solid var(--border); background: var(--bg-sunk); color: var(--text-main); border-radius: 6px; padding: 0 10px; outline: none; font-size: 13px; }
+.planner-field input:focus, .planner-field select:focus { border-color: var(--signal-info); box-shadow: 0 0 0 3px color-mix(in oklab, var(--signal-info) 18%, transparent); }
+.planner-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+@media (max-width: 900px) { .planner-timeline { grid-template-columns: 330px 1fr !important; } .planner-form-grid { grid-template-columns: 1fr; } .planner-field-wide { grid-column: auto; } }
