@@ -1931,7 +1931,22 @@ const PLAN_TASK_FILTER = (task) => task.name && !task.name.startsWith("Reserved 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PLAN_START_DATE = new Date(DRIGGS_712_SEED.meta.scheduleStartISO || "2023-10-14T00:00:00");
 const PLAN_END_DATE = new Date(DRIGGS_712_SEED.meta.scheduleEndISO || "2026-01-14T00:00:00");
-const PLAN_TOTAL_DAYS = Math.max(1, Math.round((PLAN_END_DATE - PLAN_START_DATE) / DAY_MS));
+
+function monthFloor(value) {
+  const d = parsePlanDate(value);
+  if (!d) return null;
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+function addPlanMonths(date, count) {
+  return new Date(date.getFullYear(), date.getMonth() + count, 1);
+}
+
+const PLAN_TIMELINE_START_DATE = monthFloor(PLAN_MONTHS[0]?.iso) || PLAN_START_DATE;
+const PLAN_TIMELINE_END_DATE = PLAN_MONTHS.length
+  ? addPlanMonths(monthFloor(PLAN_MONTHS[PLAN_MONTHS.length - 1]?.iso) || PLAN_END_DATE, 1)
+  : PLAN_END_DATE;
+const PLAN_TOTAL_DAYS = Math.max(1, Math.round((PLAN_TIMELINE_END_DATE - PLAN_TIMELINE_START_DATE) / DAY_MS));
 
 function normalizePlanText(value) {
   return String(value || "").toLowerCase().trim();
@@ -2031,21 +2046,41 @@ function getTaskTimelineMetrics(task) {
   const start = parsePlanDate(task.startISO);
   const end = parsePlanDate(task.endISO || task.startISO);
   if (!start || !end) return { left: 0, width: 2 };
-  const startOffset = Math.max(0, Math.min(PLAN_TOTAL_DAYS, Math.round((start - PLAN_START_DATE) / DAY_MS)));
-  const endOffset = Math.max(startOffset + 1, Math.min(PLAN_TOTAL_DAYS, Math.round((end - PLAN_START_DATE) / DAY_MS) + 1));
+  const startOffset = Math.max(0, Math.min(PLAN_TOTAL_DAYS, Math.round((start - PLAN_TIMELINE_START_DATE) / DAY_MS)));
+  const endOffset = Math.max(startOffset + 1, Math.min(PLAN_TOTAL_DAYS, Math.round((end - PLAN_TIMELINE_START_DATE) / DAY_MS) + 1));
   return {
     left: Math.max(0, Math.min(98, (startOffset / PLAN_TOTAL_DAYS) * 100)),
     width: Math.max(1.6, ((endOffset - startOffset) / PLAN_TOTAL_DAYS) * 100),
   };
 }
 
-function getCurrentDayPct() {
+function getPeriodEndDate(period, nextPeriod, zoom) {
+  if (nextPeriod?.iso) return monthFloor(nextPeriod.iso) || addPlanMonths(monthFloor(period?.iso) || PLAN_TIMELINE_START_DATE, 1);
+  const start = monthFloor(period?.iso) || PLAN_TIMELINE_START_DATE;
+  if (zoom === "years") return new Date(start.getFullYear() + 1, 0, 1);
+  if (zoom === "quarters") return addPlanMonths(start, 3);
+  return addPlanMonths(start, 1);
+}
+
+function getCurrentDayPct(periods = PLAN_MONTHS, zoom = "months") {
   const today = new Date();
-  const scheduleStart = PLAN_START_DATE.getTime();
-  const scheduleEnd = PLAN_END_DATE.getTime();
-  if (!Number.isFinite(scheduleStart) || !Number.isFinite(scheduleEnd) || scheduleEnd <= scheduleStart) return 0;
-  const rawPct = ((today.getTime() - scheduleStart) / (scheduleEnd - scheduleStart)) * 100;
-  return Math.max(0, Math.min(100, rawPct));
+  const visiblePeriods = periods.length ? periods : PLAN_MONTHS;
+  if (!visiblePeriods.length) return 0;
+  const firstStart = monthFloor(visiblePeriods[0]?.iso) || PLAN_TIMELINE_START_DATE;
+  const lastEnd = getPeriodEndDate(visiblePeriods[visiblePeriods.length - 1], null, zoom);
+  if (today <= firstStart) return 0;
+  if (today >= lastEnd) return 100;
+  const periodIndex = visiblePeriods.findIndex((period, index) => {
+    const start = monthFloor(period.iso) || firstStart;
+    const end = getPeriodEndDate(period, visiblePeriods[index + 1], zoom);
+    return today >= start && today < end;
+  });
+  if (periodIndex < 0) return Math.max(0, Math.min(100, ((today - firstStart) / Math.max(DAY_MS, lastEnd - firstStart)) * 100));
+  const period = visiblePeriods[periodIndex];
+  const start = monthFloor(period.iso) || firstStart;
+  const end = getPeriodEndDate(period, visiblePeriods[periodIndex + 1], zoom);
+  const within = Math.max(0, Math.min(1, (today - start) / Math.max(DAY_MS, end - start)));
+  return Math.max(0, Math.min(100, ((periodIndex + within) / visiblePeriods.length) * 100));
 }
 
 function buildPlanCsv(tasks) {
@@ -2368,7 +2403,7 @@ function getTimelinePeriods(months, zoom) {
 
 function TimelineView({ groups, allTasks, months, zoom, draggedTaskId, setDraggedTaskId, onMoveTask, onEditTask, onEditGroup, onAddTask, onToggleCollapse }) {
   const periods = getTimelinePeriods(months, zoom);
-  const todayPct = getCurrentDayPct();
+  const todayPct = getCurrentDayPct(periods, zoom);
   const minWidth = zoom === "months" ? 1360 : zoom === "quarters" ? 980 : 760;
 
   return (
@@ -2633,7 +2668,7 @@ function PlanListView({ groups, onStatusChange, onEditTask, onEditGroup, onAddTa
                   </td>
                   <td className="muted">{task.phase}</td>
                   <td>
-                    <select className="select" value={task.bucket === "reserved" ? "unscheduled" : task.bucket} onChange={(event) => onStatusChange(task.id, event.target.value)} style={{ width: 132, height: 28 }}>
+                    <select className="select planner-status-select" value={task.bucket === "reserved" ? "unscheduled" : task.bucket} onChange={(event) => onStatusChange(task.id, event.target.value)} aria-label={`Update status for ${task.name}`}>
                       <option value="backlog">Open</option>
                       <option value="progress">In progress</option>
                       <option value="done">Done</option>
@@ -2672,6 +2707,20 @@ function TaskEditorOverlay({ task, groups, tasks, onClose, onSave }) {
     dependenciesText: (task.dependencies || []).join(", "),
   }));
   const update = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
+  const selectableTasks = React.useMemo(() => tasks.filter((candidate) => candidate.id !== task.id), [tasks, task.id]);
+  const toggleTaskLink = React.useCallback((field, value) => {
+    setDraft((current) => {
+      const selected = String(current[field] || "").split(",").map((item) => item.trim()).filter(Boolean);
+      const next = selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value];
+      return { ...current, [field]: next.join(", ") };
+    });
+  }, []);
+  const removeTaskLink = React.useCallback((field, value) => {
+    setDraft((current) => {
+      const next = String(current[field] || "").split(",").map((item) => item.trim()).filter(Boolean).filter((item) => item !== value);
+      return { ...current, [field]: next.join(", ") };
+    });
+  }, []);
 
   return (
     <div className="planner-modal-backdrop" role="dialog" aria-modal="true">
@@ -2694,15 +2743,68 @@ function TaskEditorOverlay({ task, groups, tasks, onClose, onSave }) {
           <label className="planner-field"><span>Start</span><input type="date" value={draft.startISO || ""} onChange={(event) => update("startISO", event.target.value)} /></label>
           <label className="planner-field"><span>End</span><input type="date" value={draft.endISO || ""} onChange={(event) => update("endISO", event.target.value)} /></label>
           <label className="planner-field"><span>Days</span><input type="number" min="0" value={draft.days ?? 0} onChange={(event) => update("days", Number(event.target.value))} /></label>
-          <label className="planner-field planner-field-wide"><span>Predecessors</span><input value={draft.predecessorsText || ""} onChange={(event) => update("predecessorsText", event.target.value)} list="planner-task-wbs" placeholder="Comma-separated WBS or task names" /></label>
-          <label className="planner-field planner-field-wide"><span>Dependencies</span><input value={draft.dependenciesText || ""} onChange={(event) => update("dependenciesText", event.target.value)} placeholder="Comma-separated dependent WBS or task names" /></label>
-          <datalist id="planner-task-wbs">{tasks.map((candidate) => <option key={candidate.id} value={candidate.wbs}>{candidate.name}</option>)}</datalist>
+          <TaskLinkSelector
+            label="Predecessors"
+            description="Tasks that must happen before this task."
+            value={draft.predecessorsText || ""}
+            field="predecessorsText"
+            candidates={selectableTasks}
+            onToggle={toggleTaskLink}
+            onRemove={removeTaskLink}
+          />
+          <TaskLinkSelector
+            label="Dependencies"
+            description="Tasks that depend on this task."
+            value={draft.dependenciesText || ""}
+            field="dependenciesText"
+            candidates={selectableTasks}
+            onToggle={toggleTaskLink}
+            onRemove={removeTaskLink}
+          />
         </div>
         <div className="planner-modal-actions">
           <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
           <button type="submit" className="btn btn-primary"><Icon name="check" size={13} /> Save task</button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function TaskLinkSelector({ label, description, value, field, candidates, onToggle, onRemove }) {
+  const selected = String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+  const selectedSet = new Set(selected);
+  return (
+    <div className="planner-field planner-field-wide planner-link-selector">
+      <div className="planner-link-selector-head">
+        <div>
+          <span>{label}</span>
+          <small>{description}</small>
+        </div>
+        <em>{selected.length} selected</em>
+      </div>
+      {selected.length > 0 && (
+        <div className="planner-link-chips" aria-label={`Selected ${label.toLowerCase()}`}>
+          {selected.map((item) => (
+            <button key={item} type="button" className="planner-link-chip" onClick={() => onRemove(field, item)} title={`Remove ${item}`}>
+              {item}<Icon name="x" size={10} />
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="planner-link-list" role="listbox" aria-label={`Choose ${label.toLowerCase()}`}>
+        {candidates.map((candidate) => {
+          const key = candidate.wbs || candidate.name;
+          const active = selectedSet.has(key);
+          return (
+            <button key={candidate.id} type="button" className={`planner-link-option ${active ? "is-selected" : ""}`} onClick={() => onToggle(field, key)} aria-pressed={active}>
+              <span className="planner-link-check"><Icon name={active ? "check" : "plus"} size={11} /></span>
+              <span className="planner-link-copy"><strong>{candidate.wbs}</strong><em>{candidate.name}</em></span>
+              <span className={`pill ${candidate.pctComplete >= 1 ? "pos" : candidate.cls} no-dot`}>{candidate.pctLabel}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

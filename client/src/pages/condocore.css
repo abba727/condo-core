@@ -1558,6 +1558,7 @@ a {
 .planner-list-shell { overflow-x: auto; }
 .planner-list-actions { display: flex; justify-content: flex-end; padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--bg-sunk); }
 .planner-table { min-width: 1120px; }
+.planner-status-select { width: 172px; min-height: 40px; line-height: 1.35; padding: 0 38px 0 14px; border-radius: 9px; font-size: 14px; background-position: right 12px center; }
 .planner-table-group-row td { background: color-mix(in oklab, var(--bg-sunk) 86%, var(--signal-info-soft) 14%); border-top: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-strong); padding: 8px 12px; text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
 .planner-row-complete td { background: color-mix(in oklab, var(--signal-pos-soft) 36%, var(--bg-elev) 64%); }
 .planner-modal-backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(15, 20, 24, 0.48); backdrop-filter: blur(10px); }
@@ -1571,5 +1572,22 @@ a {
 .planner-field span { color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.055em; }
 .planner-field input, .planner-field select { height: 34px; border: 1px solid var(--border); background: var(--bg-sunk); color: var(--text-main); border-radius: 6px; padding: 0 10px; outline: none; font-size: 13px; }
 .planner-field input:focus, .planner-field select:focus { border-color: var(--signal-info); box-shadow: 0 0 0 3px color-mix(in oklab, var(--signal-info) 18%, transparent); }
+.planner-link-selector { gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 9px; background: color-mix(in oklab, var(--bg-sunk) 78%, var(--bg-elev) 22%); }
+.planner-link-selector-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.planner-link-selector-head > div { display: flex; flex-direction: column; gap: 3px; }
+.planner-link-selector-head small { color: var(--text-muted); font-size: 12px; line-height: 1.35; }
+.planner-link-selector-head em { flex: 0 0 auto; color: var(--text-muted); font-size: 11px; font-style: normal; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
+.planner-link-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.planner-link-chip { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border: 1px solid color-mix(in oklab, var(--signal-info) 30%, var(--border)); border-radius: 999px; background: var(--signal-info-soft); color: var(--signal-info); font-size: 12px; font-weight: 700; }
+.planner-link-chip:hover { border-color: var(--signal-info); background: color-mix(in oklab, var(--signal-info-soft) 74%, white 26%); }
+.planner-link-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; max-height: 224px; overflow: auto; padding: 2px; }
+.planner-link-option { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 46px; padding: 7px 8px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg-elev); color: var(--text-main); text-align: left; transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
+.planner-link-option:hover { border-color: var(--border-strong); background: color-mix(in oklab, var(--bg-elev) 82%, var(--bg-active) 18%); }
+.planner-link-option.is-selected { border-color: color-mix(in oklab, var(--signal-info) 48%, var(--border)); background: color-mix(in oklab, var(--signal-info-soft) 48%, var(--bg-elev) 52%); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--signal-info) 18%, transparent); }
+.planner-link-check { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; background: var(--bg-sunk); color: var(--text-muted); border: 1px solid var(--border); }
+.planner-link-option.is-selected .planner-link-check { background: var(--signal-info); color: white; border-color: var(--signal-info); }
+.planner-link-copy { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.planner-link-copy strong { color: var(--text-main); font-size: 12px; font-weight: 800; }
+.planner-link-copy em { color: var(--text-muted); font-size: 12px; font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .planner-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
-@media (max-width: 900px) { .planner-timeline { grid-template-columns: 330px 1fr !important; } .planner-form-grid { grid-template-columns: 1fr; } .planner-field-wide { grid-column: auto; } }
+@media (max-width: 900px) { .planner-timeline { grid-template-columns: 330px 1fr !important; } .planner-form-grid { grid-template-columns: 1fr; } .planner-field-wide { grid-column: auto; } .planner-link-list { grid-template-columns: 1fr; } }

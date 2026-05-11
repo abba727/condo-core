@@ -49,3 +49,11 @@
 - [x] Make Timeline and List group collapse/expand icons clearly visible in group headers, including hover/focus and collapsed/expanded states.
 - [x] Run production build and browser verification for the updated collapse/expand controls.
 - [x] Save a checkpoint and deliver the icon visibility fix.
+
+# Planner Marker, Dropdown, and Dependency Selector Fixes
+
+- [x] Correct the red Today marker so it reflects the actual current date across Month, Quarter, and Year timeline scales instead of appearing at the far end.
+- [x] Fix List-view status dropdown formatting so option text is vertically centered and not clipped.
+- [x] Replace the predecessor/dependency native dropdown design with a cleaner task-linking selector that avoids the oversized side list.
+- [x] Run production build and browser verification for Timeline, List, and task editor changes.
+- [ ] Save a checkpoint and deliver the updated planner fixes.
