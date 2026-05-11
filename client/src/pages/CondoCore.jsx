@@ -1993,6 +1993,7 @@ function normalizeTaskForPlanner(task, index = 0) {
     ...task,
     id: String(task.id || `task-${index + 1}`),
     plannerOrder: Number.isFinite(task.plannerOrder) ? task.plannerOrder : index,
+    kanbanOrder: Number.isFinite(task.kanbanOrder) ? task.kanbanOrder : (Number.isFinite(task.plannerOrder) ? task.plannerOrder : index),
     wbs: task.wbs || `${index + 1}`,
     name: task.name || `Task ${index + 1}`,
     groupId: task.groupId || slugPlanValue(groupName),
@@ -2040,8 +2041,11 @@ function getTaskTimelineMetrics(task) {
 
 function getCurrentDayPct() {
   const today = new Date();
-  const offset = Math.round((today - PLAN_START_DATE) / DAY_MS);
-  return Math.max(0, Math.min(100, (offset / PLAN_TOTAL_DAYS) * 100));
+  const scheduleStart = PLAN_START_DATE.getTime();
+  const scheduleEnd = PLAN_END_DATE.getTime();
+  if (!Number.isFinite(scheduleStart) || !Number.isFinite(scheduleEnd) || scheduleEnd <= scheduleStart) return 0;
+  const rawPct = ((today.getTime() - scheduleStart) / (scheduleEnd - scheduleStart)) * 100;
+  return Math.max(0, Math.min(100, rawPct));
 }
 
 function buildPlanCsv(tasks) {
@@ -2114,6 +2118,10 @@ function ProjectPlanPage() {
     tasks: filteredTasks.filter((task) => task.groupId === group.id),
   })).filter((entry) => entry.tasks.length > 0 || phaseFilter === "all"), [orderedGroups, filteredTasks, phaseFilter]);
 
+  const toggleGroupCollapse = React.useCallback((groupId) => {
+    setGroups((current) => current.map((group) => group.id === groupId ? { ...group, collapsed: !group.collapsed } : group));
+  }, []);
+
   const doneCount = visibleBaseTasks.filter((task) => task.bucket === "done" || task.pctComplete >= 1).length;
   const progressCount = visibleBaseTasks.filter((task) => task.bucket === "progress").length;
   const openCount = visibleBaseTasks.filter((task) => task.bucket === "backlog").length;
@@ -2146,7 +2154,7 @@ function ProjectPlanPage() {
     setTasks((current) => {
       const exists = current.some((task) => task.id === normalized.id);
       if (exists) return current.map((task) => task.id === normalized.id ? normalized : task);
-      return [{ ...normalized, plannerOrder: -1 }, ...current].map((task, index) => ({ ...task, plannerOrder: index }));
+      return [{ ...normalized, plannerOrder: -1, kanbanOrder: -1 }, ...current].map((task, index) => ({ ...task, plannerOrder: index, kanbanOrder: Number.isFinite(task.kanbanOrder) ? task.kanbanOrder : index }));
     });
     setEditingTask(null);
   }, [groups]);
@@ -2170,6 +2178,37 @@ function ProjectPlanPage() {
       const pctComplete = bucket === "done" ? 1 : bucket === "progress" ? Math.max(task.pctComplete || 0.25, 0.25) : 0;
       return normalizeTaskForPlanner({ ...task, bucket, status: meta.status, cls: meta.cls, pctComplete, pctLabel: `${Math.round(pctComplete * 100)}%` });
     }));
+  }, []);
+
+  const moveKanbanTask = React.useCallback((taskId, targetTaskId, bucket) => {
+    const targetBucket = bucket === "reserved" ? "unscheduled" : bucket;
+    const meta = statusMetaForBucket(targetBucket);
+    const matchesBucket = (task) => targetBucket === "unscheduled" ? ["unscheduled", "reserved"].includes(task.bucket) : task.bucket === targetBucket;
+    setTasks((current) => {
+      const moving = current.find((task) => task.id === taskId);
+      if (!moving) return current;
+      const pctComplete = targetBucket === moving.bucket
+        ? moving.pctComplete
+        : targetBucket === "done"
+          ? 1
+          : targetBucket === "progress"
+            ? Math.max(moving.pctComplete || 0.25, 0.25)
+            : 0;
+      const statusAdjusted = current.map((task) => task.id === taskId
+        ? normalizeTaskForPlanner({ ...task, bucket: targetBucket, status: meta.status, cls: meta.cls, pctComplete, pctLabel: `${Math.round(pctComplete * 100)}%` })
+        : task
+      );
+      const column = statusAdjusted
+        .filter(matchesBucket)
+        .sort((a, b) => (a.kanbanOrder ?? a.plannerOrder ?? 0) - (b.kanbanOrder ?? b.plannerOrder ?? 0));
+      const movingTask = column.find((task) => task.id === taskId);
+      if (!movingTask) return statusAdjusted;
+      const orderedColumn = column.filter((task) => task.id !== taskId);
+      const targetIndex = targetTaskId ? orderedColumn.findIndex((task) => task.id === targetTaskId) : -1;
+      orderedColumn.splice(targetIndex >= 0 ? targetIndex : orderedColumn.length, 0, movingTask);
+      const orderMap = new Map(orderedColumn.map((task, index) => [task.id, index]));
+      return statusAdjusted.map((task) => orderMap.has(task.id) ? { ...task, kanbanOrder: orderMap.get(task.id) } : task);
+    });
   }, []);
 
   const moveTask = React.useCallback((taskId, targetTaskId, targetGroupId = null) => {
@@ -2275,9 +2314,9 @@ function ProjectPlanPage() {
           )}
         </div>
 
-        {view === "timeline" && <TimelineView groups={filteredGroupedTasks} allTasks={visibleBaseTasks} months={PLAN_MONTHS} zoom={zoom} draggedTaskId={draggedTaskId} setDraggedTaskId={setDraggedTaskId} onMoveTask={moveTask} onEditTask={setEditingTask} onEditGroup={setEditingGroup} onAddTask={addTaskForGroup} />}
-        {view === "kanban" && <KanbanView tasks={filteredTasks} draggedTaskId={draggedKanbanTaskId} setDraggedTaskId={setDraggedKanbanTaskId} dropBucket={kanbanDropBucket} setDropBucket={setKanbanDropBucket} onStatusChange={updateTaskStatus} onEditTask={setEditingTask} />}
-        {view === "list" && <PlanListView groups={filteredGroupedTasks} tasks={filteredTasks} onStatusChange={updateTaskStatus} onEditTask={setEditingTask} onEditGroup={setEditingGroup} onAddTask={addTaskForGroup} onAddGroup={() => setEditingGroup({ id: null, name: "" })} />}
+        {view === "timeline" && <TimelineView groups={filteredGroupedTasks} allTasks={visibleBaseTasks} months={PLAN_MONTHS} zoom={zoom} draggedTaskId={draggedTaskId} setDraggedTaskId={setDraggedTaskId} onMoveTask={moveTask} onEditTask={setEditingTask} onEditGroup={setEditingGroup} onAddTask={addTaskForGroup} onToggleCollapse={toggleGroupCollapse} />}
+        {view === "kanban" && <KanbanView tasks={filteredTasks} draggedTaskId={draggedKanbanTaskId} setDraggedTaskId={setDraggedKanbanTaskId} dropBucket={kanbanDropBucket} setDropBucket={setKanbanDropBucket} onStatusChange={updateTaskStatus} onKanbanMove={moveKanbanTask} onEditTask={setEditingTask} />}
+        {view === "list" && <PlanListView groups={filteredGroupedTasks} tasks={filteredTasks} onStatusChange={updateTaskStatus} onEditTask={setEditingTask} onEditGroup={setEditingGroup} onAddTask={addTaskForGroup} onAddGroup={() => setEditingGroup({ id: null, name: "" })} onToggleCollapse={toggleGroupCollapse} />}
       </div>
 
       {editingTask && <TaskEditorOverlay task={editingTask} groups={groups} tasks={visibleBaseTasks} onClose={() => setEditingTask(null)} onSave={saveTask} />}
@@ -2327,7 +2366,7 @@ function getTimelinePeriods(months, zoom) {
   return months;
 }
 
-function TimelineView({ groups, allTasks, months, zoom, draggedTaskId, setDraggedTaskId, onMoveTask, onEditTask, onEditGroup, onAddTask }) {
+function TimelineView({ groups, allTasks, months, zoom, draggedTaskId, setDraggedTaskId, onMoveTask, onEditTask, onEditGroup, onAddTask, onToggleCollapse }) {
   const periods = getTimelinePeriods(months, zoom);
   const todayPct = getCurrentDayPct();
   const minWidth = zoom === "months" ? 1360 : zoom === "quarters" ? 980 : 760;
@@ -2339,8 +2378,8 @@ function TimelineView({ groups, allTasks, months, zoom, draggedTaskId, setDragge
           <div className="planner-sticky-head planner-task-head">Task / WBS · Owner · Days · Predecessors</div>
           {groups.map(({ group, tasks }) => (
             <React.Fragment key={group.id}>
-              <GroupHeader group={group} count={tasks.length} onEditGroup={onEditGroup} onAddTask={onAddTask} onDropTask={(taskId) => onMoveTask(taskId, null, group.id)} />
-              {tasks.map((task) => (
+              <GroupHeader group={group} count={tasks.length} onEditGroup={onEditGroup} onAddTask={onAddTask} onToggleCollapse={onToggleCollapse} onDropTask={(taskId) => onMoveTask(taskId, null, group.id)} />
+              {!group.collapsed && tasks.map((task) => (
                 <TimelineTaskRow key={task.id} task={task} draggedTaskId={draggedTaskId} setDraggedTaskId={setDraggedTaskId} onMoveTask={onMoveTask} onEditTask={onEditTask} />
               ))}
             </React.Fragment>
@@ -2358,7 +2397,7 @@ function TimelineView({ groups, allTasks, months, zoom, draggedTaskId, setDragge
               {groups.map(({ group, tasks }) => (
                 <React.Fragment key={group.id}>
                   <div className="planner-group-grid-row" />
-                  {tasks.map((task) => <TimelineBarRow key={task.id} task={task} periods={periods} onEditTask={onEditTask} />)}
+                  {!group.collapsed && tasks.map((task) => <TimelineBarRow key={task.id} task={task} periods={periods} onEditTask={onEditTask} />)}
                 </React.Fragment>
               ))}
             </div>
@@ -2369,7 +2408,7 @@ function TimelineView({ groups, allTasks, months, zoom, draggedTaskId, setDragge
   );
 }
 
-function GroupHeader({ group, count, onEditGroup, onAddTask, onDropTask }) {
+function GroupHeader({ group, count, onEditGroup, onAddTask, onToggleCollapse, onDropTask }) {
   return (
     <div
       className="planner-group-row"
@@ -2381,6 +2420,9 @@ function GroupHeader({ group, count, onEditGroup, onAddTask, onDropTask }) {
       }}
     >
       <div className="row" style={{ gap: 8 }}>
+        <button className="planner-collapse-btn" onClick={() => onToggleCollapse(group.id)} title={group.collapsed ? "Expand group" : "Collapse group"} aria-label={group.collapsed ? `Expand ${group.name}` : `Collapse ${group.name}`}>
+          <Icon name={group.collapsed ? "chevron-right" : "chevron-down"} size={13} />
+        </button>
         <Icon name="layers" size={13} />
         <strong>{group.name}</strong>
         <span className="mono faint">{count}</span>
@@ -2418,10 +2460,10 @@ function TimelineTaskRow({ task, draggedTaskId, setDraggedTaskId, onMoveTask, on
         <div className="row" style={{ gap: 8 }}>
           <span className="mono faint" style={{ fontSize: 11, minWidth: 36 }}>{task.wbs}</span>
           <span className="planner-task-name">{task.name}</span>
-          {task.pctComplete >= 1 && <span className="pill pos no-dot" style={{ height: 18 }}>100%</span>}
+          {task.pctComplete > 0 && <span className={`pill ${task.pctComplete >= 1 ? "pos" : task.cls} no-dot`} style={{ height: 18 }}>{task.pctLabel}</span>}
         </div>
         <div className="planner-task-meta">
-          {task.owner} · {task.startDisplay} → {task.endDisplay} · {task.days ?? "—"}d
+          {task.owner} · {task.startDisplay} → {task.endDisplay} · {task.days ?? "—"}d · {task.pctLabel}
           {(task.predecessors || []).length > 0 && <> · pred: {(task.predecessors || []).join(", ")}</>}
         </div>
       </div>
@@ -2449,14 +2491,17 @@ function TimelineBarRow({ task, periods, onEditTask }) {
   );
 }
 
-function KanbanView({ tasks, draggedTaskId, setDraggedTaskId, dropBucket, setDropBucket, onStatusChange, onEditTask }) {
+function KanbanView({ tasks, draggedTaskId, setDraggedTaskId, dropBucket, setDropBucket, onStatusChange, onKanbanMove, onEditTask }) {
+  const [dragOverKanbanTaskId, setDragOverKanbanTaskId] = React.useState(null);
   const columns = [
     { ...PLAN_STATUS_META.backlog, count: tasks.filter((task) => task.bucket === "backlog").length },
     { ...PLAN_STATUS_META.progress, count: tasks.filter((task) => task.bucket === "progress").length },
     { ...PLAN_STATUS_META.done, count: tasks.filter((task) => task.bucket === "done").length },
     { ...PLAN_STATUS_META.unscheduled, count: tasks.filter((task) => task.bucket === "unscheduled" || task.bucket === "reserved").length },
   ];
-  const tasksByCol = Object.fromEntries(columns.map((column) => [column.id, tasks.filter((task) => column.id === "unscheduled" ? ["unscheduled", "reserved"].includes(task.bucket) : task.bucket === column.id)]));
+  const tasksByCol = Object.fromEntries(columns.map((column) => [column.id, tasks
+    .filter((task) => column.id === "unscheduled" ? ["unscheduled", "reserved"].includes(task.bucket) : task.bucket === column.id)
+    .sort((a, b) => (a.kanbanOrder ?? a.plannerOrder ?? 0) - (b.kanbanOrder ?? b.plannerOrder ?? 0))]));
 
   return (
     <div className="card-body planner-kanban-shell">
@@ -2470,9 +2515,10 @@ function KanbanView({ tasks, draggedTaskId, setDraggedTaskId, dropBucket, setDro
             onDrop={(event) => {
               event.preventDefault();
               const taskId = event.dataTransfer.getData("text/plain") || draggedTaskId;
-              if (taskId) onStatusChange(taskId, col.id);
+              if (taskId) onKanbanMove(taskId, null, col.id);
               setDraggedTaskId(null);
               setDropBucket(null);
+              setDragOverKanbanTaskId(null);
             }}
           >
             <div className="row-between planner-kanban-head">
@@ -2486,14 +2532,31 @@ function KanbanView({ tasks, draggedTaskId, setDraggedTaskId, dropBucket, setDro
               {(tasksByCol[col.id] || []).map((task) => (
                 <div
                   key={task.id}
-                  className={`planner-kanban-card ${task.pctComplete >= 1 ? "is-complete" : ""}`}
+                  className={`planner-kanban-card ${task.pctComplete >= 1 ? "is-complete" : ""} ${dragOverKanbanTaskId === task.id ? "is-drop-before" : ""}`}
+                  style={{ "--card-accent": `var(--${task.pctComplete >= 1 ? "signal-pos" : task.cls === "info" ? "signal-info" : task.cls === "warn" ? "signal-warn" : task.cls === "neg" ? "signal-neg" : "border-strong"})`, "--card-progress": `${Math.max(0, Math.min(100, (task.pctComplete || 0) * 100))}%` }}
                   draggable
                   onDragStart={(event) => {
                     event.dataTransfer.effectAllowed = "move";
                     event.dataTransfer.setData("text/plain", task.id);
                     setDraggedTaskId(task.id);
                   }}
-                  onDragEnd={() => { setDraggedTaskId(null); setDropBucket(null); }}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setDropBucket(col.id);
+                    if (draggedTaskId && draggedTaskId !== task.id) setDragOverKanbanTaskId(task.id);
+                  }}
+                  onDragLeave={() => setDragOverKanbanTaskId((current) => current === task.id ? null : current)}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const taskId = event.dataTransfer.getData("text/plain") || draggedTaskId;
+                    if (taskId && taskId !== task.id) onKanbanMove(taskId, task.id, col.id);
+                    setDraggedTaskId(null);
+                    setDropBucket(null);
+                    setDragOverKanbanTaskId(null);
+                  }}
+                  onDragEnd={() => { setDraggedTaskId(null); setDropBucket(null); setDragOverKanbanTaskId(null); }}
                   onDoubleClick={() => onEditTask(task)}
                 >
                   <div className="row" style={{ gap: 6, marginBottom: 4 }}>
@@ -2501,14 +2564,17 @@ function KanbanView({ tasks, draggedTaskId, setDraggedTaskId, dropBucket, setDro
                     <span className={`pill ${task.pctComplete >= 1 ? "pos" : task.cls} no-dot`} style={{ marginLeft: "auto", height: 18 }}>{task.pctLabel}</span>
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{task.name}</div>
+                  <div className="planner-kanban-dates mono">{task.startDisplay} → {task.endDisplay}</div>
+                  <div className="planner-kanban-progress" aria-label={`${task.pctLabel} complete`}><span /></div>
                   <div className="row" style={{ gap: 6, fontSize: 11, color: "var(--text-muted)", flexWrap: "wrap" }}>
                     <Icon name="clock" size={11} />
                     <span>{task.days ?? "—"}d</span>
                     <span className="dot" style={{ width: 3, height: 3, marginLeft: 4 }} />
                     <span>{task.owner}</span>
+                    {(task.predecessors || []).length > 0 && <span className="planner-kanban-badge"><Icon name="link" size={10} /> {(task.predecessors || []).length}</span>}
                   </div>
                   <div className="planner-card-foot">
-                    <span className="faint">{task.group}</span>
+                    <span className="faint">{task.phase || task.group}</span>
                     <button className="planner-icon-btn" onClick={() => onEditTask(task)} title="Edit task"><Icon name="edit" size={12} /></button>
                   </div>
                 </div>
@@ -2522,7 +2588,7 @@ function KanbanView({ tasks, draggedTaskId, setDraggedTaskId, dropBucket, setDro
   );
 }
 
-function PlanListView({ groups, onStatusChange, onEditTask, onEditGroup, onAddTask, onAddGroup }) {
+function PlanListView({ groups, onStatusChange, onEditTask, onEditGroup, onAddTask, onAddGroup, onToggleCollapse }) {
   return (
     <div className="card-body-flush planner-list-shell">
       <div className="planner-list-actions">
@@ -2550,7 +2616,7 @@ function PlanListView({ groups, onStatusChange, onEditTask, onEditGroup, onAddTa
               <tr className="planner-table-group-row">
                 <td colSpan="11">
                   <div className="row-between">
-                    <div className="row" style={{ gap: 8 }}><Icon name="layers" size={13} /><strong>{group.name}</strong><span className="mono faint">{tasks.length}</span></div>
+                    <div className="row" style={{ gap: 8 }}><button className="planner-collapse-btn" onClick={() => onToggleCollapse(group.id)} title={group.collapsed ? "Expand group" : "Collapse group"} aria-label={group.collapsed ? `Expand ${group.name}` : `Collapse ${group.name}`}><Icon name={group.collapsed ? "chevron-right" : "chevron-down"} size={13} /></button><Icon name="layers" size={13} /><strong>{group.name}</strong><span className="mono faint">{tasks.length}</span></div>
                     <div className="row" style={{ gap: 6 }}>
                       <button className="btn btn-secondary btn-sm" onClick={() => onAddTask(group.id)}><Icon name="plus" size={12} /> Task</button>
                       <button className="btn btn-secondary btn-sm" onClick={() => onEditGroup(group)}><Icon name="edit" size={12} /> Group</button>
@@ -2558,7 +2624,7 @@ function PlanListView({ groups, onStatusChange, onEditTask, onEditGroup, onAddTa
                   </div>
                 </td>
               </tr>
-              {tasks.map((task) => (
+              {!group.collapsed && tasks.map((task) => (
                 <tr key={task.id} className={task.pctComplete >= 1 ? "planner-row-complete" : ""}>
                   <td className="mono faint">{task.wbs}</td>
                   <td style={{ fontWeight: 500 }}>

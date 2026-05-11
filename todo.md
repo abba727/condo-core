@@ -28,5 +28,18 @@
 - [x] Kanban view: support editing tasks from cards.
 - [x] List view: support adding tasks and groups.
 - [x] List view: support editing tasks and group assignment.
-- [ ] Run production build and browser verification for Timeline, Kanban, and List interactions.
-- [ ] Save a final checkpoint and deliver the updated planner version.
+- [x] Run production build and browser verification for Timeline, Kanban, and List interactions.
+- [x] Save a final checkpoint and deliver the updated planner version.
+
+# Project Plan Refinement Pass
+
+- [x] Fix Timeline month/quarter/year header so the time-scale columns never scroll over or into the title/name section.
+- [x] Show `% complete` on Timeline task rows and bars when a task is in progress or has any percent-complete value.
+- [x] Correct the current-day marker so it is positioned on the time axis, not in the wrong row or direction.
+- [x] Add collapse/expand behavior for groups on the Timeline view.
+- [x] Add collapse/expand behavior for groups on the List view.
+- [x] Hide Timeline row pencil/edit icons by default and reveal them only on row hover/focus.
+- [x] Support drag-and-drop reordering within the same Kanban column, in addition to moving cards between columns.
+- [x] Show richer details on Kanban cards, including owner, phase/group, dates, duration, percent complete, and predecessor/dependency information where available.
+- [x] Run production build and browser verification for Timeline, Kanban, and List refinements.
+- [x] Save a checkpoint and deliver the refined planner version.
