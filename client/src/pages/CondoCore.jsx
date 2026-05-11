@@ -2421,7 +2421,7 @@ function GroupHeader({ group, count, onEditGroup, onAddTask, onToggleCollapse, o
     >
       <div className="row" style={{ gap: 8 }}>
         <button className="planner-collapse-btn" onClick={() => onToggleCollapse(group.id)} title={group.collapsed ? "Expand group" : "Collapse group"} aria-label={group.collapsed ? `Expand ${group.name}` : `Collapse ${group.name}`}>
-          <Icon name={group.collapsed ? "chevron-right" : "chevron-down"} size={13} />
+          <Icon name={group.collapsed ? "chevronRight" : "chevronDown"} size={13} />
         </button>
         <Icon name="layers" size={13} />
         <strong>{group.name}</strong>
@@ -2616,7 +2616,7 @@ function PlanListView({ groups, onStatusChange, onEditTask, onEditGroup, onAddTa
               <tr className="planner-table-group-row">
                 <td colSpan="11">
                   <div className="row-between">
-                    <div className="row" style={{ gap: 8 }}><button className="planner-collapse-btn" onClick={() => onToggleCollapse(group.id)} title={group.collapsed ? "Expand group" : "Collapse group"} aria-label={group.collapsed ? `Expand ${group.name}` : `Collapse ${group.name}`}><Icon name={group.collapsed ? "chevron-right" : "chevron-down"} size={13} /></button><Icon name="layers" size={13} /><strong>{group.name}</strong><span className="mono faint">{tasks.length}</span></div>
+                    <div className="row" style={{ gap: 8 }}><button className="planner-collapse-btn" onClick={() => onToggleCollapse(group.id)} title={group.collapsed ? "Expand group" : "Collapse group"} aria-label={group.collapsed ? `Expand ${group.name}` : `Collapse ${group.name}`}><Icon name={group.collapsed ? "chevronRight" : "chevronDown"} size={13} /></button><Icon name="layers" size={13} /><strong>{group.name}</strong><span className="mono faint">{tasks.length}</span></div>
                     <div className="row" style={{ gap: 6 }}>
                       <button className="btn btn-secondary btn-sm" onClick={() => onAddTask(group.id)}><Icon name="plus" size={12} /> Task</button>
                       <button className="btn btn-secondary btn-sm" onClick={() => onEditGroup(group)}><Icon name="edit" size={12} /> Group</button>
@@ -4109,7 +4109,7 @@ function DocumentVaultPage() {
 
           <div className="vault-breadcrumb">
             <span className="faint">Vault</span>
-            <Icon name="chevron-right" size={11} style={{ color: "var(--text-faint)" }} />
+            <Icon name="chevronRight" size={11} style={{ color: "var(--text-faint)" }} />
             <span>{category || (folder === "fav" ? "Pinned" : folder === "recent" ? "Recent" : "All documents")}</span>
             <span className="muted" style={{ marginLeft: 12, fontSize: 12 }}>{filtered.length} items</span>
           </div>

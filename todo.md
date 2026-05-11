@@ -43,3 +43,9 @@
 - [x] Show richer details on Kanban cards, including owner, phase/group, dates, duration, percent complete, and predecessor/dependency information where available.
 - [x] Run production build and browser verification for Timeline, Kanban, and List refinements.
 - [x] Save a checkpoint and deliver the refined planner version.
+
+# Collapse Control Visibility Fix
+
+- [x] Make Timeline and List group collapse/expand icons clearly visible in group headers, including hover/focus and collapsed/expanded states.
+- [x] Run production build and browser verification for the updated collapse/expand controls.
+- [x] Save a checkpoint and deliver the icon visibility fix.
