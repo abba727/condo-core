@@ -56,4 +56,21 @@
 - [x] Fix List-view status dropdown formatting so option text is vertically centered and not clipped.
 - [x] Replace the predecessor/dependency native dropdown design with a cleaner task-linking selector that avoids the oversized side list.
 - [x] Run production build and browser verification for Timeline, List, and task editor changes.
-- [ ] Save a checkpoint and deliver the updated planner fixes.
+- [x] Save a checkpoint and deliver the updated planner fixes.
+
+# GitHub Commit
+
+- [x] Inspect local Git state and configured remote for `abba727/condo-core`.
+- [x] Stage the intended CondoCore project files and create a commit for the completed planner refinements.
+- [x] Push the commit to GitHub and verify the pushed branch/commit URL.
+- [x] Report the commit details to the user.
+
+# Project Plan Timeline and Editor Polish
+
+- [x] Correct the red Today vertical line so it is positioned from the actual current date against the rendered timeline scale and never defaults to the far right.
+- [x] Restore visible horizontal scrollbars for the timeline and keep the top timeline header from scrolling over the sticky task-name column.
+- [x] Highlight the corresponding timeline row/section in light grey when hovering over a Project Plan task.
+- [x] Replace the predecessor/dependency entry pattern with a themed, friendly task picker where selected tasks appear beneath the picker.
+- [x] Restyle task overlay and new-task overlay date controls so calendar/date fields match the CondoCore theme instead of generic browser boxes.
+- [x] Run production build and browser verification for the updated timeline, relationship picker, and date controls.
+- [x] Save a checkpoint and deliver the completed Project Plan polish fixes.

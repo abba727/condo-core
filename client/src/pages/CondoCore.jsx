@@ -2042,18 +2042,6 @@ function buildInitialGroups(tasks) {
   return Array.from(map.values());
 }
 
-function getTaskTimelineMetrics(task) {
-  const start = parsePlanDate(task.startISO);
-  const end = parsePlanDate(task.endISO || task.startISO);
-  if (!start || !end) return { left: 0, width: 2 };
-  const startOffset = Math.max(0, Math.min(PLAN_TOTAL_DAYS, Math.round((start - PLAN_TIMELINE_START_DATE) / DAY_MS)));
-  const endOffset = Math.max(startOffset + 1, Math.min(PLAN_TOTAL_DAYS, Math.round((end - PLAN_TIMELINE_START_DATE) / DAY_MS) + 1));
-  return {
-    left: Math.max(0, Math.min(98, (startOffset / PLAN_TOTAL_DAYS) * 100)),
-    width: Math.max(1.6, ((endOffset - startOffset) / PLAN_TOTAL_DAYS) * 100),
-  };
-}
-
 function getPeriodEndDate(period, nextPeriod, zoom) {
   if (nextPeriod?.iso) return monthFloor(nextPeriod.iso) || addPlanMonths(monthFloor(period?.iso) || PLAN_TIMELINE_START_DATE, 1);
   const start = monthFloor(period?.iso) || PLAN_TIMELINE_START_DATE;
@@ -2062,25 +2050,53 @@ function getPeriodEndDate(period, nextPeriod, zoom) {
   return addPlanMonths(start, 1);
 }
 
-function getCurrentDayPct(periods = PLAN_MONTHS, zoom = "months") {
-  const today = new Date();
+function getDatePeriodCoordinate(value, periods = PLAN_MONTHS, zoom = "months", { clamp = true } = {}) {
+  const date = parsePlanDate(value);
   const visiblePeriods = periods.length ? periods : PLAN_MONTHS;
-  if (!visiblePeriods.length) return 0;
+  if (!date || !visiblePeriods.length) return null;
   const firstStart = monthFloor(visiblePeriods[0]?.iso) || PLAN_TIMELINE_START_DATE;
   const lastEnd = getPeriodEndDate(visiblePeriods[visiblePeriods.length - 1], null, zoom);
-  if (today <= firstStart) return 0;
-  if (today >= lastEnd) return 100;
+  if (date < firstStart) return clamp ? 0 : null;
+  if (date >= lastEnd) return clamp ? 100 : null;
+
   const periodIndex = visiblePeriods.findIndex((period, index) => {
     const start = monthFloor(period.iso) || firstStart;
     const end = getPeriodEndDate(period, visiblePeriods[index + 1], zoom);
-    return today >= start && today < end;
+    return date >= start && date < end;
   });
-  if (periodIndex < 0) return Math.max(0, Math.min(100, ((today - firstStart) / Math.max(DAY_MS, lastEnd - firstStart)) * 100));
+
+  if (periodIndex < 0) {
+    if (!clamp) return null;
+    return Math.max(0, Math.min(100, ((date - firstStart) / Math.max(DAY_MS, lastEnd - firstStart)) * 100));
+  }
+
   const period = visiblePeriods[periodIndex];
   const start = monthFloor(period.iso) || firstStart;
   const end = getPeriodEndDate(period, visiblePeriods[periodIndex + 1], zoom);
-  const within = Math.max(0, Math.min(1, (today - start) / Math.max(DAY_MS, end - start)));
+  const within = Math.max(0, Math.min(1, (date - start) / Math.max(DAY_MS, end - start)));
   return Math.max(0, Math.min(100, ((periodIndex + within) / visiblePeriods.length) * 100));
+}
+
+function getTaskTimelineMetrics(task, periods = PLAN_MONTHS, zoom = "months") {
+  const start = parsePlanDate(task.startISO);
+  const end = parsePlanDate(task.endISO || task.startISO);
+  if (!start || !end) return { left: 0, width: 2 };
+  const left = getDatePeriodCoordinate(start, periods, zoom, { clamp: true }) ?? 0;
+  const right = getDatePeriodCoordinate(new Date(end.getTime() + DAY_MS), periods, zoom, { clamp: true }) ?? Math.min(100, left + 2);
+  return {
+    left: Math.max(0, Math.min(99, left)),
+    width: Math.max(1.6, Math.min(100 - left, right - left)),
+  };
+}
+
+function getCurrentDayMarker(periods = PLAN_MONTHS, zoom = "months") {
+  const today = new Date();
+  const left = getDatePeriodCoordinate(today, periods, zoom, { clamp: false });
+  if (left == null) return null;
+  return {
+    left,
+    label: today.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+  };
 }
 
 function buildPlanCsv(tasks) {
@@ -2402,20 +2418,22 @@ function getTimelinePeriods(months, zoom) {
 }
 
 function TimelineView({ groups, allTasks, months, zoom, draggedTaskId, setDraggedTaskId, onMoveTask, onEditTask, onEditGroup, onAddTask, onToggleCollapse }) {
+  const [hoveredTaskId, setHoveredTaskId] = React.useState(null);
   const periods = getTimelinePeriods(months, zoom);
-  const todayPct = getCurrentDayPct(periods, zoom);
-  const minWidth = zoom === "months" ? 1360 : zoom === "quarters" ? 980 : 760;
+  const todayMarker = getCurrentDayMarker(periods, zoom);
+  const minWidth = zoom === "months" ? 1680 : zoom === "quarters" ? 1180 : 980;
+  const periodMin = Math.max(116, Math.floor(minWidth / Math.max(1, periods.length)));
 
   return (
     <div className="planner-timeline-shell">
-      <div className="planner-timeline" style={{ gridTemplateColumns: "390px 1fr" }}>
+      <div className="planner-timeline" style={{ gridTemplateColumns: "390px max-content" }}>
         <div className="planner-task-pane">
           <div className="planner-sticky-head planner-task-head">Task / WBS · Owner · Days · Predecessors</div>
           {groups.map(({ group, tasks }) => (
             <React.Fragment key={group.id}>
               <GroupHeader group={group} count={tasks.length} onEditGroup={onEditGroup} onAddTask={onAddTask} onToggleCollapse={onToggleCollapse} onDropTask={(taskId) => onMoveTask(taskId, null, group.id)} />
               {!group.collapsed && tasks.map((task) => (
-                <TimelineTaskRow key={task.id} task={task} draggedTaskId={draggedTaskId} setDraggedTaskId={setDraggedTaskId} onMoveTask={onMoveTask} onEditTask={onEditTask} />
+                <TimelineTaskRow key={task.id} task={task} draggedTaskId={draggedTaskId} setDraggedTaskId={setDraggedTaskId} onMoveTask={onMoveTask} onEditTask={onEditTask} hoveredTaskId={hoveredTaskId} setHoveredTaskId={setHoveredTaskId} />
               ))}
             </React.Fragment>
           ))}
@@ -2424,15 +2442,15 @@ function TimelineView({ groups, allTasks, months, zoom, draggedTaskId, setDragge
 
         <div className="planner-grid-pane">
           <div className="planner-grid-inner" style={{ minWidth }}>
-            <div className="planner-period-head planner-sticky-head" style={{ gridTemplateColumns: `repeat(${periods.length}, minmax(86px, 1fr))` }}>
+            <div className="planner-period-head planner-sticky-head" style={{ gridTemplateColumns: `repeat(${periods.length}, minmax(${periodMin}px, 1fr))` }}>
               {periods.map((m) => <div key={`${zoom}-${m.label}-${m.iso}`} className="planner-period-cell">{m.label}</div>)}
             </div>
-            <div className="planner-bars" style={{ "--timeline-cols": periods.length, "--today-left": `${todayPct}%` }}>
-              <div className="planner-today-line"><span>Today</span></div>
+            <div className="planner-bars" style={{ "--timeline-cols": periods.length, "--today-left": todayMarker ? `${todayMarker.left}%` : "-999px" }}>
+              {todayMarker && <div className="planner-today-line"><span>Today · {todayMarker.label}</span></div>}
               {groups.map(({ group, tasks }) => (
                 <React.Fragment key={group.id}>
                   <div className="planner-group-grid-row" />
-                  {!group.collapsed && tasks.map((task) => <TimelineBarRow key={task.id} task={task} periods={periods} onEditTask={onEditTask} />)}
+                  {!group.collapsed && tasks.map((task) => <TimelineBarRow key={task.id} task={task} periods={periods} zoom={zoom} hoveredTaskId={hoveredTaskId} setHoveredTaskId={setHoveredTaskId} onEditTask={onEditTask} />)}
                 </React.Fragment>
               ))}
             </div>
@@ -2470,11 +2488,12 @@ function GroupHeader({ group, count, onEditGroup, onAddTask, onToggleCollapse, o
   );
 }
 
-function TimelineTaskRow({ task, draggedTaskId, setDraggedTaskId, onMoveTask, onEditTask }) {
+function TimelineTaskRow({ task, draggedTaskId, setDraggedTaskId, onMoveTask, onEditTask, hoveredTaskId, setHoveredTaskId }) {
   const isDragging = draggedTaskId === task.id;
+  const isHovered = hoveredTaskId === task.id;
   return (
     <div
-      className={`planner-task-row ${task.pctComplete >= 1 ? "is-done" : ""} ${isDragging ? "is-dragging" : ""}`}
+      className={`planner-task-row ${task.pctComplete >= 1 ? "is-done" : ""} ${isDragging ? "is-dragging" : ""} ${isHovered ? "is-hovered" : ""}`}
       draggable
       onDragStart={(event) => {
         event.dataTransfer.effectAllowed = "move";
@@ -2489,6 +2508,14 @@ function TimelineTaskRow({ task, draggedTaskId, setDraggedTaskId, onMoveTask, on
         if (taskId && taskId !== task.id) onMoveTask(taskId, task.id, task.groupId);
       }}
       onDoubleClick={() => onEditTask(task)}
+      onMouseEnter={() => setHoveredTaskId(task.id)}
+      onMouseOver={() => setHoveredTaskId(task.id)}
+      onPointerEnter={() => setHoveredTaskId(task.id)}
+      onPointerOver={() => setHoveredTaskId(task.id)}
+      onMouseLeave={() => setHoveredTaskId((current) => current === task.id ? null : current)}
+      onPointerLeave={() => setHoveredTaskId((current) => current === task.id ? null : current)}
+      onFocus={() => setHoveredTaskId(task.id)}
+      onBlur={() => setHoveredTaskId((current) => current === task.id ? null : current)}
     >
       <Icon name="grip" size={12} className="planner-grip" />
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -2507,12 +2534,22 @@ function TimelineTaskRow({ task, draggedTaskId, setDraggedTaskId, onMoveTask, on
   );
 }
 
-function TimelineBarRow({ task, periods, onEditTask }) {
-  const metrics = getTaskTimelineMetrics(task);
+function TimelineBarRow({ task, periods, zoom, hoveredTaskId, setHoveredTaskId, onEditTask }) {
+  const metrics = getTaskTimelineMetrics(task, periods, zoom);
   const isDone = task.pctComplete >= 1;
   const predecessorCount = (task.predecessors || []).length;
+  const isHovered = hoveredTaskId === task.id;
   return (
-    <div className="planner-bar-row" style={{ "--timeline-cols": periods.length }}>
+    <div
+      className={`planner-bar-row ${isHovered ? "is-hovered" : ""}`}
+      style={{ "--timeline-cols": periods.length }}
+      onMouseEnter={() => setHoveredTaskId(task.id)}
+      onMouseOver={() => setHoveredTaskId(task.id)}
+      onPointerEnter={() => setHoveredTaskId(task.id)}
+      onPointerOver={() => setHoveredTaskId(task.id)}
+      onMouseLeave={() => setHoveredTaskId((current) => current === task.id ? null : current)}
+      onPointerLeave={() => setHoveredTaskId((current) => current === task.id ? null : current)}
+    >
       <div
         className={`planner-task-bar ${isDone ? "is-complete" : task.bucket === "progress" ? "is-progress" : task.bucket === "unscheduled" ? "is-unscheduled" : ""}`}
         style={{ left: `${metrics.left}%`, width: `${metrics.width}%`, "--task-progress": `${Math.max(4, (task.pctComplete || 0) * 100)}%` }}
@@ -2740,8 +2777,8 @@ function TaskEditorOverlay({ task, groups, tasks, onClose, onSave }) {
           <label className="planner-field"><span>Phase</span><input value={draft.phase || ""} onChange={(event) => update("phase", event.target.value)} /></label>
           <label className="planner-field"><span>Status</span><select value={draft.status || "Open"} onChange={(event) => update("status", event.target.value)}><option>Open</option><option>In progress</option><option>Done</option><option>Unscheduled</option></select></label>
           <label className="planner-field"><span>% complete</span><input type="number" min="0" max="100" value={draft.pctComplete ?? 0} onChange={(event) => update("pctComplete", event.target.value)} /></label>
-          <label className="planner-field"><span>Start</span><input type="date" value={draft.startISO || ""} onChange={(event) => update("startISO", event.target.value)} /></label>
-          <label className="planner-field"><span>End</span><input type="date" value={draft.endISO || ""} onChange={(event) => update("endISO", event.target.value)} /></label>
+          <ThemedDateField label="Start" value={draft.startISO || ""} onChange={(value) => update("startISO", value)} />
+          <ThemedDateField label="End" value={draft.endISO || ""} onChange={(value) => update("endISO", value)} />
           <label className="planner-field"><span>Days</span><input type="number" min="0" value={draft.days ?? 0} onChange={(event) => update("days", Number(event.target.value))} /></label>
           <TaskLinkSelector
             label="Predecessors"
@@ -2771,36 +2808,87 @@ function TaskEditorOverlay({ task, groups, tasks, onClose, onSave }) {
   );
 }
 
+function ThemedDateField({ label, value, onChange }) {
+  const inputRef = React.useRef(null);
+  const display = value ? displayPlanDate(value) : "Choose date";
+  const openPicker = () => {
+    if (inputRef.current?.showPicker) inputRef.current.showPicker();
+    else inputRef.current?.focus();
+  };
+  return (
+    <label className="planner-field planner-date-field">
+      <span>{label}</span>
+      <button type="button" className={`planner-date-trigger ${value ? "has-value" : ""}`} onClick={openPicker}>
+        <Icon name="calendar" size={14} />
+        <strong>{display}</strong>
+        <em>{value || "Not scheduled"}</em>
+      </button>
+      <input ref={inputRef} type="date" value={value || ""} onChange={(event) => onChange(event.target.value)} aria-label={`${label} date`} />
+    </label>
+  );
+}
+
 function TaskLinkSelector({ label, description, value, field, candidates, onToggle, onRemove }) {
+  const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState("");
   const selected = String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
   const selectedSet = new Set(selected);
+  const byKey = React.useMemo(() => new Map(candidates.map((candidate) => [candidate.wbs || candidate.name, candidate])), [candidates]);
+  const filteredCandidates = candidates.filter((candidate) => {
+    const haystack = `${candidate.wbs} ${candidate.name} ${candidate.owner} ${candidate.phase}`.toLowerCase();
+    return haystack.includes(query.toLowerCase().trim());
+  }).slice(0, 18);
+
+  const pick = (key) => {
+    onToggle(field, key);
+    setQuery("");
+    setOpen(true);
+  };
+
   return (
-    <div className="planner-field planner-field-wide planner-link-selector">
+    <div className={`planner-field planner-field-wide planner-link-selector ${open ? "is-open" : ""}`}>
       <div className="planner-link-selector-head">
         <div>
           <span>{label}</span>
           <small>{description}</small>
         </div>
-        <em>{selected.length} selected</em>
+        <em>{selected.length} linked</em>
       </div>
-      {selected.length > 0 && (
-        <div className="planner-link-chips" aria-label={`Selected ${label.toLowerCase()}`}>
-          {selected.map((item) => (
-            <button key={item} type="button" className="planner-link-chip" onClick={() => onRemove(field, item)} title={`Remove ${item}`}>
-              {item}<Icon name="x" size={10} />
-            </button>
-          ))}
+      <button type="button" className="planner-link-trigger" onClick={() => setOpen((current) => !current)} aria-expanded={open}>
+        <span><Icon name="link" size={13} /> Click to find and link a task</span>
+        <Icon name={open ? "chevronUp" : "chevronDown"} size={14} />
+      </button>
+      {open && (
+        <div className="planner-link-popover">
+          <label className="planner-link-search">
+            <Icon name="search" size={13} />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by WBS, task, owner, or phase…" autoFocus />
+          </label>
+          <div className="planner-link-list" role="listbox" aria-label={`Choose ${label.toLowerCase()}`}>
+            {filteredCandidates.map((candidate) => {
+              const key = candidate.wbs || candidate.name;
+              const active = selectedSet.has(key);
+              return (
+                <button key={candidate.id} type="button" className={`planner-link-option ${active ? "is-selected" : ""}`} onClick={() => pick(key)} aria-pressed={active}>
+                  <span className="planner-link-check"><Icon name={active ? "check" : "plus"} size={11} /></span>
+                  <span className="planner-link-copy"><strong>{candidate.wbs}</strong><em>{candidate.name}</em><small>{candidate.owner} · {candidate.startDisplay} → {candidate.endDisplay}</small></span>
+                  <span className={`pill ${candidate.pctComplete >= 1 ? "pos" : candidate.cls} no-dot`}>{candidate.pctLabel}</span>
+                </button>
+              );
+            })}
+            {filteredCandidates.length === 0 && <div className="planner-link-empty">No matching tasks found.</div>}
+          </div>
         </div>
       )}
-      <div className="planner-link-list" role="listbox" aria-label={`Choose ${label.toLowerCase()}`}>
-        {candidates.map((candidate) => {
-          const key = candidate.wbs || candidate.name;
-          const active = selectedSet.has(key);
+      <div className="planner-link-selected" aria-label={`Selected ${label.toLowerCase()}`}>
+        {selected.length === 0 && <div className="planner-link-empty compact">No tasks linked yet.</div>}
+        {selected.map((item) => {
+          const linkedTask = byKey.get(item);
           return (
-            <button key={candidate.id} type="button" className={`planner-link-option ${active ? "is-selected" : ""}`} onClick={() => onToggle(field, key)} aria-pressed={active}>
-              <span className="planner-link-check"><Icon name={active ? "check" : "plus"} size={11} /></span>
-              <span className="planner-link-copy"><strong>{candidate.wbs}</strong><em>{candidate.name}</em></span>
-              <span className={`pill ${candidate.pctComplete >= 1 ? "pos" : candidate.cls} no-dot`}>{candidate.pctLabel}</span>
+            <button key={item} type="button" className="planner-link-chip" onClick={() => onRemove(field, item)} title={`Remove ${item}`}>
+              <strong>{item}</strong>
+              {linkedTask && <span>{linkedTask.name}</span>}
+              <Icon name="x" size={10} />
             </button>
           );
         })}
