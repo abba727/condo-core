@@ -2202,10 +2202,37 @@ function ProjectPlanPage() {
       predecessors: String(taskDraft.predecessorsText || "").split(",").map((x) => x.trim()).filter(Boolean),
       dependencies: String(taskDraft.dependenciesText || "").split(",").map((x) => x.trim()).filter(Boolean),
     });
+
+    // Cascade: if the editor flagged dependent tasks to push forward, shift them.
+    const cascade = taskDraft._cascadeDependencies;
+
     setTasks((current) => {
-      const exists = current.some((task) => task.id === normalized.id);
-      if (exists) return current.map((task) => task.id === normalized.id ? normalized : task);
-      return [{ ...normalized, plannerOrder: -1, kanbanOrder: -1 }, ...current].map((task, index) => ({ ...task, plannerOrder: index, kanbanOrder: Number.isFinite(task.kanbanOrder) ? task.kanbanOrder : index }));
+      let updated = (() => {
+        const exists = current.some((task) => task.id === normalized.id);
+        if (exists) return current.map((task) => task.id === normalized.id ? normalized : task);
+        return [{ ...normalized, plannerOrder: -1, kanbanOrder: -1 }, ...current].map((task, index) => ({ ...task, plannerOrder: index, kanbanOrder: Number.isFinite(task.kanbanOrder) ? task.kanbanOrder : index }));
+      })();
+
+      if (cascade) {
+        const { depKeys, newEnd } = cascade;
+        const newStart = new Date(newEnd.getTime() + DAY_MS);
+        updated = updated.map((task) => {
+          const key = task.wbs || task.name;
+          if (!depKeys.includes(key)) return task;
+          const taskStart = parsePlanDate(task.startISO);
+          // Only push forward — never pull backward.
+          if (taskStart && taskStart >= newStart) return task;
+          const shifted = shiftTaskDates(task, newStart);
+          return normalizeTaskForPlanner({
+            ...task,
+            startISO: shifted.startISO,
+            endISO: shifted.endISO,
+            days: shifted.days,
+          });
+        });
+      }
+
+      return updated;
     });
     setEditingTask(null);
   }, [groups]);
@@ -2734,6 +2761,41 @@ function PlanListView({ groups, onStatusChange, onEditTask, onEditGroup, onAddTa
   );
 }
 
+// ---------------------------------------------------------------------------
+// Auto-date helpers used by TaskEditorOverlay
+// ---------------------------------------------------------------------------
+
+/**
+ * Given a list of predecessor WBS/name keys and the full task list, return the
+ * latest end date among all matched predecessor tasks, or null if none found.
+ */
+function latestPredecessorEnd(predecessorKeys, allTasks) {
+  let latest = null;
+  for (const key of predecessorKeys) {
+    const match = allTasks.find((t) => (t.wbs && t.wbs === key) || t.name === key);
+    if (!match) continue;
+    const end = parsePlanDate(match.endISO || match.startISO);
+    if (end && (!latest || end > latest)) latest = end;
+  }
+  return latest;
+}
+
+/**
+ * Shift a task's start date to `newStart`, preserving its duration (days).
+ * Returns updated { startISO, endISO, days }.
+ */
+function shiftTaskDates(task, newStart) {
+  const origStart = parsePlanDate(task.startISO);
+  const origEnd = parsePlanDate(task.endISO || task.startISO);
+  const durationMs = origStart && origEnd ? Math.max(0, origEnd - origStart) : 0;
+  const endDate = new Date(newStart.getTime() + durationMs);
+  return {
+    startISO: formatPlanDate(newStart),
+    endISO: formatPlanDate(endDate),
+    days: Math.max(1, Math.round(durationMs / DAY_MS) + 1),
+  };
+}
+
 function TaskEditorOverlay({ task, groups, tasks, onClose, onSave }) {
   const [draft, setDraft] = React.useState(() => ({
     ...task,
@@ -2743,15 +2805,34 @@ function TaskEditorOverlay({ task, groups, tasks, onClose, onSave }) {
     predecessorsText: (task.predecessors || []).join(", "),
     dependenciesText: (task.dependencies || []).join(", "),
   }));
+  const [autoAdjustNotice, setAutoAdjustNotice] = React.useState(null);
   const update = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
   const selectableTasks = React.useMemo(() => tasks.filter((candidate) => candidate.id !== task.id), [tasks, task.id]);
+
+  // When a predecessor chip is added, snap this task's start date to the
+  // day after the latest predecessor end date (Finish-to-Start constraint).
   const toggleTaskLink = React.useCallback((field, value) => {
     setDraft((current) => {
       const selected = String(current[field] || "").split(",").map((item) => item.trim()).filter(Boolean);
-      const next = selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value];
-      return { ...current, [field]: next.join(", ") };
+      const wasSelected = selected.includes(value);
+      const next = wasSelected ? selected.filter((item) => item !== value) : [...selected, value];
+      const nextDraft = { ...current, [field]: next.join(", ") };
+
+      if (field === "predecessorsText" && !wasSelected) {
+        // A new predecessor was just added — recalculate start date.
+        const latestEnd = latestPredecessorEnd(next, tasks);
+        if (latestEnd) {
+          // Start the day after the predecessor ends.
+          const newStart = new Date(latestEnd.getTime() + DAY_MS);
+          const shifted = shiftTaskDates(current, newStart);
+          setAutoAdjustNotice(`Start date moved to ${displayPlanDate(shifted.startISO)} based on predecessor schedule.`);
+          return { ...nextDraft, ...shifted };
+        }
+      }
+      return nextDraft;
     });
-  }, []);
+  }, [tasks]);
+
   const removeTaskLink = React.useCallback((field, value) => {
     setDraft((current) => {
       const next = String(current[field] || "").split(",").map((item) => item.trim()).filter(Boolean).filter((item) => item !== value);
@@ -2759,9 +2840,26 @@ function TaskEditorOverlay({ task, groups, tasks, onClose, onSave }) {
     });
   }, []);
 
+  // When saving, also push dependent tasks forward if this task's end date
+  // changed relative to the original, so callers can cascade the change.
+  const handleSave = (event) => {
+    event.preventDefault();
+    const saved = { ...draft, pctComplete: Number(draft.pctComplete) / 100 };
+    const origEnd = parsePlanDate(task.endISO);
+    const newEnd = parsePlanDate(draft.endISO);
+    // If end date moved forward, push any dependent tasks that start before the new end.
+    if (origEnd && newEnd && newEnd > origEnd) {
+      const depKeys = String(draft.dependenciesText || "").split(",").map((k) => k.trim()).filter(Boolean);
+      if (depKeys.length > 0) {
+        saved._cascadeDependencies = { depKeys, newEnd };
+      }
+    }
+    onSave(saved);
+  };
+
   return (
     <div className="planner-modal-backdrop" role="dialog" aria-modal="true">
-      <form className="planner-modal" onSubmit={(event) => { event.preventDefault(); onSave({ ...draft, pctComplete: Number(draft.pctComplete) / 100 }); }}>
+      <form className="planner-modal" onSubmit={handleSave}>
         <div className="planner-modal-head">
           <div>
             <div className="metric-label">Task editor</div>
@@ -2769,6 +2867,13 @@ function TaskEditorOverlay({ task, groups, tasks, onClose, onSave }) {
           </div>
           <button type="button" className="planner-icon-btn" onClick={onClose}><Icon name="x" size={14} /></button>
         </div>
+        {autoAdjustNotice && (
+          <div className="planner-auto-adjust-notice" role="status">
+            <Icon name="calendar" size={13} />
+            <span>{autoAdjustNotice}</span>
+            <button type="button" className="planner-icon-btn" onClick={() => setAutoAdjustNotice(null)}><Icon name="x" size={11} /></button>
+          </div>
+        )}
         <div className="planner-form-grid">
           <label className="planner-field planner-field-wide"><span>Task name</span><input value={draft.name || ""} onChange={(event) => update("name", event.target.value)} required /></label>
           <label className="planner-field"><span>WBS</span><input value={draft.wbs || ""} onChange={(event) => update("wbs", event.target.value)} /></label>

@@ -1578,6 +1578,9 @@ a {
 .planner-field input, .planner-field select { height: 34px; border: 1px solid var(--border); background: var(--bg-sunk); color: var(--text-main); border-radius: 6px; padding: 0 10px; outline: none; font-size: 13px; }
 .planner-field input:focus, .planner-field select:focus { border-color: var(--signal-info); box-shadow: 0 0 0 3px color-mix(in oklab, var(--signal-info) 18%, transparent); }
 .planner-date-field { position: relative; }
+.planner-auto-adjust-notice { display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin-bottom: 4px; background: var(--signal-info-soft); border: 1px solid color-mix(in oklab, var(--signal-info) 28%, var(--border)); border-radius: 8px; font-size: 12px; color: var(--signal-info); line-height: 1.4; }
+.planner-auto-adjust-notice span { flex: 1; }
+.planner-auto-adjust-notice .planner-icon-btn { flex-shrink: 0; opacity: 0.65; }
 .planner-date-field input[type="date"] { position: absolute; inset: auto 0 0 auto; width: 1px !important; height: 1px !important; min-width: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; clip-path: inset(50%); overflow: hidden; }
 .planner-date-trigger { min-height: 48px; display: grid; grid-template-columns: 28px minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; column-gap: 9px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: linear-gradient(180deg, color-mix(in oklab, var(--bg-elev) 88%, white 12%), var(--bg-sunk)); color: var(--text-main); text-align: left; transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease; }
 .planner-date-trigger svg { grid-row: 1 / span 2; width: 28px; height: 28px; padding: 6px; border-radius: 7px; background: var(--signal-info-soft); color: var(--signal-info); }
