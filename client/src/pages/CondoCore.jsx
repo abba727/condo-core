@@ -2028,7 +2028,7 @@ function normalizeTaskForPlanner(task, index = 0) {
     pctComplete,
     pctLabel: `${Math.round(pctComplete * 100)}%`,
     predecessors: Array.isArray(task.predecessors) ? task.predecessors : String(task.predecessors || task.raw?.Predecessors || task.raw?.Predecessor || "").split(",").map((x) => x.trim()).filter(Boolean),
-    dependencies: Array.isArray(task.dependencies) ? task.dependencies : String(task.dependencies || task.raw?.Dependencies || task.raw?.Dependency || "").split(",").map((x) => x.trim()).filter(Boolean),
+    successors: Array.isArray(task.successors) ? task.successors : String(task.successors || task.raw?.Successors || task.raw?.Successor || task.raw?.Dependencies || task.raw?.Dependency || "").split(",").map((x) => x.trim()).filter(Boolean),
   };
 }
 
@@ -2100,7 +2100,7 @@ function getCurrentDayMarker(periods = PLAN_MONTHS, zoom = "months") {
 }
 
 function buildPlanCsv(tasks) {
-  const headers = ["WBS", "Task", "Group", "Phase", "Owner", "Status", "Percent Complete", "Days", "Start", "End", "Predecessors", "Dependencies", "Source Row"];
+  const headers = ["WBS", "Task", "Group", "Phase", "Owner", "Status", "Percent Complete", "Days", "Start", "End", "Predecessors", "Successors", "Source Row"];
   const rows = tasks.map((task) => [
     task.wbs,
     task.name,
@@ -2113,7 +2113,7 @@ function buildPlanCsv(tasks) {
     task.startDisplay,
     task.endDisplay,
     (task.predecessors || []).join("; "),
-    (task.dependencies || []).join("; "),
+    (task.successors || []).join("; "),
     task.sourceRow,
   ]);
   return [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n");
@@ -2154,7 +2154,7 @@ function ProjectPlanPage() {
   const filteredTasks = React.useMemo(() => {
     const q = normalizePlanText(query);
     return visibleBaseTasks.filter((task) => {
-      const haystack = normalizePlanText([task.wbs, task.name, task.owner, task.status, task.phase, task.group, task.startDisplay, task.endDisplay, ...(task.predecessors || []), ...(task.dependencies || [])].join(" "));
+      const haystack = normalizePlanText([task.wbs, task.name, task.owner, task.status, task.phase, task.group, task.startDisplay, task.endDisplay, ...(task.predecessors || []), ...(task.successors || [])].join(" "));
       const queryOk = !q || haystack.includes(q);
       const statusOk = statusFilter === "all" || task.status === statusFilter;
       const ownerOk = ownerFilter === "all" || task.owner === ownerFilter;
@@ -2200,11 +2200,11 @@ function ProjectPlanPage() {
       pctComplete,
       pctLabel: `${Math.round(pctComplete * 100)}%`,
       predecessors: String(taskDraft.predecessorsText || "").split(",").map((x) => x.trim()).filter(Boolean),
-      dependencies: String(taskDraft.dependenciesText || "").split(",").map((x) => x.trim()).filter(Boolean),
+      successors: String(taskDraft.successorsText || "").split(",").map((x) => x.trim()).filter(Boolean),
     });
 
-    // Cascade: if the editor flagged dependent tasks to push forward, shift them.
-    const cascade = taskDraft._cascadeDependencies;
+    // Cascade: if the editor flagged successor tasks to push forward, shift them.
+    const cascade = taskDraft._cascadeSuccessors;
 
     setTasks((current) => {
       let updated = (() => {
@@ -2214,11 +2214,11 @@ function ProjectPlanPage() {
       })();
 
       if (cascade) {
-        const { depKeys, newEnd } = cascade;
+        const { sucKeys, newEnd } = cascade;
         const newStart = new Date(newEnd.getTime() + DAY_MS);
         updated = updated.map((task) => {
           const key = task.wbs || task.name;
-          if (!depKeys.includes(key)) return task;
+          if (!sucKeys.includes(key)) return task;
           const taskStart = parsePlanDate(task.startISO);
           // Only push forward — never pull backward.
           if (taskStart && taskStart >= newStart) return task;
@@ -2321,7 +2321,7 @@ function ProjectPlanPage() {
       endISO: "",
       days: 1,
       predecessors: [],
-      dependencies: [],
+      successors: [],
       raw: { source: "local client-side addition" },
     });
   }, [groups, ownerFilter, visibleBaseTasks.length]);
@@ -2706,6 +2706,7 @@ function PlanListView({ groups, onStatusChange, onEditTask, onEditGroup, onAddTa
             <th>End</th>
             <th>Owner</th>
             <th>Pred.</th>
+            <th>Succ.</th>
             <th className="num">Actions</th>
           </tr>
         </thead>
@@ -2713,7 +2714,7 @@ function PlanListView({ groups, onStatusChange, onEditTask, onEditGroup, onAddTa
           {groups.map(({ group, tasks }) => (
             <React.Fragment key={group.id}>
               <tr className="planner-table-group-row">
-                <td colSpan="11">
+                <td colSpan="12">
                   <div className="row-between">
                     <div className="row" style={{ gap: 8 }}><button className="planner-collapse-btn" onClick={() => onToggleCollapse(group.id)} title={group.collapsed ? "Expand group" : "Collapse group"} aria-label={group.collapsed ? `Expand ${group.name}` : `Collapse ${group.name}`}><Icon name={group.collapsed ? "chevronRight" : "chevronDown"} size={13} /></button><Icon name="layers" size={13} /><strong>{group.name}</strong><span className="mono faint">{tasks.length}</span></div>
                     <div className="row" style={{ gap: 6 }}>
@@ -2728,7 +2729,7 @@ function PlanListView({ groups, onStatusChange, onEditTask, onEditGroup, onAddTa
                   <td className="mono faint">{task.wbs}</td>
                   <td style={{ fontWeight: 500 }}>
                     <div>{task.name}</div>
-                    <div className="faint" style={{ fontSize: 11 }}>Source row {task.sourceRow} · deps {(task.dependencies || []).length}</div>
+                    <div className="faint" style={{ fontSize: 11 }}>Source row {task.sourceRow} · {(task.successors || []).length} successor{(task.successors || []).length !== 1 ? "s" : ""}</div>
                   </td>
                   <td className="muted">{task.phase}</td>
                   <td>
@@ -2745,6 +2746,7 @@ function PlanListView({ groups, onStatusChange, onEditTask, onEditGroup, onAddTa
                   <td className="muted mono" style={{ fontSize: 12 }}>{task.endISO || "—"}</td>
                   <td className="muted">{task.owner}</td>
                   <td className="muted mono" style={{ fontSize: 11 }}>{(task.predecessors || []).join(", ") || "—"}</td>
+                  <td className="muted mono" style={{ fontSize: 11 }}>{(task.successors || []).join(", ") || "—"}</td>
                   <td className="num"><button className="planner-icon-btn" onClick={() => onEditTask(task)} title="Edit task"><Icon name="edit" size={12} /></button></td>
                 </tr>
               ))}
@@ -2752,7 +2754,7 @@ function PlanListView({ groups, onStatusChange, onEditTask, onEditGroup, onAddTa
           ))}
           {groups.every((entry) => entry.tasks.length === 0) && (
             <tr>
-              <td colSpan="11"><EmptyPlanState /></td>
+              <td colSpan="12"><EmptyPlanState /></td>
             </tr>
           )}
         </tbody>
@@ -2803,7 +2805,7 @@ function TaskEditorOverlay({ task, groups, tasks, onClose, onSave }) {
     endISO: formatPlanDate(task.endISO),
     pctComplete: Math.round((task.pctComplete || 0) * 100),
     predecessorsText: (task.predecessors || []).join(", "),
-    dependenciesText: (task.dependencies || []).join(", "),
+    successorsText: (task.successors || []).join(", "),
   }));
   const [autoAdjustNotice, setAutoAdjustNotice] = React.useState(null);
   const update = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
@@ -2840,22 +2842,22 @@ function TaskEditorOverlay({ task, groups, tasks, onClose, onSave }) {
     });
   }, []);
 
-  // When saving, also push dependent tasks forward if this task's end date
-  // changed relative to the original, so callers can cascade the change.
-  const handleSave = (event) => {
-    event.preventDefault();
-    const saved = { ...draft, pctComplete: Number(draft.pctComplete) / 100 };
-    const origEnd = parsePlanDate(task.endISO);
-    const newEnd = parsePlanDate(draft.endISO);
-    // If end date moved forward, push any dependent tasks that start before the new end.
-    if (origEnd && newEnd && newEnd > origEnd) {
-      const depKeys = String(draft.dependenciesText || "").split(",").map((k) => k.trim()).filter(Boolean);
-      if (depKeys.length > 0) {
-        saved._cascadeDependencies = { depKeys, newEnd };
+    // When saving, also push successor tasks forward if this task's end date
+    // changed relative to the original, so callers can cascade the change.
+    const handleSave = (event) => {
+      event.preventDefault();
+      const saved = { ...draft, pctComplete: Number(draft.pctComplete) / 100 };
+      const origEnd = parsePlanDate(task.endISO);
+      const newEnd = parsePlanDate(draft.endISO);
+      // If end date moved forward, push any successor tasks that start before the new end.
+      if (origEnd && newEnd && newEnd > origEnd) {
+        const sucKeys = String(draft.successorsText || "").split(",").map((k) => k.trim()).filter(Boolean);
+        if (sucKeys.length > 0) {
+          saved._cascadeSuccessors = { sucKeys, newEnd };
+        }
       }
-    }
-    onSave(saved);
-  };
+      onSave(saved);
+    };
 
   return (
     <div className="planner-modal-backdrop" role="dialog" aria-modal="true">
@@ -2895,10 +2897,10 @@ function TaskEditorOverlay({ task, groups, tasks, onClose, onSave }) {
             onRemove={removeTaskLink}
           />
           <TaskLinkSelector
-            label="Dependencies"
-            description="Tasks that depend on this task."
-            value={draft.dependenciesText || ""}
-            field="dependenciesText"
+            label="Successors"
+            description="Tasks that come after this task."
+            value={draft.successorsText || ""}
+            field="successorsText"
             candidates={selectableTasks}
             onToggle={toggleTaskLink}
             onRemove={removeTaskLink}
