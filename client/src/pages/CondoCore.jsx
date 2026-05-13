@@ -4440,7 +4440,6 @@ function CondoCoreApp() {
       <main className="main">
         <TopBar crumbs={crumbs} onTheme={toggleTheme} theme={`${t.theme}-${t.mode}`} />
         <div className="page">
-          <PageAssetBanner asset={pageConfig.asset} route={route} />
           {route === "vendors" ? (
             vendorDetailId ? (
               <VendorDetailPageImpl
