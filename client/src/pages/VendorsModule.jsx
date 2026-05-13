@@ -788,8 +788,9 @@ const DETAIL_TABS = [
   { id: 'profile', label: 'Profile', icon: 'users' },
   { id: 'transactions', label: 'Transactions', icon: 'dollar' },
   { id: '1099', label: '1099', icon: 'doc' },
-  { id: 'bids', label: 'Bids', icon: 'list' },
+  { id: 'bids', label: 'Bids & Contracts', icon: 'list' },
   { id: 'cois', label: 'COIs', icon: 'shield' },
+  { id: 'documents', label: 'Documents', icon: 'folder' },
 ];
 
 export function VendorDetailPage({ vendorId, onBack }) {
@@ -916,6 +917,7 @@ export function VendorDetailPage({ vendorId, onBack }) {
         {tab === '1099' && <Vendor1099Tab vendor={vendor} />}
         {tab === 'bids' && <VendorBidsTab vendor={vendor} store={store} />}
         {tab === 'cois' && <VendorCoisTab vendor={vendor} store={store} />}
+        {tab === 'documents' && <VendorDocumentsTab vendor={vendor} />}
       </div>
 
       <VendorModal open={editOpen} vendor={vendor} onClose={() => setEditOpen(false)} onSave={handleSaveEdit} />
@@ -983,20 +985,8 @@ function VendorProfileTab({ vendor, onEdit }) {
 function VendorTransactionsTab({ vendor }) {
   const txns = React.useMemo(() => buildVendorTransactions(vendor.name), [vendor.name]);
 
-  // Also include contract draws
-  const contractRows = DRIGGS_712_CONTRACTS
-    .filter((r) => String(r.Vendor || '').toLowerCase().includes(vendor.name.toLowerCase().slice(0, 8)))
-    .map((r, i) => ({
-      id: `contract-${i}`,
-      date: fmtDate(r.Date),
-      type: 'CONTRACT',
-      category: 'Contract',
-      memo: `Contract total: ${typeof fmtUSD === 'function' ? fmtUSD(trackerAmt(r['Contract Total'])) : '$' + trackerAmt(r['Contract Total']).toLocaleString()}`,
-      debit: trackerAmt(r['Total Paid']),
-      credit: 0,
-    }));
-
-  const allTxns = [...contractRows, ...txns];
+  // CONTRACT rows are now shown in Bids & Contracts tab — only show expense/wire payments here
+  const allTxns = txns;
   const totalDebit = allTxns.reduce((s, t) => s + t.debit, 0);
   const totalCredit = allTxns.reduce((s, t) => s + t.credit, 0);
 
@@ -1185,7 +1175,47 @@ NOTE: This is a summary for review only. File the official IRS Form 1099-NEC.
 }
 
 // ── Bids Tab ─────────────────────────────────────────────────
-const BID_STATUS_OPTS = ['Submitted', 'Under review', 'Awarded', 'Declined', 'Withdrawn'];
+const BID_STATUS_OPTS = ['Submitted', 'Under review', 'Approved', 'Contracted', 'Declined', 'Withdrawn'];
+
+// Helper: parse a date string to a Date object for comparison
+function parseDateStr(s) {
+  if (!s || s === '—' || s === 'Not tracked') return null;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// Helper: is a date string in the past?
+function isExpired(s) {
+  const d = parseDateStr(s);
+  if (!d) return false;
+  return d < new Date();
+}
+
+// Simulated file upload — stores file metadata in state
+function useFileUpload() {
+  const [files, setFiles] = React.useState([]);
+  const inputRef = React.useRef(null);
+  const trigger = () => inputRef.current?.click();
+  const onPick = (e) => {
+    const picked = Array.from(e.target.files || []);
+    setFiles((prev) => [
+      ...prev,
+      ...picked.map((f) => ({
+        id: `doc-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: f.name,
+        size: f.size,
+        type: f.type,
+        uploadedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        description: '',
+        url: URL.createObjectURL(f),
+      }))
+    ]);
+    e.target.value = '';
+  };
+  const remove = (id) => setFiles((prev) => prev.filter((f) => f.id !== id));
+  const setDesc = (id, desc) => setFiles((prev) => prev.map((f) => f.id === id ? { ...f, description: desc } : f));
+  return { files, trigger, onPick, remove, setDesc, inputRef };
+}
 
 function BidModal({ open, bid, onClose, onSave, onDelete }) {
   const [form, setForm] = React.useState({});
@@ -1232,56 +1262,176 @@ function BidModal({ open, bid, onClose, onSave, onDelete }) {
 
 function VendorBidsTab({ vendor, store }) {
   const [bidModal, setBidModal] = React.useState({ open: false, bid: null });
+  const upload = useFileUpload();
+  // Per-bid document state: { [bidId]: File[] }
+  const [bidDocs, setBidDocs] = React.useState({});
+  const bidFileRef = React.useRef(null);
+  const [activeBidForUpload, setActiveBidForUpload] = React.useState(null);
+
+  // Contract rows from seed data
+  const contractRows = React.useMemo(() => {
+    return DRIGGS_712_CONTRACTS
+      .filter((r) => String(r.Vendor || '').toLowerCase().includes(vendor.name.toLowerCase().slice(0, 8)))
+      .map((r, i) => ({
+        id: `contract-seed-${i}`,
+        date: fmtDate(r.Date),
+        scope: `Contract — ${r.Vendor}`,
+        amount: trackerAmt(r['Contract Total']),
+        paid: trackerAmt(r['Total Paid']),
+        status: 'Contracted',
+        notes: `Paid: ${typeof fmtUSD === 'function' ? fmtUSD(trackerAmt(r['Total Paid'])) : '$' + trackerAmt(r['Total Paid']).toLocaleString()} of ${typeof fmtUSD === 'function' ? fmtUSD(trackerAmt(r['Contract Total'])) : '$' + trackerAmt(r['Contract Total']).toLocaleString()}`,
+        isContract: true,
+        docs: [],
+      }));
+  }, [vendor.name]);
+
+  const allRows = [...contractRows, ...vendor.bids];
 
   const statusCls = (s) => {
-    if (s === 'Awarded') return 'pos';
+    if (s === 'Contracted' || s === 'Approved') return 'pos';
     if (s === 'Declined' || s === 'Withdrawn') return 'neutral';
-    return 'info';
+    if (s === 'Submitted') return 'info';
+    return 'neutral';
+  };
+
+  const handleBidFileChange = (e) => {
+    const picked = Array.from(e.target.files || []);
+    if (!activeBidForUpload || !picked.length) return;
+    setBidDocs((prev) => ({
+      ...prev,
+      [activeBidForUpload]: [
+        ...(prev[activeBidForUpload] || []),
+        ...picked.map((f) => ({
+          id: `bdoc-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          name: f.name,
+          size: f.size,
+          uploadedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+          description: '',
+          url: URL.createObjectURL(f),
+        }))
+      ]
+    }));
+    e.target.value = '';
   };
 
   return (
-    <div className="card">
-      <div className="card-head">
-        <span style={{ fontWeight: 600, fontSize: 13 }}>Bids & proposals</span>
-        <button className="btn btn-primary btn-sm" onClick={() => setBidModal({ open: true, bid: null })}>
-          <Icon name="plus" size={12} /> Add bid
-        </button>
-      </div>
-      <div className="card-body-flush">
-        {vendor.bids.length === 0 ? (
-          <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>
-            No bids on record. Click "Add bid" to record a proposal.
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <input ref={bidFileRef} type="file" multiple style={{ display: 'none' }} onChange={handleBidFileChange} />
+      <div className="card">
+        <div className="card-head">
+          <div>
+            <span style={{ fontWeight: 600, fontSize: 13 }}>Bids & Contracts</span>
+            <span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>
+              {allRows.filter((r) => r.status === 'Contracted').length} contracted
+              {vendor.bids.filter((b) => b.status === 'Approved').length > 0 && (
+                <span style={{ color: 'var(--signal-pos)', marginLeft: 6 }}>
+                  · {vendor.bids.filter((b) => b.status === 'Approved').length} approved
+                </span>
+              )}
+            </span>
           </div>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Scope</th>
-                <th className="num">Amount</th>
-                <th>Status</th>
-                <th>Notes</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {vendor.bids.map((b) => (
-                <tr key={b.id}>
-                  <td className="mono muted" style={{ fontSize: 12 }}>{b.date}</td>
-                  <td style={{ fontWeight: 500 }}>{b.scope}</td>
-                  <td className="num mono">{typeof fmtUSD === 'function' ? fmtUSD(b.amount) : '$' + (b.amount || 0).toLocaleString()}</td>
-                  <td><span className={`pill no-dot ${statusCls(b.status)}`}>{b.status}</span></td>
-                  <td className="muted" style={{ fontSize: 12 }}>{b.notes || '—'}</td>
-                  <td>
-                    <button className="iconbtn" onClick={() => setBidModal({ open: true, bid: b })}>
-                      <Icon name="edit" size={13} />
-                    </button>
-                  </td>
+          <button className="btn btn-primary btn-sm" onClick={() => setBidModal({ open: true, bid: null })}>
+            <Icon name="plus" size={12} /> Add bid
+          </button>
+        </div>
+        <div className="card-body-flush">
+          {allRows.length === 0 ? (
+            <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>
+              No bids or contracts on record. Click "Add bid" to record a proposal.
+            </div>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Scope</th>
+                  <th className="num">Amount</th>
+                  <th>Status</th>
+                  <th>Notes</th>
+                  <th>Docs</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {allRows.map((b) => (
+                  <React.Fragment key={b.id}>
+                    <tr>
+                      <td className="mono muted" style={{ fontSize: 12 }}>{b.date}</td>
+                      <td style={{ fontWeight: 500 }}>
+                        {b.scope}
+                        {b.isContract && (
+                          <span className="pill neutral no-dot" style={{ fontSize: 10, marginLeft: 6 }}>Contract</span>
+                        )}
+                      </td>
+                      <td className="num mono">{typeof fmtUSD === 'function' ? fmtUSD(b.amount) : '$' + (b.amount || 0).toLocaleString()}</td>
+                      <td>
+                        <span className={`pill no-dot ${statusCls(b.status)}`}>{b.status}</span>
+                        {b.status === 'Approved' && !b.isContract && (
+                          <span className="muted" style={{ fontSize: 10, marginLeft: 4 }}>→ contract amount</span>
+                        )}
+                      </td>
+                      <td className="muted" style={{ fontSize: 12 }}>{b.notes || '—'}</td>
+                      <td>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          style={{ fontSize: 11, padding: '2px 6px' }}
+                          onClick={() => {
+                            setActiveBidForUpload(b.id);
+                            setTimeout(() => bidFileRef.current?.click(), 0);
+                          }}
+                        >
+                          <Icon name="plus" size={11} /> Upload
+                        </button>
+                        {(bidDocs[b.id] || []).length > 0 && (
+                          <span className="pill info no-dot" style={{ fontSize: 10, marginLeft: 4 }}>
+                            {(bidDocs[b.id] || []).length}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {!b.isContract && (
+                          <button className="iconbtn" onClick={() => setBidModal({ open: true, bid: b })}>
+                            <Icon name="edit" size={13} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                    {/* Inline document list for this bid */}
+                    {(bidDocs[b.id] || []).map((doc) => (
+                      <tr key={doc.id} style={{ background: 'var(--surface-raised)' }}>
+                        <td colSpan={2} style={{ paddingLeft: 24 }}>
+                          <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)' }}>
+                            <Icon name="doc" size={11} style={{ marginRight: 4 }} />{doc.name}
+                          </a>
+                          <span className="muted" style={{ fontSize: 11, marginLeft: 8 }}>{doc.uploadedAt}</span>
+                        </td>
+                        <td colSpan={3}>
+                          <input
+                            value={doc.description}
+                            onChange={(e) => setBidDocs((prev) => ({
+                              ...prev,
+                              [b.id]: (prev[b.id] || []).map((d) => d.id === doc.id ? { ...d, description: e.target.value } : d)
+                            }))}
+                            placeholder="Add description…"
+                            style={{ fontSize: 12, background: 'transparent', border: 'none', outline: 'none', width: '100%', color: 'var(--text-body)' }}
+                          />
+                        </td>
+                        <td colSpan={2} style={{ textAlign: 'right' }}>
+                          <button className="iconbtn" onClick={() => setBidDocs((prev) => ({
+                            ...prev,
+                            [b.id]: (prev[b.id] || []).filter((d) => d.id !== doc.id)
+                          }))}>
+                            <Icon name="trash" size={12} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
 
       <BidModal
@@ -1301,6 +1451,13 @@ function VendorBidsTab({ vendor, store }) {
 // ── COIs Tab ─────────────────────────────────────────────────
 const COI_TYPE_OPTS = ['General Liability', 'Workers Comp', 'Umbrella / Excess', 'Professional Liability', 'Auto', 'Other'];
 const COI_STATUS_OPTS = ['Active', 'Expired', 'Pending', 'Waived'];
+
+// Derive effective COI status: if expiry date is in the past, override to Expired
+function effectiveCoiStatus(coi) {
+  if (coi.status === 'Waived' || coi.status === 'Pending') return coi.status;
+  if (isExpired(coi.expires)) return 'Expired';
+  return coi.status || 'Active';
+}
 
 function CoiModal({ open, coi, onClose, onSave, onDelete }) {
   const [form, setForm] = React.useState({});
@@ -1350,52 +1507,256 @@ function CoiModal({ open, coi, onClose, onSave, onDelete }) {
 
 function VendorCoisTab({ vendor, store }) {
   const [coiModal, setCoiModal] = React.useState({ open: false, coi: null });
+  // Per-COI document state
+  const [coiDocs, setCoiDocs] = React.useState({});
+  const coiFileRef = React.useRef(null);
+  const [activeCoiForUpload, setActiveCoiForUpload] = React.useState(null);
+  // COI tracking toggle (per-vendor, stored locally)
+  const [trackingEnabled, setTrackingEnabled] = React.useState(
+    vendor.cois.length > 0 || vendor.coiExpires !== 'Not tracked'
+  );
 
   const statusCls = (s) => {
     if (s === 'Active') return 'pos';
-    if (s === 'Expired') return 'warn';
+    if (s === 'Expired') return 'neg';
     if (s === 'Pending') return 'info';
     return 'neutral';
+  };
+
+  const handleCoiFileChange = (e) => {
+    const picked = Array.from(e.target.files || []);
+    if (!activeCoiForUpload || !picked.length) return;
+    setCoiDocs((prev) => ({
+      ...prev,
+      [activeCoiForUpload]: [
+        ...(prev[activeCoiForUpload] || []),
+        ...picked.map((f) => ({
+          id: `cdoc-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          name: f.name,
+          size: f.size,
+          uploadedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+          description: '',
+          url: URL.createObjectURL(f),
+        }))
+      ]
+    }));
+    e.target.value = '';
+  };
+
+  const expiredCount = vendor.cois.filter((c) => effectiveCoiStatus(c) === 'Expired').length;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <input ref={coiFileRef} type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} onChange={handleCoiFileChange} />
+
+      {/* Tracking toggle card */}
+      <div className="card">
+        <div className="card-head" style={{ paddingBottom: 12 }}>
+          <div>
+            <span style={{ fontWeight: 600, fontSize: 13 }}>COI Tracking</span>
+            <span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>
+              {trackingEnabled
+                ? (expiredCount > 0
+                  ? <span style={{ color: 'var(--signal-neg)' }}>{expiredCount} expired</span>
+                  : <span style={{ color: 'var(--signal-pos)' }}>All current</span>)
+                : 'Tracking disabled'}
+            </span>
+          </div>
+          <label className="vendor-toggle-row">
+            <span className="muted" style={{ fontSize: 12 }}>Track COI</span>
+            <button
+              role="switch"
+              aria-checked={trackingEnabled}
+              className={`vendor-toggle ${trackingEnabled ? 'on' : ''}`}
+              onClick={() => setTrackingEnabled((v) => !v)}
+            />
+          </label>
+        </div>
+      </div>
+
+      {trackingEnabled && (
+        <div className="card">
+          <div className="card-head">
+            <span style={{ fontWeight: 600, fontSize: 13 }}>Certificates of Insurance</span>
+            <button className="btn btn-primary btn-sm" onClick={() => setCoiModal({ open: true, coi: null })}>
+              <Icon name="plus" size={12} /> Add COI
+            </button>
+          </div>
+          <div className="card-body-flush">
+            {vendor.cois.length === 0 ? (
+              <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>
+                No COIs on record. Click "Add COI" to track a certificate.
+              </div>
+            ) : (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Carrier</th>
+                    <th>Policy #</th>
+                    <th>Coverage</th>
+                    <th>Expires</th>
+                    <th>Status</th>
+                    <th>Docs</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {vendor.cois.map((c) => {
+                    const effStatus = effectiveCoiStatus(c);
+                    return (
+                      <React.Fragment key={c.id}>
+                        <tr style={effStatus === 'Expired' ? { background: 'var(--signal-neg-soft, #fff1f0)' } : {}}>
+                          <td style={{ fontWeight: 500 }}>{c.type}</td>
+                          <td className="muted">{c.carrier || '—'}</td>
+                          <td className="mono muted" style={{ fontSize: 12 }}>{c.policyNum || '—'}</td>
+                          <td className="mono" style={{ fontSize: 12 }}>{c.amount || '—'}</td>
+                          <td className="mono muted" style={{ fontSize: 12, color: effStatus === 'Expired' ? 'var(--signal-neg)' : 'inherit' }}>
+                            {c.expires || '—'}
+                            {effStatus === 'Expired' && <span style={{ marginLeft: 4, fontSize: 10 }}>(⚠ expired)</span>}
+                          </td>
+                          <td><span className={`pill no-dot ${statusCls(effStatus)}`}>{effStatus}</span></td>
+                          <td>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              style={{ fontSize: 11, padding: '2px 6px' }}
+                              onClick={() => {
+                                setActiveCoiForUpload(c.id);
+                                setTimeout(() => coiFileRef.current?.click(), 0);
+                              }}
+                            >
+                              <Icon name="plus" size={11} /> Upload
+                            </button>
+                            {(coiDocs[c.id] || []).length > 0 && (
+                              <span className="pill info no-dot" style={{ fontSize: 10, marginLeft: 4 }}>
+                                {(coiDocs[c.id] || []).length}
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <button className="iconbtn" onClick={() => setCoiModal({ open: true, coi: c })}>
+                              <Icon name="edit" size={13} />
+                            </button>
+                          </td>
+                        </tr>
+                        {/* Inline document list for this COI */}
+                        {(coiDocs[c.id] || []).map((doc) => (
+                          <tr key={doc.id} style={{ background: 'var(--surface-raised)' }}>
+                            <td colSpan={3} style={{ paddingLeft: 24 }}>
+                              <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)' }}>
+                                <Icon name="doc" size={11} style={{ marginRight: 4 }} />{doc.name}
+                              </a>
+                              <span className="muted" style={{ fontSize: 11, marginLeft: 8 }}>{doc.uploadedAt}</span>
+                            </td>
+                            <td colSpan={3}>
+                              <input
+                                value={doc.description}
+                                onChange={(e) => setCoiDocs((prev) => ({
+                                  ...prev,
+                                  [c.id]: (prev[c.id] || []).map((d) => d.id === doc.id ? { ...d, description: e.target.value } : d)
+                                }))}
+                                placeholder="Add description…"
+                                style={{ fontSize: 12, background: 'transparent', border: 'none', outline: 'none', width: '100%', color: 'var(--text-body)' }}
+                              />
+                            </td>
+                            <td colSpan={2} style={{ textAlign: 'right' }}>
+                              <button className="iconbtn" onClick={() => setCoiDocs((prev) => ({
+                                ...prev,
+                                [c.id]: (prev[c.id] || []).filter((d) => d.id !== doc.id)
+                              }))}>
+                                <Icon name="trash" size={12} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <CoiModal
+            open={coiModal.open}
+            coi={coiModal.coi}
+            onClose={() => setCoiModal({ open: false, coi: null })}
+            onSave={(form) => {
+              if (coiModal.coi?.id) store?.updateCoi(vendor.id, coiModal.coi.id, form);
+              else store?.addCoi(vendor.id, form);
+            }}
+            onDelete={(id) => store?.deleteCoi(vendor.id, id)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Documents Tab ─────────────────────────────────────────────
+function VendorDocumentsTab({ vendor }) {
+  const upload = useFileUpload();
+
+  const fmtBytes = (b) => {
+    if (!b) return '';
+    if (b < 1024) return `${b} B`;
+    if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+    return `${(b / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   return (
     <div className="card">
       <div className="card-head">
-        <span style={{ fontWeight: 600, fontSize: 13 }}>Certificates of Insurance</span>
-        <button className="btn btn-primary btn-sm" onClick={() => setCoiModal({ open: true, coi: null })}>
-          <Icon name="plus" size={12} /> Add COI
+        <div>
+          <span style={{ fontWeight: 600, fontSize: 13 }}>Documents</span>
+          <span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>{upload.files.length} file{upload.files.length !== 1 ? 's' : ''}</span>
+        </div>
+        <button className="btn btn-primary btn-sm" onClick={upload.trigger}>
+          <Icon name="plus" size={12} /> Upload document
         </button>
       </div>
+      <input ref={upload.inputRef} type="file" multiple style={{ display: 'none' }} onChange={upload.onPick} />
       <div className="card-body-flush">
-        {vendor.cois.length === 0 ? (
-          <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>
-            No COIs on record. Click "Add COI" to track a certificate.
+        {upload.files.length === 0 ? (
+          <div
+            style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13, cursor: 'pointer' }}
+            onClick={upload.trigger}
+          >
+            <Icon name="folder" size={24} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
+            No documents uploaded yet. Click to upload files.
           </div>
         ) : (
           <table className="table">
             <thead>
               <tr>
-                <th>Type</th>
-                <th>Carrier</th>
-                <th>Policy #</th>
-                <th>Coverage</th>
-                <th>Expires</th>
-                <th>Status</th>
+                <th>File name</th>
+                <th>Description</th>
+                <th>Uploaded</th>
+                <th className="num">Size</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {vendor.cois.map((c) => (
-                <tr key={c.id}>
-                  <td style={{ fontWeight: 500 }}>{c.type}</td>
-                  <td className="muted">{c.carrier || '—'}</td>
-                  <td className="mono muted" style={{ fontSize: 12 }}>{c.policyNum || '—'}</td>
-                  <td className="mono" style={{ fontSize: 12 }}>{c.amount || '—'}</td>
-                  <td className="mono muted" style={{ fontSize: 12 }}>{c.expires || '—'}</td>
-                  <td><span className={`pill no-dot ${statusCls(c.status)}`}>{c.status}</span></td>
+              {upload.files.map((f) => (
+                <tr key={f.id}>
                   <td>
-                    <button className="iconbtn" onClick={() => setCoiModal({ open: true, coi: c })}>
-                      <Icon name="edit" size={13} />
+                    <a href={f.url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Icon name="doc" size={13} />{f.name}
+                    </a>
+                  </td>
+                  <td>
+                    <input
+                      value={f.description}
+                      onChange={(e) => upload.setDesc(f.id, e.target.value)}
+                      placeholder="Add description…"
+                      style={{ fontSize: 12, background: 'transparent', border: 'none', outline: 'none', width: '100%', color: 'var(--text-body)' }}
+                    />
+                  </td>
+                  <td className="muted" style={{ fontSize: 12 }}>{f.uploadedAt}</td>
+                  <td className="num mono muted" style={{ fontSize: 12 }}>{fmtBytes(f.size)}</td>
+                  <td>
+                    <button className="iconbtn" onClick={() => upload.remove(f.id)}>
+                      <Icon name="trash" size={13} />
                     </button>
                   </td>
                 </tr>
@@ -1404,17 +1765,6 @@ function VendorCoisTab({ vendor, store }) {
           </table>
         )}
       </div>
-
-      <CoiModal
-        open={coiModal.open}
-        coi={coiModal.coi}
-        onClose={() => setCoiModal({ open: false, coi: null })}
-        onSave={(form) => {
-          if (coiModal.coi?.id) store?.updateCoi(vendor.id, coiModal.coi.id, form);
-          else store?.addCoi(vendor.id, form);
-        }}
-        onDelete={(id) => store?.deleteCoi(vendor.id, id)}
-      />
     </div>
   );
 }
