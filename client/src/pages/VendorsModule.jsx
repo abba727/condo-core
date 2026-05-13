@@ -975,36 +975,6 @@ function VendorProfileTab({ vendor, onEdit }) {
         )}
       </div>
 
-      {vendor.rawSources?.length > 0 && (
-        <div className="card" style={{ flex: '1 1 100%' }}>
-          <div className="card-head">
-            <span style={{ fontWeight: 600, fontSize: 13 }}>Workbook sources</span>
-            <span className="pill neutral no-dot">{vendor.rawSources.length} record{vendor.rawSources.length !== 1 ? 's' : ''}</span>
-          </div>
-          <div className="card-body-flush">
-            <table className="table">
-              <thead>
-                <tr>
-                  {Object.keys(vendor.rawSources[0] || {}).slice(0, 6).map((k) => (
-                    <th key={k}>{k}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {vendor.rawSources.slice(0, 5).map((src, i) => (
-                  <tr key={i}>
-                    {Object.values(src).slice(0, 6).map((val, j) => (
-                      <td key={j} className="muted" style={{ fontSize: 12 }}>
-                        {String(val ?? '—').slice(0, 40)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
