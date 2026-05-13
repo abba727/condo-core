@@ -24,6 +24,28 @@ import {
 // ============================================================
 // Helpers
 // ============================================================
+
+// Parse a date string to a Date object for comparison
+function parseDateStr(s) {
+  if (!s || s === '\u2014' || s === 'Not tracked') return null;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// Is a date string in the past?
+function isExpired(s) {
+  const d = parseDateStr(s);
+  if (!d) return false;
+  return d < new Date();
+}
+
+// Derive effective COI status — auto-overrides to Expired when past expiry date
+function effectiveCoiStatus(coi) {
+  if (coi.status === 'Waived' || coi.status === 'Pending') return coi.status;
+  if (isExpired(coi.expires)) return 'Expired';
+  return coi.status || 'Active';
+}
+
 const fmtDate = (iso) => {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -812,6 +834,30 @@ export function VendorDetailPage({ vendorId, onBack }) {
   const isAssigned = store?.projectVendorIds.has(vendor.id);
   const statusCls = vendor.status === 'Active' ? 'pos' : vendor.status === 'At risk' ? 'warn' : 'neutral';
 
+  // Derive COI status from actual COI records (respects expiry dates)
+  const derivedCoiStatus = React.useMemo(() => {
+    if (!vendor.cois || vendor.cois.length === 0) {
+      return { label: 'Not tracked', ok: null, icon: 'neutral', expires: vendor.coiExpires || 'Not tracked' };
+    }
+    const statuses = vendor.cois.map((c) => effectiveCoiStatus(c));
+    const hasExpired = statuses.includes('Expired');
+    const hasPending = statuses.includes('Pending');
+    const allWaived = statuses.every((s) => s === 'Waived');
+    // Earliest expiry date among non-waived COIs
+    const expiries = vendor.cois
+      .filter((c) => c.expires && c.status !== 'Waived')
+      .map((c) => parseDateStr(c.expires))
+      .filter(Boolean)
+      .sort((a, b) => a - b);
+    const earliestExpiry = expiries.length > 0
+      ? expiries[0].toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+      : 'Not tracked';
+    if (hasExpired) return { label: 'Expired', ok: false, icon: 'neg', expires: earliestExpiry };
+    if (hasPending) return { label: 'Pending', ok: false, icon: 'warn', expires: earliestExpiry };
+    if (allWaived) return { label: 'Waived', ok: true, icon: 'neutral', expires: 'Waived' };
+    return { label: 'Current', ok: true, icon: 'pos', expires: earliestExpiry };
+  }, [vendor.cois, vendor.coiExpires]);
+
   const handleSaveEdit = (form) => {
     store?.updateVendor(vendor.id, form);
     setEditOpen(false);
@@ -879,12 +925,20 @@ export function VendorDetailPage({ vendorId, onBack }) {
         <div className="metric">
           <div className="metric-label">COI status</div>
           <div className="row" style={{ gap: 6, marginTop: 6, alignItems: 'center' }}>
-            {vendor.coiOk
-              ? <Icon name="check" size={16} style={{ color: 'var(--signal-pos)' }} />
-              : <Icon name="alert" size={16} style={{ color: 'var(--signal-warn)' }} />}
-            <span className="mono" style={{ fontSize: 14, fontWeight: 600 }}>{vendor.coiOk ? 'Current' : 'Alert'}</span>
+            {derivedCoiStatus.icon === 'pos' && <Icon name="check" size={16} style={{ color: 'var(--signal-pos)' }} />}
+            {derivedCoiStatus.icon === 'neg' && <Icon name="alert" size={16} style={{ color: 'var(--signal-neg)' }} />}
+            {derivedCoiStatus.icon === 'warn' && <Icon name="alert" size={16} style={{ color: 'var(--signal-warn)' }} />}
+            {derivedCoiStatus.icon === 'neutral' && <Icon name="shield" size={16} style={{ color: 'var(--text-faint)' }} />}
+            <span className="mono" style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: derivedCoiStatus.icon === 'neg' ? 'var(--signal-neg)'
+                : derivedCoiStatus.icon === 'warn' ? 'var(--signal-warn)'
+                : derivedCoiStatus.icon === 'pos' ? 'var(--signal-pos)'
+                : 'inherit'
+            }}>{derivedCoiStatus.label}</span>
           </div>
-          <div className="metric-foot"><span>Expires {vendor.coiExpires}</span></div>
+          <div className="metric-foot"><span>Expires {derivedCoiStatus.expires}</span></div>
         </div>
         <div className="metric">
           <div className="metric-label">Rating</div>
@@ -1177,20 +1231,6 @@ NOTE: This is a summary for review only. File the official IRS Form 1099-NEC.
 // ── Bids Tab ─────────────────────────────────────────────────
 const BID_STATUS_OPTS = ['Submitted', 'Under review', 'Approved', 'Contracted', 'Declined', 'Withdrawn'];
 
-// Helper: parse a date string to a Date object for comparison
-function parseDateStr(s) {
-  if (!s || s === '—' || s === 'Not tracked') return null;
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
-}
-
-// Helper: is a date string in the past?
-function isExpired(s) {
-  const d = parseDateStr(s);
-  if (!d) return false;
-  return d < new Date();
-}
-
 // Simulated file upload — stores file metadata in state
 function useFileUpload() {
   const [files, setFiles] = React.useState([]);
@@ -1451,13 +1491,6 @@ function VendorBidsTab({ vendor, store }) {
 // ── COIs Tab ─────────────────────────────────────────────────
 const COI_TYPE_OPTS = ['General Liability', 'Workers Comp', 'Umbrella / Excess', 'Professional Liability', 'Auto', 'Other'];
 const COI_STATUS_OPTS = ['Active', 'Expired', 'Pending', 'Waived'];
-
-// Derive effective COI status: if expiry date is in the past, override to Expired
-function effectiveCoiStatus(coi) {
-  if (coi.status === 'Waived' || coi.status === 'Pending') return coi.status;
-  if (isExpired(coi.expires)) return 'Expired';
-  return coi.status || 'Active';
-}
 
 function CoiModal({ open, coi, onClose, onSave, onDelete }) {
   const [form, setForm] = React.useState({});
