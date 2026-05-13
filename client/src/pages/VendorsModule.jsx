@@ -1,0 +1,1487 @@
+/**
+ * VendorsModule.jsx
+ * CondoCore style: Quiet Brutalist Enterprise — warm stone/slate palette,
+ * monospaced ledgers, compact status pills, restrained construction-document texture.
+ *
+ * Exports:
+ *   VendorsPage         — list page with project filter, add vendor, assign to project
+ *   VendorDetailPage    — detail page with 5 tabs: Profile, Transactions, 1099, Bids, COIs
+ *   VENDOR_STORE        — shared mutable vendor state (React context)
+ */
+import React from 'react';
+import {
+  DRIGGS_712_CONTRACTS,
+  DRIGGS_712_EXPENSES,
+  DRIGGS_712_INSURANCES,
+  DRIGGS_712_PERMITS,
+  DRIGGS_712_TEAM,
+  DRIGGS_712_LOOKUP,
+} from '../data/driggs712.js';
+
+/* ─── globals injected by CondoCore.jsx ─────────────────────────────────── */
+/* global Icon, Modal, Field, Input, Select, Textarea, PageHead, fmtUSD, Avatar, Stars */
+
+// ============================================================
+// Helpers
+// ============================================================
+const fmtDate = (iso) => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d)) return String(iso).slice(0, 10);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+function vendorInitials(name) {
+  return String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase() || '?';
+}
+
+function classifyVendorTrade(name, sourceRole = '') {
+  const v = `${name} ${sourceRole}`.toLowerCase();
+  if (/architect|design|studio|office of architects/.test(v)) return 'Design';
+  if (/engineer|mep|structural|consult|yaker|stroh|wjy/i.test(v)) return 'Engineering';
+  if (/insurance|liability|workers|state farm|casulty/.test(v)) return 'Insurance';
+  if (/permit|contracting|plumb|mason|sewer|gir(o|ó)n|first choice|trysler/.test(v)) return 'Subcontractor';
+  if (/legal|law|counsel/.test(v)) return 'Legal';
+  if (/broker|sales|marketing/.test(v)) return 'Brokerage';
+  if (/construction|contractor|gc/.test(v)) return 'GC';
+  return 'Consulting';
+}
+
+function trackerAmt(value) {
+  if (typeof value === 'number') return value;
+  if (!value) return 0;
+  return parseFloat(String(value).replace(/[$,]/g, '')) || 0;
+}
+
+function trackerDateLabel(iso) {
+  if (!iso) return 'Not tracked';
+  const d = new Date(iso);
+  if (isNaN(d)) return String(iso).slice(0, 10);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ============================================================
+// Seed vendor map from workbook data
+// ============================================================
+function buildVendorMap() {
+  const map = new Map();
+  let seq = 0;
+
+  function coalesce(name, seed = {}) {
+    if (!name) return null;
+    const key = String(name).trim();
+    if (!key) return null;
+    const existing = map.get(key) || {
+      id: `v-${++seq}`,
+      name: key,
+      role: seed.role || 'Project contact',
+      trade: classifyVendorTrade(key, seed.role),
+      status: 'Active',
+      rating: 4.2,
+      contracts: 0,
+      paid: 0,
+      contractValue: 0,
+      contact: seed.contact || '—',
+      email: seed.email || '',
+      phone: seed.phone || '',
+      address: seed.address || '',
+      ein: '',
+      notes: '',
+      coiExpires: seed.coiExpires || 'Not tracked',
+      coiOk: seed.coiOk ?? true,
+      init: vendorInitials(key),
+      color: seq % 7,
+      rawSources: [],
+      // project assignment — all seeded vendors are assigned to 712 Driggs
+      projectIds: ['driggs-712'],
+      // bids array
+      bids: [],
+      // coi records
+      cois: [],
+    };
+    if (seed.role && existing.role === 'Project contact') existing.role = seed.role;
+    if (seed.contact && existing.contact === '—') existing.contact = seed.contact;
+    if (seed.email && !existing.email) existing.email = seed.email;
+    if (seed.phone && !existing.phone) existing.phone = seed.phone;
+    if (seed.trade) existing.trade = seed.trade;
+    if (typeof seed.contractValue === 'number') existing.contractValue += seed.contractValue;
+    if (typeof seed.paid === 'number') existing.paid += seed.paid;
+    if (seed.hasContract) existing.contracts += 1;
+    if (seed.coiExpires && existing.coiExpires === 'Not tracked') existing.coiExpires = seed.coiExpires;
+    if (seed.coiOk === false) existing.coiOk = false;
+    if (existing.contractValue > 0 && existing.paid >= existing.contractValue) existing.status = 'Inactive';
+    if (!existing.coiOk) existing.status = 'At risk';
+    existing.rawSources.push(seed.raw || {});
+    map.set(key, existing);
+    return existing;
+  }
+
+  DRIGGS_712_CONTRACTS.forEach((row) => {
+    const v = coalesce(row.Vendor, {
+      role: 'Contracted vendor',
+      trade: classifyVendorTrade(row.Vendor, 'contract'),
+      contractValue: trackerAmt(row['Contract Total']),
+      paid: trackerAmt(row['Total Paid']),
+      hasContract: true,
+      raw: row,
+    });
+    if (v) {
+      // Seed COI from contract date
+      if (row.Date && !v.cois.length) {
+        v.cois.push({
+          id: `coi-${v.id}-1`,
+          type: 'General Liability',
+          carrier: 'On file',
+          policyNum: '—',
+          expires: trackerDateLabel(row.Date),
+          status: 'Active',
+          amount: '$1,000,000',
+        });
+      }
+    }
+  });
+
+  DRIGGS_712_TEAM.forEach((row) => {
+    const contactName = String(row.Contact || '').split('|').pop()?.trim() || row.Contact;
+    coalesce(row.Company || row.Contact, {
+      role: 'Project team',
+      contact: contactName,
+      email: row.Email,
+      trade: classifyVendorTrade(row.Company, 'team'),
+      raw: row,
+    });
+  });
+
+  DRIGGS_712_LOOKUP.forEach((row) => {
+    coalesce(row['Company Name'] || row['Company | Name'], {
+      role: 'Directory contact',
+      contact: row.Name,
+      email: row.Email,
+      trade: classifyVendorTrade(row['Company Name'], 'directory'),
+      raw: row,
+    });
+  });
+
+  DRIGGS_712_INSURANCES.forEach((row) => {
+    const exp = row['General Liability Expiration'] || row['Workers Comp Expiration'];
+    const days = row['General Liability Expiration(d)'] ?? row['Workers Comp Expiration (d)'];
+    const v = coalesce(row.Company, {
+      role: row.Subcontractor ? `${row.Subcontractor} subcontractor` : 'Insurance-tracked subcontractor',
+      trade: 'Subcontractor',
+      coiExpires: trackerDateLabel(exp),
+      coiOk: Number(days ?? 1) >= 0,
+      raw: row,
+    });
+    if (v) {
+      // Build COI records from insurance data
+      if (row['General Liability Expiration']) {
+        v.cois.push({
+          id: `coi-gl-${v.id}`,
+          type: 'General Liability',
+          carrier: row['General Liability'] || 'On file',
+          policyNum: '—',
+          expires: trackerDateLabel(row['General Liability Expiration']),
+          status: Number(row['General Liability Expiration(d)'] ?? 1) >= 0 ? 'Active' : 'Expired',
+          amount: '$1,000,000',
+        });
+      }
+      if (row['Workers Comp Expiration']) {
+        v.cois.push({
+          id: `coi-wc-${v.id}`,
+          type: 'Workers Comp',
+          carrier: 'On file',
+          policyNum: '—',
+          expires: trackerDateLabel(row['Workers Comp Expiration']),
+          status: Number(row['Workers Comp Expiration (d)'] ?? 1) >= 0 ? 'Active' : 'Expired',
+          amount: 'Statutory',
+        });
+      }
+    }
+  });
+
+  DRIGGS_712_PERMITS.forEach((row) => {
+    const days = row['Number of Days Left'];
+    coalesce(row.Contractor, {
+      role: `${row['Permit Type'] || 'Permit'} permit contractor`,
+      trade: 'Subcontractor',
+      contact: row.Contact,
+      coiExpires: trackerDateLabel(row.Expiration),
+      coiOk: Number(days ?? 1) >= 0,
+      raw: row,
+    });
+  });
+
+  return map;
+}
+
+const SEED_MAP = buildVendorMap();
+const SEED_VENDORS = Array.from(SEED_MAP.values()).sort(
+  (a, b) => b.contractValue - a.contractValue || a.name.localeCompare(b.name)
+);
+
+// ============================================================
+// Vendor transactions derived from expenses ledger
+// ============================================================
+function buildVendorTransactions(vendorName) {
+  const key = String(vendorName || '').toLowerCase();
+  return DRIGGS_712_EXPENSES
+    .filter((row) => {
+      const v = String(row.Vendor || '').toLowerCase();
+      return v && v.includes(key.slice(0, 8));
+    })
+    .map((row, i) => ({
+      id: `txn-${i}`,
+      date: fmtDate(row.Date),
+      type: row.Type || 'EXP',
+      category: row.Category || '—',
+      memo: row.Memo || '—',
+      debit: trackerAmt(row.Debit),
+      credit: trackerAmt(row.Credit),
+    }));
+}
+
+// ============================================================
+// Vendor Store (React Context for shared mutable state)
+// ============================================================
+const VendorStoreCtx = React.createContext(null);
+
+export function VendorStoreProvider({ children }) {
+  const [vendors, setVendors] = React.useState(SEED_VENDORS);
+  const [projectVendorIds, setProjectVendorIds] = React.useState(
+    new Set(SEED_VENDORS.map((v) => v.id))
+  );
+
+  const addVendor = React.useCallback((data) => {
+    const newV = {
+      id: `v-new-${Date.now()}`,
+      name: data.name || 'New Vendor',
+      role: data.role || 'Project contact',
+      trade: data.trade || 'Consulting',
+      status: 'Active',
+      rating: 0,
+      contracts: 0,
+      paid: 0,
+      contractValue: 0,
+      contact: data.contact || '—',
+      email: data.email || '',
+      phone: data.phone || '',
+      address: data.address || '',
+      ein: data.ein || '',
+      notes: data.notes || '',
+      coiExpires: 'Not tracked',
+      coiOk: true,
+      init: vendorInitials(data.name || 'NV'),
+      color: vendors.length % 7,
+      rawSources: [],
+      projectIds: data.assignToProject ? ['driggs-712'] : [],
+      bids: [],
+      cois: [],
+    };
+    setVendors((prev) => [newV, ...prev]);
+    if (data.assignToProject) {
+      setProjectVendorIds((prev) => new Set([...prev, newV.id]));
+    }
+    return newV;
+  }, [vendors.length]);
+
+  const updateVendor = React.useCallback((id, patch) => {
+    setVendors((prev) => prev.map((v) => v.id === id ? { ...v, ...patch } : v));
+  }, []);
+
+  const toggleProjectAssignment = React.useCallback((vendorId) => {
+    setProjectVendorIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(vendorId)) next.delete(vendorId);
+      else next.add(vendorId);
+      return next;
+    });
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== vendorId) return v;
+      const assigned = v.projectIds.includes('driggs-712');
+      return {
+        ...v,
+        projectIds: assigned
+          ? v.projectIds.filter((p) => p !== 'driggs-712')
+          : [...v.projectIds, 'driggs-712'],
+      };
+    }));
+  }, []);
+
+  const addBid = React.useCallback((vendorId, bid) => {
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== vendorId) return v;
+      return { ...v, bids: [...v.bids, { id: `bid-${Date.now()}`, ...bid }] };
+    }));
+  }, []);
+
+  const updateBid = React.useCallback((vendorId, bidId, patch) => {
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== vendorId) return v;
+      return { ...v, bids: v.bids.map((b) => b.id === bidId ? { ...b, ...patch } : b) };
+    }));
+  }, []);
+
+  const deleteBid = React.useCallback((vendorId, bidId) => {
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== vendorId) return v;
+      return { ...v, bids: v.bids.filter((b) => b.id !== bidId) };
+    }));
+  }, []);
+
+  const addCoi = React.useCallback((vendorId, coi) => {
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== vendorId) return v;
+      return { ...v, cois: [...v.cois, { id: `coi-${Date.now()}`, ...coi }] };
+    }));
+  }, []);
+
+  const updateCoi = React.useCallback((vendorId, coiId, patch) => {
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== vendorId) return v;
+      return { ...v, cois: v.cois.map((c) => c.id === coiId ? { ...c, ...patch } : c) };
+    }));
+  }, []);
+
+  const deleteCoi = React.useCallback((vendorId, coiId) => {
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== vendorId) return v;
+      return { ...v, cois: v.cois.filter((c) => c.id !== coiId) };
+    }));
+  }, []);
+
+  return (
+    <VendorStoreCtx.Provider value={{
+      vendors,
+      projectVendorIds,
+      addVendor,
+      updateVendor,
+      toggleProjectAssignment,
+      addBid,
+      updateBid,
+      deleteBid,
+      addCoi,
+      updateCoi,
+      deleteCoi,
+    }}>
+      {children}
+    </VendorStoreCtx.Provider>
+  );
+}
+
+function useVendorStore() {
+  return React.useContext(VendorStoreCtx);
+}
+
+// ============================================================
+// Add / Edit Vendor Modal
+// ============================================================
+const TRADE_OPTIONS = ['GC', 'Design', 'Engineering', 'Subcontractor', 'Consulting', 'Legal', 'Insurance', 'Brokerage'];
+const STATUS_OPTIONS = ['Active', 'Inactive', 'At risk', 'Prospect'];
+
+function VendorModal({ open, vendor, onClose, onSave }) {
+  const [form, setForm] = React.useState({});
+
+  React.useEffect(() => {
+    if (open) {
+      setForm(vendor ? { ...vendor } : {
+        name: '', trade: 'Consulting', role: '', contact: '', email: '',
+        phone: '', address: '', ein: '', notes: '', status: 'Active',
+        assignToProject: true,
+      });
+    }
+  }, [open, vendor]);
+
+  const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
+  const isEdit = !!vendor;
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={isEdit ? `Edit vendor — ${vendor.name}` : 'Add new vendor'}
+      subtitle={isEdit ? `${vendor.trade} · ${vendor.role}` : 'Add a vendor to the workspace'}
+      width={680}
+      footer={
+        <>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button
+            className="btn btn-primary"
+            onClick={() => { if (form.name?.trim()) { onSave(form); onClose(); } }}
+          >
+            {isEdit ? 'Save changes' : 'Add vendor'}
+          </button>
+        </>
+      }
+    >
+      <div className="form-grid">
+        <Field label="Company / vendor name" span={2}>
+          <Input value={form.name} onChange={set('name')} placeholder="Apex Building Group" />
+        </Field>
+        <Field label="Trade">
+          <Select value={form.trade} onChange={set('trade')} options={TRADE_OPTIONS.map((t) => ({ value: t, label: t }))} />
+        </Field>
+        <Field label="Role / description">
+          <Input value={form.role} onChange={set('role')} placeholder="General contractor" />
+        </Field>
+        <Field label="Primary contact">
+          <Input value={form.contact} onChange={set('contact')} placeholder="John Smith" />
+        </Field>
+        <Field label="Email">
+          <Input value={form.email} onChange={set('email')} placeholder="contact@vendor.com" type="email" />
+        </Field>
+        <Field label="Phone">
+          <Input value={form.phone} onChange={set('phone')} placeholder="(718) 555-0100" />
+        </Field>
+        <Field label="Status">
+          <Select value={form.status} onChange={set('status')} options={STATUS_OPTIONS.map((s) => ({ value: s, label: s }))} />
+        </Field>
+        <Field label="Address" span={2}>
+          <Input value={form.address} onChange={set('address')} placeholder="123 Main St, Brooklyn, NY 11201" />
+        </Field>
+        <Field label="EIN / Tax ID">
+          <Input value={form.ein} onChange={set('ein')} placeholder="12-3456789" />
+        </Field>
+        {!isEdit && (
+          <Field label="Assign to active project">
+            <div className="row" style={{ gap: 10, paddingTop: 6 }}>
+              <input
+                type="checkbox"
+                id="assign-project-cb"
+                checked={!!form.assignToProject}
+                onChange={(e) => set('assignToProject')(e.target.checked)}
+                style={{ width: 16, height: 16, cursor: 'pointer' }}
+              />
+              <label htmlFor="assign-project-cb" style={{ fontSize: 13, cursor: 'pointer' }}>
+                712 Driggs Condominium
+              </label>
+            </div>
+          </Field>
+        )}
+        <Field label="Notes" span={2}>
+          <Textarea value={form.notes} onChange={set('notes')} placeholder="Contract scope, payment terms, performance notes…" rows={3} />
+        </Field>
+      </div>
+    </Modal>
+  );
+}
+
+// ============================================================
+// VendorsPage — list with project filter + add/assign
+// ============================================================
+const TRADE_FILTERS = ['All', 'GC', 'Design', 'Engineering', 'Subcontractor', 'Consulting', 'Legal', 'Insurance', 'Brokerage'];
+
+export function VendorsPage({ onViewVendor }) {
+  const store = useVendorStore();
+  const [trade, setTrade] = React.useState('All');
+  const [search, setSearch] = React.useState('');
+  const [view, setView] = React.useState('table');
+  const [projectOnly, setProjectOnly] = React.useState(true);
+  const [addOpen, setAddOpen] = React.useState(false);
+  const [editVendor, setEditVendor] = React.useState(null);
+
+  const vendors = store?.vendors || [];
+  const projectVendorIds = store?.projectVendorIds || new Set();
+
+  const base = projectOnly
+    ? vendors.filter((v) => projectVendorIds.has(v.id))
+    : vendors;
+
+  const filtered = base.filter((v) =>
+    (trade === 'All' || v.trade === trade) &&
+    (!search || v.name.toLowerCase().includes(search.toLowerCase()) ||
+      (v.contact || '').toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const totalCommitted = base.reduce((s, v) => s + v.contractValue, 0);
+  const totalPaid = base.reduce((s, v) => s + v.paid, 0);
+  const coiAlerts = base.filter((v) => !v.coiOk).length;
+  const projectCount = projectVendorIds.size;
+
+  const handleSaveNew = (form) => {
+    store?.addVendor(form);
+  };
+
+  const handleSaveEdit = (form) => {
+    store?.updateVendor(editVendor.id, form);
+    setEditVendor(null);
+  };
+
+  const statusCls = (s) => s === 'Active' ? 'pos' : s === 'At risk' ? 'warn' : 'neutral';
+
+  return (
+    <>
+      <PageHead
+        eyebrow="Vendors"
+        title="Vendor & contractor records"
+        sub="Trade contacts, contract value, payment history, COI tracking, performance ratings."
+        actions={
+          <>
+            <button className="btn btn-secondary"><Icon name="download" size={13} /> Export</button>
+            <button className="btn btn-secondary" onClick={() => {
+              // Generate a simple 1099 summary for all vendors with payments > $600
+              const eligible = vendors.filter((v) => v.paid >= 600);
+              alert(`1099-NEC prep: ${eligible.length} vendor(s) with $600+ in payments.\n\n${eligible.map((v) => `${v.name}: ${fmtUSD ? fmtUSD(v.paid) : '$' + v.paid.toLocaleString()}`).join('\n')}`);
+            }}><Icon name="doc" size={13} /> 1099 prep</button>
+            <button className="btn btn-primary" onClick={() => setAddOpen(true)}><Icon name="plus" size={13} /> Add vendor</button>
+          </>
+        }
+      />
+
+      {/* KPIs */}
+      <div className="grid-kpis" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+        <div className="metric">
+          <div className="metric-label">Project vendors</div>
+          <div className="mono" style={{ fontSize: 22, fontWeight: 600, marginTop: 4 }}>{projectCount}</div>
+          <div className="metric-foot"><span>{vendors.length} total in workspace</span></div>
+        </div>
+        <div className="metric">
+          <div className="metric-label">Committed value</div>
+          <div className="mono" style={{ fontSize: 22, fontWeight: 600, marginTop: 4 }}>
+            {typeof fmtUSD === 'function' ? fmtUSD(totalCommitted, { compact: true }) : '$' + Math.round(totalCommitted / 1000) + 'K'}
+          </div>
+          <div className="metric-foot"><span>{base.filter((v) => v.contracts > 0).length} contracts</span></div>
+        </div>
+        <div className="metric">
+          <div className="metric-label">Paid to date</div>
+          <div className="mono" style={{ fontSize: 22, fontWeight: 600, marginTop: 4 }}>
+            {typeof fmtUSD === 'function' ? fmtUSD(totalPaid, { compact: true }) : '$' + Math.round(totalPaid / 1000) + 'K'}
+          </div>
+          <div className="metric-foot">
+            <span>{totalCommitted > 0 ? Math.round(totalPaid / totalCommitted * 100) : 0}% of committed</span>
+          </div>
+        </div>
+        <div className="metric">
+          <div className="metric-label">COI alerts</div>
+          <div className="mono" style={{
+            fontSize: 22, fontWeight: 600, marginTop: 4,
+            color: coiAlerts > 0 ? 'var(--signal-warn)' : 'var(--signal-pos)',
+          }}>{coiAlerts}</div>
+          <div className="metric-foot"><span>Insurance expired or expiring</span></div>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: 16 }}>
+        {/* Toolbar */}
+        <div className="card-head" style={{ flexWrap: 'wrap', gap: 10 }}>
+          <div className="row" style={{ gap: 10, flex: 1, flexWrap: 'wrap' }}>
+            {/* Project filter toggle */}
+            <button
+              className={`btn btn-sm ${projectOnly ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setProjectOnly((p) => !p)}
+              title={projectOnly ? 'Showing project vendors only — click to show all' : 'Showing all vendors — click to filter by project'}
+            >
+              <Icon name="building" size={12} />
+              {projectOnly ? '712 Driggs only' : 'All vendors'}
+            </button>
+
+            <label className="topbar-search" style={{ width: 240, margin: 0 }}>
+              <Icon name="search" size={13} />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search vendors, contacts…"
+                style={{ background: 'transparent', border: 'none', color: 'inherit', width: '100%', outline: 'none', fontSize: 13 }}
+              />
+            </label>
+
+            <div className="row" style={{ gap: 4, flexWrap: 'wrap' }}>
+              {TRADE_FILTERS.map((t) => (
+                <button
+                  key={t}
+                  className={`chip ${trade === t ? 'active' : ''}`}
+                  onClick={() => setTrade(t)}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="card-actions">
+            <div className="seg">
+              <button className={view === 'table' ? 'active' : ''} onClick={() => setView('table')}>Table</button>
+              <button className={view === 'cards' ? 'active' : ''} onClick={() => setView('cards')}>Cards</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Table view */}
+        {view === 'table' && (
+          <div className="card-body-flush">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Vendor</th>
+                  <th>Trade</th>
+                  <th>Status</th>
+                  <th className="num">Contract value</th>
+                  <th>Paid</th>
+                  <th>COI</th>
+                  <th>Rating</th>
+                  <th>Project</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 && (
+                  <tr><td colSpan="9" style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-faint)', fontSize: 13 }}>
+                    No vendors match the current filters.
+                  </td></tr>
+                )}
+                {filtered.map((v) => {
+                  const paidPct = v.contractValue > 0 ? Math.round((v.paid / v.contractValue) * 100) : 0;
+                  const isAssigned = projectVendorIds.has(v.id);
+                  return (
+                    <tr
+                      key={v.id}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => onViewVendor?.(v.id)}
+                    >
+                      <td>
+                        <div className="row" style={{ gap: 10 }}>
+                          <VendorAvatar init={v.init} color={v.color} size={32} />
+                          <div>
+                            <div style={{ fontWeight: 500 }}>{v.name}</div>
+                            <div className="faint" style={{ fontSize: 11 }}>{v.role} · {v.contact}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span className="pill neutral no-dot">{v.trade}</span></td>
+                      <td>
+                        <span className={`pill no-dot ${statusCls(v.status)}`}>{v.status}</span>
+                      </td>
+                      <td className="num mono">{v.contractValue > 0 ? (typeof fmtUSD === 'function' ? fmtUSD(v.contractValue, { compact: true }) : '$' + Math.round(v.contractValue / 1000) + 'K') : '—'}</td>
+                      <td style={{ minWidth: 130 }}>
+                        {v.contractValue > 0 ? (
+                          <>
+                            <div className="row-between" style={{ fontSize: 11, marginBottom: 3 }}>
+                              <span className="mono">{typeof fmtUSD === 'function' ? fmtUSD(v.paid, { compact: true }) : '$' + Math.round(v.paid / 1000) + 'K'}</span>
+                              <span className="faint">{paidPct}%</span>
+                            </div>
+                            <div className="bar" style={{ height: 4 }}>
+                              <div className="bar-fill accent" style={{ width: `${paidPct}%` }} />
+                            </div>
+                          </>
+                        ) : <span className="faint">—</span>}
+                      </td>
+                      <td>
+                        <div className="row" style={{ gap: 6 }}>
+                          {v.coiOk
+                            ? <Icon name="check" size={13} style={{ color: 'var(--signal-pos)' }} />
+                            : <Icon name="alert" size={13} style={{ color: 'var(--signal-warn)' }} />}
+                          <span className="muted" style={{ fontSize: 11 }}>{v.coiExpires}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="row" style={{ gap: 4, alignItems: 'center' }}>
+                          <span className="mono" style={{ fontWeight: 500 }}>{v.rating || '—'}</span>
+                          {v.rating > 0 && <VendorStars value={v.rating} />}
+                        </div>
+                      </td>
+                      <td>
+                        <button
+                          className={`btn btn-sm ${isAssigned ? 'btn-secondary' : 'btn-ghost'}`}
+                          style={{ fontSize: 11, padding: '3px 8px' }}
+                          title={isAssigned ? 'Remove from 712 Driggs' : 'Assign to 712 Driggs'}
+                          onClick={(e) => { e.stopPropagation(); store?.toggleProjectAssignment(v.id); }}
+                        >
+                          {isAssigned ? <><Icon name="check" size={11} /> Assigned</> : <><Icon name="plus" size={11} /> Assign</>}
+                        </button>
+                      </td>
+                      <td>
+                        <div className="row" style={{ gap: 4 }} onClick={(e) => e.stopPropagation()}>
+                          <button
+                            className="iconbtn"
+                            title="Edit vendor"
+                            onClick={(e) => { e.stopPropagation(); setEditVendor(v); }}
+                          >
+                            <Icon name="edit" size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Cards view */}
+        {view === 'cards' && (
+          <div className="card-body" style={{ padding: 16 }}>
+            {filtered.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-faint)', fontSize: 13 }}>
+                No vendors match the current filters.
+              </div>
+            )}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+              {filtered.map((v) => {
+                const isAssigned = projectVendorIds.has(v.id);
+                return (
+                  <div
+                    key={v.id}
+                    className="vendor-card"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => onViewVendor?.(v.id)}
+                  >
+                    <div className="row" style={{ gap: 12, marginBottom: 12 }}>
+                      <VendorAvatar init={v.init} color={v.color} size={40} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: 13 }}>{v.name}</div>
+                        <div className="faint" style={{ fontSize: 11 }}>{v.role}</div>
+                      </div>
+                      <button
+                        className="iconbtn"
+                        title="Edit"
+                        onClick={(e) => { e.stopPropagation(); setEditVendor(v); }}
+                      >
+                        <Icon name="edit" size={13} />
+                      </button>
+                    </div>
+                    <div className="row" style={{ gap: 6, marginBottom: 10 }}>
+                      <span className="pill neutral no-dot">{v.trade}</span>
+                      <span className={`pill no-dot ${statusCls(v.status)}`}>{v.status}</span>
+                    </div>
+                    <div style={{ borderTop: '1px solid var(--border)', margin: '10px 0' }} />
+                    <div className="row-between" style={{ marginBottom: 6 }}>
+                      <span className="muted" style={{ fontSize: 11 }}>Contract</span>
+                      <span className="mono" style={{ fontSize: 12, fontWeight: 500 }}>
+                        {v.contractValue > 0 ? (typeof fmtUSD === 'function' ? fmtUSD(v.contractValue, { compact: true }) : '$' + Math.round(v.contractValue / 1000) + 'K') : '—'}
+                      </span>
+                    </div>
+                    <div className="row-between" style={{ marginBottom: 10 }}>
+                      <span className="muted" style={{ fontSize: 11 }}>Paid</span>
+                      <span className="mono" style={{ fontSize: 12, fontWeight: 500 }}>
+                        {typeof fmtUSD === 'function' ? fmtUSD(v.paid, { compact: true }) : '$' + Math.round(v.paid / 1000) + 'K'}
+                      </span>
+                    </div>
+                    <button
+                      className={`btn btn-sm ${isAssigned ? 'btn-secondary' : 'btn-ghost'} w-full`}
+                      style={{ width: '100%', justifyContent: 'center', fontSize: 12 }}
+                      onClick={(e) => { e.stopPropagation(); store?.toggleProjectAssignment(v.id); }}
+                    >
+                      {isAssigned ? <><Icon name="check" size={11} /> Assigned to 712 Driggs</> : <><Icon name="plus" size={11} /> Assign to project</>}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Add vendor modal */}
+      <VendorModal open={addOpen} vendor={null} onClose={() => setAddOpen(false)} onSave={handleSaveNew} />
+
+      {/* Edit vendor modal */}
+      <VendorModal open={!!editVendor} vendor={editVendor} onClose={() => setEditVendor(null)} onSave={handleSaveEdit} />
+    </>
+  );
+}
+
+// ============================================================
+// Vendor Detail Page — 5 tabs
+// ============================================================
+const DETAIL_TABS = [
+  { id: 'profile', label: 'Profile', icon: 'users' },
+  { id: 'transactions', label: 'Transactions', icon: 'dollar' },
+  { id: '1099', label: '1099', icon: 'doc' },
+  { id: 'bids', label: 'Bids', icon: 'list' },
+  { id: 'cois', label: 'COIs', icon: 'shield' },
+];
+
+export function VendorDetailPage({ vendorId, onBack }) {
+  const store = useVendorStore();
+  const [tab, setTab] = React.useState('profile');
+  const [editOpen, setEditOpen] = React.useState(false);
+
+  const vendor = store?.vendors.find((v) => v.id === vendorId);
+
+  if (!vendor) {
+    return (
+      <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-faint)' }}>
+        Vendor not found.{' '}
+        <button className="btn btn-ghost" onClick={onBack}>← Back to vendors</button>
+      </div>
+    );
+  }
+
+  const isAssigned = store?.projectVendorIds.has(vendor.id);
+  const statusCls = vendor.status === 'Active' ? 'pos' : vendor.status === 'At risk' ? 'warn' : 'neutral';
+
+  const handleSaveEdit = (form) => {
+    store?.updateVendor(vendor.id, form);
+    setEditOpen(false);
+  };
+
+  return (
+    <>
+      {/* Back nav + header */}
+      <div style={{ marginBottom: 4 }}>
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={onBack}
+          style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}
+        >
+          <Icon name="chevronRight" size={12} style={{ transform: 'rotate(180deg)' }} /> Back to vendors
+        </button>
+      </div>
+
+      <div className="vendor-detail-header">
+        <VendorAvatar init={vendor.init} color={vendor.color} size={56} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="row" style={{ gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{vendor.name}</h1>
+            <span className={`pill no-dot ${statusCls}`}>{vendor.status}</span>
+            <span className="pill neutral no-dot">{vendor.trade}</span>
+          </div>
+          <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
+            {vendor.role}
+            {vendor.contact && vendor.contact !== '—' && ` · ${vendor.contact}`}
+            {vendor.email && <> · <a href={`mailto:${vendor.email}`} style={{ color: 'var(--accent)' }}>{vendor.email}</a></>}
+            {vendor.phone && ` · ${vendor.phone}`}
+          </div>
+        </div>
+        <div className="row" style={{ gap: 8 }}>
+          <button
+            className={`btn btn-sm ${isAssigned ? 'btn-secondary' : 'btn-ghost'}`}
+            onClick={() => store?.toggleProjectAssignment(vendor.id)}
+          >
+            {isAssigned ? <><Icon name="check" size={12} /> Assigned to project</> : <><Icon name="plus" size={12} /> Assign to project</>}
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={() => setEditOpen(true)}>
+            <Icon name="edit" size={12} /> Edit vendor
+          </button>
+        </div>
+      </div>
+
+      {/* KPI row */}
+      <div className="grid-kpis" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginTop: 16, marginBottom: 0 }}>
+        <div className="metric">
+          <div className="metric-label">Contract value</div>
+          <div className="mono" style={{ fontSize: 20, fontWeight: 600, marginTop: 4 }}>
+            {vendor.contractValue > 0 ? (typeof fmtUSD === 'function' ? fmtUSD(vendor.contractValue) : '$' + vendor.contractValue.toLocaleString()) : '—'}
+          </div>
+          <div className="metric-foot"><span>{vendor.contracts} contract{vendor.contracts !== 1 ? 's' : ''}</span></div>
+        </div>
+        <div className="metric">
+          <div className="metric-label">Paid to date</div>
+          <div className="mono" style={{ fontSize: 20, fontWeight: 600, marginTop: 4 }}>
+            {typeof fmtUSD === 'function' ? fmtUSD(vendor.paid) : '$' + vendor.paid.toLocaleString()}
+          </div>
+          <div className="metric-foot">
+            <span>{vendor.contractValue > 0 ? Math.round(vendor.paid / vendor.contractValue * 100) : 0}% of contract</span>
+          </div>
+        </div>
+        <div className="metric">
+          <div className="metric-label">COI status</div>
+          <div className="row" style={{ gap: 6, marginTop: 6, alignItems: 'center' }}>
+            {vendor.coiOk
+              ? <Icon name="check" size={16} style={{ color: 'var(--signal-pos)' }} />
+              : <Icon name="alert" size={16} style={{ color: 'var(--signal-warn)' }} />}
+            <span className="mono" style={{ fontSize: 14, fontWeight: 600 }}>{vendor.coiOk ? 'Current' : 'Alert'}</span>
+          </div>
+          <div className="metric-foot"><span>Expires {vendor.coiExpires}</span></div>
+        </div>
+        <div className="metric">
+          <div className="metric-label">Rating</div>
+          <div className="row" style={{ gap: 6, marginTop: 6, alignItems: 'center' }}>
+            <span className="mono" style={{ fontSize: 20, fontWeight: 600 }}>{vendor.rating || '—'}</span>
+            {vendor.rating > 0 && <VendorStars value={vendor.rating} />}
+          </div>
+          <div className="metric-foot"><span>{vendor.bids.length} bid{vendor.bids.length !== 1 ? 's' : ''} on record</span></div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="vendor-detail-tabs">
+        {DETAIL_TABS.map((t) => (
+          <button
+            key={t.id}
+            className={`vendor-detail-tab ${tab === t.id ? 'active' : ''}`}
+            onClick={() => setTab(t.id)}
+          >
+            <Icon name={t.icon} size={13} />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      <div style={{ marginTop: 16 }}>
+        {tab === 'profile' && <VendorProfileTab vendor={vendor} onEdit={() => setEditOpen(true)} />}
+        {tab === 'transactions' && <VendorTransactionsTab vendor={vendor} />}
+        {tab === '1099' && <Vendor1099Tab vendor={vendor} />}
+        {tab === 'bids' && <VendorBidsTab vendor={vendor} store={store} />}
+        {tab === 'cois' && <VendorCoisTab vendor={vendor} store={store} />}
+      </div>
+
+      <VendorModal open={editOpen} vendor={vendor} onClose={() => setEditOpen(false)} onSave={handleSaveEdit} />
+    </>
+  );
+}
+
+// ── Profile Tab ──────────────────────────────────────────────
+function VendorProfileTab({ vendor, onEdit }) {
+  const row = (label, value) => (
+    <div className="vendor-profile-row" key={label}>
+      <span className="vendor-profile-label">{label}</span>
+      <span className="vendor-profile-value">{value || '—'}</span>
+    </div>
+  );
+
+  return (
+    <div className="row" style={{ gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div className="card" style={{ flex: '1 1 340px' }}>
+        <div className="card-head">
+          <span style={{ fontWeight: 600, fontSize: 13 }}>Contact information</span>
+          <button className="btn btn-ghost btn-sm" onClick={onEdit}><Icon name="edit" size={12} /> Edit</button>
+        </div>
+        <div className="card-body" style={{ padding: '0 16px 16px' }}>
+          {row('Company name', vendor.name)}
+          {row('Trade', vendor.trade)}
+          {row('Role', vendor.role)}
+          {row('Primary contact', vendor.contact)}
+          {row('Email', vendor.email ? <a href={`mailto:${vendor.email}`} style={{ color: 'var(--accent)' }}>{vendor.email}</a> : null)}
+          {row('Phone', vendor.phone)}
+          {row('Address', vendor.address)}
+          {row('EIN / Tax ID', vendor.ein)}
+          {row('Status', <span className={`pill no-dot ${vendor.status === 'Active' ? 'pos' : vendor.status === 'At risk' ? 'warn' : 'neutral'}`}>{vendor.status}</span>)}
+        </div>
+      </div>
+
+      <div className="card" style={{ flex: '1 1 280px' }}>
+        <div className="card-head">
+          <span style={{ fontWeight: 600, fontSize: 13 }}>Contract summary</span>
+        </div>
+        <div className="card-body" style={{ padding: '0 16px 16px' }}>
+          {row('Contract value', vendor.contractValue > 0 ? (typeof fmtUSD === 'function' ? fmtUSD(vendor.contractValue) : '$' + vendor.contractValue.toLocaleString()) : '—')}
+          {row('Total paid', typeof fmtUSD === 'function' ? fmtUSD(vendor.paid) : '$' + vendor.paid.toLocaleString())}
+          {row('Remaining', vendor.contractValue > 0 ? (typeof fmtUSD === 'function' ? fmtUSD(vendor.contractValue - vendor.paid) : '$' + (vendor.contractValue - vendor.paid).toLocaleString()) : '—')}
+          {row('Contracts', String(vendor.contracts))}
+          {row('COI expires', vendor.coiExpires)}
+          {row('COI status', vendor.coiOk ? <span className="pill pos no-dot">Current</span> : <span className="pill warn no-dot">Alert</span>)}
+        </div>
+        {vendor.notes && (
+          <>
+            <div style={{ borderTop: '1px solid var(--border)', margin: '0 16px' }} />
+            <div className="card-body" style={{ padding: '12px 16px' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', marginBottom: 6 }}>Notes</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{vendor.notes}</div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {vendor.rawSources?.length > 0 && (
+        <div className="card" style={{ flex: '1 1 100%' }}>
+          <div className="card-head">
+            <span style={{ fontWeight: 600, fontSize: 13 }}>Workbook sources</span>
+            <span className="pill neutral no-dot">{vendor.rawSources.length} record{vendor.rawSources.length !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="card-body-flush">
+            <table className="table">
+              <thead>
+                <tr>
+                  {Object.keys(vendor.rawSources[0] || {}).slice(0, 6).map((k) => (
+                    <th key={k}>{k}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {vendor.rawSources.slice(0, 5).map((src, i) => (
+                  <tr key={i}>
+                    {Object.values(src).slice(0, 6).map((val, j) => (
+                      <td key={j} className="muted" style={{ fontSize: 12 }}>
+                        {String(val ?? '—').slice(0, 40)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Transactions Tab ─────────────────────────────────────────
+function VendorTransactionsTab({ vendor }) {
+  const txns = React.useMemo(() => buildVendorTransactions(vendor.name), [vendor.name]);
+
+  // Also include contract draws
+  const contractRows = DRIGGS_712_CONTRACTS
+    .filter((r) => String(r.Vendor || '').toLowerCase().includes(vendor.name.toLowerCase().slice(0, 8)))
+    .map((r, i) => ({
+      id: `contract-${i}`,
+      date: fmtDate(r.Date),
+      type: 'CONTRACT',
+      category: 'Contract',
+      memo: `Contract total: ${typeof fmtUSD === 'function' ? fmtUSD(trackerAmt(r['Contract Total'])) : '$' + trackerAmt(r['Contract Total']).toLocaleString()}`,
+      debit: trackerAmt(r['Total Paid']),
+      credit: 0,
+    }));
+
+  const allTxns = [...contractRows, ...txns];
+  const totalDebit = allTxns.reduce((s, t) => s + t.debit, 0);
+  const totalCredit = allTxns.reduce((s, t) => s + t.credit, 0);
+
+  return (
+    <div className="card">
+      <div className="card-head">
+        <span style={{ fontWeight: 600, fontSize: 13 }}>Transaction history</span>
+        <div className="row" style={{ gap: 16 }}>
+          <span className="muted" style={{ fontSize: 12 }}>
+            Total paid: <strong className="mono">{typeof fmtUSD === 'function' ? fmtUSD(totalDebit) : '$' + totalDebit.toLocaleString()}</strong>
+          </span>
+          {totalCredit > 0 && (
+            <span className="muted" style={{ fontSize: 12 }}>
+              Credits: <strong className="mono">{typeof fmtUSD === 'function' ? fmtUSD(totalCredit) : '$' + totalCredit.toLocaleString()}</strong>
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="card-body-flush">
+        {allTxns.length === 0 ? (
+          <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>
+            No transactions found in the ledger for this vendor.
+          </div>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Memo</th>
+                <th className="num">Debit</th>
+                <th className="num">Credit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allTxns.map((t) => (
+                <tr key={t.id}>
+                  <td className="mono muted" style={{ fontSize: 12 }}>{t.date}</td>
+                  <td><span className="pill neutral no-dot" style={{ fontSize: 10 }}>{t.type}</span></td>
+                  <td className="muted" style={{ fontSize: 12 }}>{t.category}</td>
+                  <td style={{ fontSize: 13 }}>{t.memo}</td>
+                  <td className="num mono" style={{ color: t.debit > 0 ? 'var(--signal-neg)' : 'inherit' }}>
+                    {t.debit > 0 ? (typeof fmtUSD === 'function' ? fmtUSD(t.debit) : '$' + t.debit.toLocaleString()) : '—'}
+                  </td>
+                  <td className="num mono" style={{ color: t.credit > 0 ? 'var(--signal-pos)' : 'inherit' }}>
+                    {t.credit > 0 ? (typeof fmtUSD === 'function' ? fmtUSD(t.credit) : '$' + t.credit.toLocaleString()) : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── 1099 Tab ─────────────────────────────────────────────────
+function Vendor1099Tab({ vendor }) {
+  const currentYear = new Date().getFullYear() - 1; // prior tax year
+  const [taxYear, setTaxYear] = React.useState(String(currentYear));
+  const [printed, setPrinted] = React.useState(false);
+
+  const totalPayments = vendor.paid;
+  const eligible = totalPayments >= 600;
+
+  const handlePrint = () => {
+    setPrinted(true);
+    const content = `
+1099-NEC — ${taxYear} Tax Year
+================================
+PAYER: 712 Driggs Condominium LLC
+       712 Driggs Avenue, Brooklyn, NY 11211
+       EIN: 83-XXXXXXX
+
+RECIPIENT: ${vendor.name}
+           ${vendor.address || 'Address not on file'}
+           EIN/SSN: ${vendor.ein || 'Not on file'}
+
+Box 1 — Nonemployee compensation: ${typeof fmtUSD === 'function' ? fmtUSD(totalPayments) : '$' + totalPayments.toLocaleString()}
+
+Prepared by CondoCore on ${new Date().toLocaleDateString()}
+================================
+NOTE: This is a summary for review only. File the official IRS Form 1099-NEC.
+    `.trim();
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(`<pre style="font-family:monospace;padding:40px;font-size:14px;">${content}</pre>`);
+      win.document.close();
+      win.print();
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 640 }}>
+      <div className="card">
+        <div className="card-head">
+          <span style={{ fontWeight: 600, fontSize: 13 }}>1099-NEC Summary</span>
+          <div className="row" style={{ gap: 8 }}>
+            <select
+              className="form-input"
+              value={taxYear}
+              onChange={(e) => setTaxYear(e.target.value)}
+              style={{ width: 100, fontSize: 13 }}
+            >
+              {[0, 1, 2, 3].map((offset) => {
+                const y = String(currentYear - offset);
+                return <option key={y} value={y}>{y}</option>;
+              })}
+            </select>
+            <button className="btn btn-primary btn-sm" onClick={handlePrint} disabled={!eligible}>
+              <Icon name="doc" size={12} /> Generate 1099
+            </button>
+          </div>
+        </div>
+        <div className="card-body" style={{ padding: 20 }}>
+          {/* 1099 form preview */}
+          <div className="vendor-1099-preview">
+            <div className="vendor-1099-header">
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-faint)' }}>Form 1099-NEC</div>
+                <div style={{ fontSize: 18, fontWeight: 700, marginTop: 2 }}>Nonemployee Compensation</div>
+                <div className="muted" style={{ fontSize: 12 }}>Tax Year {taxYear}</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>Prepared by</div>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>CondoCore</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 20 }}>
+              <div>
+                <div className="vendor-1099-field-label">Payer</div>
+                <div className="vendor-1099-field-value">712 Driggs Condominium LLC</div>
+                <div className="vendor-1099-field-value muted">712 Driggs Avenue, Brooklyn, NY 11211</div>
+                <div className="vendor-1099-field-value muted">EIN: 83-XXXXXXX</div>
+              </div>
+              <div>
+                <div className="vendor-1099-field-label">Recipient</div>
+                <div className="vendor-1099-field-value">{vendor.name}</div>
+                <div className="vendor-1099-field-value muted">{vendor.address || <span style={{ color: 'var(--signal-warn)' }}>Address not on file</span>}</div>
+                <div className="vendor-1099-field-value muted">EIN/SSN: {vendor.ein || <span style={{ color: 'var(--signal-warn)' }}>Not on file</span>}</div>
+              </div>
+            </div>
+
+            <div style={{ borderTop: '2px solid var(--border)', margin: '20px 0' }} />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              <div className="vendor-1099-box">
+                <div className="vendor-1099-box-label">Box 1 — Nonemployee compensation</div>
+                <div className="vendor-1099-box-value">
+                  {typeof fmtUSD === 'function' ? fmtUSD(totalPayments) : '$' + totalPayments.toLocaleString()}
+                </div>
+              </div>
+              <div className="vendor-1099-box">
+                <div className="vendor-1099-box-label">Box 4 — Federal income tax withheld</div>
+                <div className="vendor-1099-box-value muted">$0.00</div>
+              </div>
+              <div className="vendor-1099-box">
+                <div className="vendor-1099-box-label">Filing threshold</div>
+                <div className="vendor-1099-box-value" style={{ color: eligible ? 'var(--signal-pos)' : 'var(--signal-warn)' }}>
+                  {eligible ? '≥ $600 — File required' : '< $600 — No filing required'}
+                </div>
+              </div>
+            </div>
+
+            {!vendor.ein && (
+              <div style={{ marginTop: 16, padding: '10px 14px', background: 'var(--signal-warn-soft)', border: '1px solid var(--signal-warn)', borderRadius: 8, fontSize: 12, color: 'var(--signal-warn)' }}>
+                <Icon name="alert" size={13} style={{ marginRight: 6 }} />
+                EIN / Tax ID is not on file for this vendor. Add it in the Profile tab before filing.
+              </div>
+            )}
+          </div>
+
+          {printed && (
+            <div style={{ marginTop: 12, padding: '10px 14px', background: 'var(--signal-pos-soft)', border: '1px solid var(--signal-pos)', borderRadius: 8, fontSize: 12, color: 'var(--signal-pos)' }}>
+              <Icon name="check" size={13} style={{ marginRight: 6 }} />
+              1099 summary opened in a new window for printing. File the official IRS Form 1099-NEC separately.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Bids Tab ─────────────────────────────────────────────────
+const BID_STATUS_OPTS = ['Submitted', 'Under review', 'Awarded', 'Declined', 'Withdrawn'];
+
+function BidModal({ open, bid, onClose, onSave, onDelete }) {
+  const [form, setForm] = React.useState({});
+  React.useEffect(() => {
+    if (open) setForm(bid || {
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      scope: '', amount: 0, status: 'Submitted', notes: '',
+    });
+  }, [open, bid]);
+  const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={bid?.id ? 'Edit bid' : 'Add bid'}
+      subtitle="Record a bid or proposal from this vendor"
+      width={560}
+      footer={
+        <>
+          {bid?.id && (
+            <button className="btn btn-ghost" style={{ color: 'var(--signal-neg)', marginRight: 'auto' }} onClick={() => { onDelete(bid.id); onClose(); }}>
+              <Icon name="trash" size={13} /> Delete
+            </button>
+          )}
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => { onSave(form); onClose(); }}>
+            {bid?.id ? 'Save changes' : 'Add bid'}
+          </button>
+        </>
+      }
+    >
+      <div className="form-grid">
+        <Field label="Date"><Input value={form.date} onChange={set('date')} placeholder="May 06, 2024" /></Field>
+        <Field label="Bid amount"><Input value={form.amount} onChange={(v) => set('amount')(parseFloat(v) || 0)} type="number" prefix="$" /></Field>
+        <Field label="Scope / description" span={2}><Input value={form.scope} onChange={set('scope')} placeholder="Foundation work, Phase 1" /></Field>
+        <Field label="Status">
+          <Select value={form.status} onChange={set('status')} options={BID_STATUS_OPTS.map((s) => ({ value: s, label: s }))} />
+        </Field>
+        <Field label="Notes" span={2}><Textarea value={form.notes} onChange={set('notes')} placeholder="Inclusions, exclusions, qualifications…" rows={3} /></Field>
+      </div>
+    </Modal>
+  );
+}
+
+function VendorBidsTab({ vendor, store }) {
+  const [bidModal, setBidModal] = React.useState({ open: false, bid: null });
+
+  const statusCls = (s) => {
+    if (s === 'Awarded') return 'pos';
+    if (s === 'Declined' || s === 'Withdrawn') return 'neutral';
+    return 'info';
+  };
+
+  return (
+    <div className="card">
+      <div className="card-head">
+        <span style={{ fontWeight: 600, fontSize: 13 }}>Bids & proposals</span>
+        <button className="btn btn-primary btn-sm" onClick={() => setBidModal({ open: true, bid: null })}>
+          <Icon name="plus" size={12} /> Add bid
+        </button>
+      </div>
+      <div className="card-body-flush">
+        {vendor.bids.length === 0 ? (
+          <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>
+            No bids on record. Click "Add bid" to record a proposal.
+          </div>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Scope</th>
+                <th className="num">Amount</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {vendor.bids.map((b) => (
+                <tr key={b.id}>
+                  <td className="mono muted" style={{ fontSize: 12 }}>{b.date}</td>
+                  <td style={{ fontWeight: 500 }}>{b.scope}</td>
+                  <td className="num mono">{typeof fmtUSD === 'function' ? fmtUSD(b.amount) : '$' + (b.amount || 0).toLocaleString()}</td>
+                  <td><span className={`pill no-dot ${statusCls(b.status)}`}>{b.status}</span></td>
+                  <td className="muted" style={{ fontSize: 12 }}>{b.notes || '—'}</td>
+                  <td>
+                    <button className="iconbtn" onClick={() => setBidModal({ open: true, bid: b })}>
+                      <Icon name="edit" size={13} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <BidModal
+        open={bidModal.open}
+        bid={bidModal.bid}
+        onClose={() => setBidModal({ open: false, bid: null })}
+        onSave={(form) => {
+          if (bidModal.bid?.id) store?.updateBid(vendor.id, bidModal.bid.id, form);
+          else store?.addBid(vendor.id, form);
+        }}
+        onDelete={(id) => store?.deleteBid(vendor.id, id)}
+      />
+    </div>
+  );
+}
+
+// ── COIs Tab ─────────────────────────────────────────────────
+const COI_TYPE_OPTS = ['General Liability', 'Workers Comp', 'Umbrella / Excess', 'Professional Liability', 'Auto', 'Other'];
+const COI_STATUS_OPTS = ['Active', 'Expired', 'Pending', 'Waived'];
+
+function CoiModal({ open, coi, onClose, onSave, onDelete }) {
+  const [form, setForm] = React.useState({});
+  React.useEffect(() => {
+    if (open) setForm(coi || {
+      type: 'General Liability', carrier: '', policyNum: '',
+      expires: '', status: 'Active', amount: '$1,000,000',
+    });
+  }, [open, coi]);
+  const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={coi?.id ? 'Edit COI' : 'Add COI'}
+      subtitle="Certificate of Insurance record"
+      width={560}
+      footer={
+        <>
+          {coi?.id && (
+            <button className="btn btn-ghost" style={{ color: 'var(--signal-neg)', marginRight: 'auto' }} onClick={() => { onDelete(coi.id); onClose(); }}>
+              <Icon name="trash" size={13} /> Delete
+            </button>
+          )}
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => { onSave(form); onClose(); }}>
+            {coi?.id ? 'Save changes' : 'Add COI'}
+          </button>
+        </>
+      }
+    >
+      <div className="form-grid">
+        <Field label="Coverage type">
+          <Select value={form.type} onChange={set('type')} options={COI_TYPE_OPTS.map((t) => ({ value: t, label: t }))} />
+        </Field>
+        <Field label="Status">
+          <Select value={form.status} onChange={set('status')} options={COI_STATUS_OPTS.map((s) => ({ value: s, label: s }))} />
+        </Field>
+        <Field label="Carrier"><Input value={form.carrier} onChange={set('carrier')} placeholder="State Farm" /></Field>
+        <Field label="Policy number"><Input value={form.policyNum} onChange={set('policyNum')} placeholder="GL-2024-XXXXX" /></Field>
+        <Field label="Coverage amount"><Input value={form.amount} onChange={set('amount')} placeholder="$1,000,000" /></Field>
+        <Field label="Expiration date"><Input value={form.expires} onChange={set('expires')} placeholder="Dec 31, 2025" /></Field>
+      </div>
+    </Modal>
+  );
+}
+
+function VendorCoisTab({ vendor, store }) {
+  const [coiModal, setCoiModal] = React.useState({ open: false, coi: null });
+
+  const statusCls = (s) => {
+    if (s === 'Active') return 'pos';
+    if (s === 'Expired') return 'warn';
+    if (s === 'Pending') return 'info';
+    return 'neutral';
+  };
+
+  return (
+    <div className="card">
+      <div className="card-head">
+        <span style={{ fontWeight: 600, fontSize: 13 }}>Certificates of Insurance</span>
+        <button className="btn btn-primary btn-sm" onClick={() => setCoiModal({ open: true, coi: null })}>
+          <Icon name="plus" size={12} /> Add COI
+        </button>
+      </div>
+      <div className="card-body-flush">
+        {vendor.cois.length === 0 ? (
+          <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>
+            No COIs on record. Click "Add COI" to track a certificate.
+          </div>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Carrier</th>
+                <th>Policy #</th>
+                <th>Coverage</th>
+                <th>Expires</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {vendor.cois.map((c) => (
+                <tr key={c.id}>
+                  <td style={{ fontWeight: 500 }}>{c.type}</td>
+                  <td className="muted">{c.carrier || '—'}</td>
+                  <td className="mono muted" style={{ fontSize: 12 }}>{c.policyNum || '—'}</td>
+                  <td className="mono" style={{ fontSize: 12 }}>{c.amount || '—'}</td>
+                  <td className="mono muted" style={{ fontSize: 12 }}>{c.expires || '—'}</td>
+                  <td><span className={`pill no-dot ${statusCls(c.status)}`}>{c.status}</span></td>
+                  <td>
+                    <button className="iconbtn" onClick={() => setCoiModal({ open: true, coi: c })}>
+                      <Icon name="edit" size={13} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <CoiModal
+        open={coiModal.open}
+        coi={coiModal.coi}
+        onClose={() => setCoiModal({ open: false, coi: null })}
+        onSave={(form) => {
+          if (coiModal.coi?.id) store?.updateCoi(vendor.id, coiModal.coi.id, form);
+          else store?.addCoi(vendor.id, form);
+        }}
+        onDelete={(id) => store?.deleteCoi(vendor.id, id)}
+      />
+    </div>
+  );
+}
+
+// ============================================================
+// Shared sub-components
+// ============================================================
+function VendorAvatar({ init, color = 0, size = 32 }) {
+  const palettes = [
+    { bg: 'var(--accent-soft)', fg: 'var(--accent-soft-text)' },
+    { bg: 'var(--signal-info-soft)', fg: 'var(--signal-info)' },
+    { bg: 'var(--signal-pos-soft)', fg: 'var(--signal-pos)' },
+    { bg: 'var(--signal-warn-soft)', fg: 'var(--signal-warn)' },
+    { bg: 'var(--signal-neg-soft)', fg: 'var(--signal-neg)' },
+    { bg: 'var(--bg-active)', fg: 'var(--text)' },
+    { bg: 'var(--accent)', fg: 'var(--text-on-accent)' },
+  ];
+  const p = palettes[color % palettes.length];
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 8,
+      background: p.bg, color: p.fg,
+      display: 'grid', placeItems: 'center',
+      fontSize: size * 0.36, fontWeight: 600, flexShrink: 0,
+    }}>{init}</div>
+  );
+}
+
+function VendorStars({ value }) {
+  return (
+    <div className="row" style={{ gap: 1 }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span key={i} style={{
+          color: i <= Math.round(value) ? 'var(--signal-warn)' : 'var(--border-strong)',
+          fontSize: 11,
+        }}>★</span>
+      ))}
+    </div>
+  );
+}

@@ -6,6 +6,11 @@
 import React from 'react';
 import './condocore.css';
 import {
+  VendorStoreProvider,
+  VendorsPage as VendorsPageImpl,
+  VendorDetailPage as VendorDetailPageImpl,
+} from './VendorsModule.jsx';
+import {
   DRIGGS_712_PROJECT,
   DRIGGS_712_PLAN_TASKS,
   DRIGGS_712_PLAN_MONTHS,
@@ -3919,6 +3924,8 @@ function StackBar({ label, value, pct, cls, detail }) {
 window.FinancialsPage = FinancialsPage;
 /* global React, Icon, PageHead, fmtUSD */
 
+// Vendor module imported at top of file
+
 function vendorInitials(name) {
   return String(name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "?";
 }
@@ -4035,187 +4042,9 @@ const VENDORS = Array.from(VENDOR_MAP_712.values()).sort((a, b) => b.contractVal
 
 const TRADE_FILTERS = ["All", "GC", "Design", "Engineering", "Subcontractor", "Consulting", "Legal", "Insurance", "Brokerage"];
 
+// Thin wrapper — delegates to VendorsModule
 function VendorsPage() {
-  const [trade, setTrade] = React.useState("All");
-  const [view, setView] = React.useState("table");
-  const [search, setSearch] = React.useState("");
-
-  const filtered = VENDORS.filter(v =>
-    (trade === "All" || v.trade === trade) &&
-    (!search || v.name.toLowerCase().includes(search.toLowerCase()))
-  );
-
-  const totalCommitted = VENDORS.reduce((s, v) => s + v.contractValue, 0);
-  const totalPaid = VENDORS.reduce((s, v) => s + v.paid, 0);
-  const coiAlerts = VENDORS.filter(v => !v.coiOk).length;
-
-  return (
-    <>
-      <PageHead
-        eyebrow="Vendors"
-        title="Vendor & vendor records"
-        sub="Trade contacts, contract value, payment history, COI tracking, performance ratings."
-        actions={
-          <>
-            <button className="btn btn-secondary"><Icon name="download" size={13} /> Export</button>
-            <button className="btn btn-secondary"><Icon name="ext" size={13} /> 1099 prep</button>
-            <button className="btn btn-primary"><Icon name="plus" size={13} /> Add vendor</button>
-          </>
-        }
-      />
-
-      <div className="grid-kpis" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        <VKpi label="Total vendors" value={VENDORS.length} sub={`${VENDORS.filter(v => v.status === "Active").length} active`} />
-        <VKpi label="Committed value" value={fmtUSD(totalCommitted, { compact: true })} sub="14 contracts" />
-        <VKpi label="Paid to date" value={fmtUSD(totalPaid, { compact: true })} sub={`${Math.round(totalPaid / totalCommitted * 100)}% of committed`} />
-        <VKpi label="COI alerts" value={coiAlerts} sub="Insurance expired or expiring" cls={coiAlerts > 0 ? "warn" : "pos"} />
-      </div>
-
-      <div className="card" style={{ marginTop: 16 }}>
-        <div className="card-head">
-          <div className="row" style={{ gap: 10, flex: 1 }}>
-            <label className="topbar-search" style={{ width: 280, margin: 0 }}>
-              <Icon name="search" size={13} />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search vendors, contacts…"
-                style={{ background: "transparent", border: "none", color: "inherit", width: "100%", outline: "none", fontSize: 13 }}
-              />
-            </label>
-            <div className="row" style={{ gap: 4, flexWrap: "wrap" }}>
-              {TRADE_FILTERS.map((t) => (
-                <button
-                  key={t}
-                  className={`chip ${trade === t ? "active" : ""}`}
-                  onClick={() => setTrade(t)}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="card-actions">
-            <div className="seg">
-              <button className={view === "table" ? "active" : ""} onClick={() => setView("table")}>Table</button>
-              <button className={view === "cards" ? "active" : ""} onClick={() => setView("cards")}>Cards</button>
-            </div>
-          </div>
-        </div>
-
-        {view === "table" && (
-          <div className="card-body-flush">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Vendor</th>
-                  <th>Trade</th>
-                  <th>Status</th>
-                  <th className="num">Contract value</th>
-                  <th>Paid</th>
-                  <th>COI</th>
-                  <th>Rating</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((v) => {
-                  const paidPct = v.contractValue > 0 ? Math.round((v.paid / v.contractValue) * 100) : 0;
-                  return (
-                    <tr key={v.id}>
-                      <td>
-                        <div className="row" style={{ gap: 10 }}>
-                          <Avatar init={v.init} color={v.color} size={32} />
-                          <div>
-                            <div style={{ fontWeight: 500 }}>{v.name}</div>
-                            <div className="faint" style={{ fontSize: 11 }}>{v.role} · {v.contact}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td><span className="pill neutral no-dot">{v.trade}</span></td>
-                      <td>
-                        <span className={`pill no-dot ${v.status === "Active" ? "pos" : v.status === "At risk" ? "warn" : "neutral"}`}>
-                          {v.status}
-                        </span>
-                      </td>
-                      <td className="num mono">{v.contractValue > 0 ? fmtUSD(v.contractValue, { compact: true }) : "—"}</td>
-                      <td style={{ minWidth: 140 }}>
-                        {v.contractValue > 0 ? (
-                          <>
-                            <div className="row-between" style={{ fontSize: 11, marginBottom: 3 }}>
-                              <span className="mono">{fmtUSD(v.paid, { compact: true })}</span>
-                              <span className="faint">{paidPct}%</span>
-                            </div>
-                            <div className="bar" style={{ height: 4 }}>
-                              <div className="bar-fill accent" style={{ width: `${paidPct}%` }} />
-                            </div>
-                          </>
-                        ) : <span className="faint">—</span>}
-                      </td>
-                      <td>
-                        <div className="row" style={{ gap: 6 }}>
-                          {v.coiOk ? (
-                            <Icon name="check" size={13} style={{ color: "var(--signal-pos)" }} />
-                          ) : (
-                            <Icon name="alert" size={13} style={{ color: "var(--signal-warn)" }} />
-                          )}
-                          <span className="muted" style={{ fontSize: 11 }}>{v.coiExpires}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="row" style={{ gap: 4, alignItems: "center" }}>
-                          <span className="mono" style={{ fontWeight: 500 }}>{v.rating}</span>
-                          <Stars value={v.rating} />
-                        </div>
-                      </td>
-                      <td><button className="iconbtn"><Icon name="more" size={14} /></button></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {view === "cards" && (
-          <div className="card-body" style={{ padding: 16 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
-              {filtered.map((v) => (
-                <div key={v.id} className="vendor-card">
-                  <div className="row" style={{ gap: 12, marginBottom: 12 }}>
-                    <Avatar init={v.init} color={v.color} size={40} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{v.name}</div>
-                      <div className="faint" style={{ fontSize: 11 }}>{v.role}</div>
-                    </div>
-                    <button className="iconbtn"><Icon name="more" size={14} /></button>
-                  </div>
-                  <div className="row" style={{ gap: 6, marginBottom: 10 }}>
-                    <span className="pill neutral no-dot">{v.trade}</span>
-                    <span className={`pill no-dot ${v.status === "Active" ? "pos" : v.status === "At risk" ? "warn" : "neutral"}`}>{v.status}</span>
-                  </div>
-                  <div className="div" style={{ margin: "10px 0" }} />
-                  <div className="row-between" style={{ marginBottom: 6 }}>
-                    <span className="muted" style={{ fontSize: 11 }}>Contract</span>
-                    <span className="mono" style={{ fontSize: 12, fontWeight: 500 }}>{v.contractValue > 0 ? fmtUSD(v.contractValue, { compact: true }) : "—"}</span>
-                  </div>
-                  <div className="row-between" style={{ marginBottom: 6 }}>
-                    <span className="muted" style={{ fontSize: 11 }}>Paid</span>
-                    <span className="mono" style={{ fontSize: 12, fontWeight: 500 }}>{fmtUSD(v.paid, { compact: true })}</span>
-                  </div>
-                  <div className="row-between">
-                    <span className="muted" style={{ fontSize: 11 }}>Rating</span>
-                    <Stars value={v.rating} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </>
-  );
+  return null; // replaced by VendorsShell in CondoCoreApp
 }
 
 function VKpi({ label, value, sub, cls = "neutral" }) {
@@ -4267,7 +4096,7 @@ function Stars({ value }) {
   );
 }
 
-window.VendorsPage = VendorsPage;
+window.VendorsPage = VendorsPage; // kept for compatibility
 /* global React, Icon, PageHead */
 
 const FOLDERS = [
@@ -4567,6 +4396,8 @@ function readRouteFromHash() {
 function CondoCoreApp() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [route, setRoute] = React.useState(readRouteFromHash());
+  // Vendor detail sub-routing: null = list, string = vendor id
+  const [vendorDetailId, setVendorDetailId] = React.useState(null);
 
   React.useEffect(() => {
     document.documentElement.setAttribute("data-theme", `${t.theme}-${t.mode}`);
@@ -4576,7 +4407,12 @@ function CondoCoreApp() {
   }, [t.theme, t.mode, t.density, t.fontFamily, t.radius]);
 
   React.useEffect(() => {
-    const onHash = () => setRoute(readRouteFromHash());
+    const onHash = () => {
+      const newRoute = readRouteFromHash();
+      setRoute(newRoute);
+      // Clear vendor detail when navigating away from vendors
+      if (newRoute !== "vendors") setVendorDetailId(null);
+    };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
@@ -4584,6 +4420,7 @@ function CondoCoreApp() {
   const handleNav = (id) => {
     window.location.hash = `/${id}`;
     setRoute(id);
+    if (id !== "vendors") setVendorDetailId(null);
   };
 
   const toggleTheme = () => {
@@ -4591,17 +4428,31 @@ function CondoCoreApp() {
   };
 
   const pageConfig = PAGES[route];
-  const Page = pageConfig.Component;
-  const crumbs = pageConfig.crumbs;
+  // Dynamic crumbs for vendor detail
+  const crumbs = vendorDetailId && route === "vendors"
+    ? [...pageConfig.crumbs, "Vendor details"]
+    : pageConfig.crumbs;
 
   return (
+    <VendorStoreProvider>
     <div className="condocore-root app-shell">
       <Rail active={route} onNav={handleNav} project={PROJECTS[0]} onProjectSwitch={() => {}} />
       <main className="main">
         <TopBar crumbs={crumbs} onTheme={toggleTheme} theme={`${t.theme}-${t.mode}`} />
         <div className="page">
           <PageAssetBanner asset={pageConfig.asset} route={route} />
-          <Page />
+          {route === "vendors" ? (
+            vendorDetailId ? (
+              <VendorDetailPageImpl
+                vendorId={vendorDetailId}
+                onBack={() => setVendorDetailId(null)}
+              />
+            ) : (
+              <VendorsPageImpl onViewVendor={(id) => setVendorDetailId(id)} />
+            )
+          ) : (
+            React.createElement(pageConfig.Component)
+          )}
         </div>
       </main>
       <TweaksPanel title="Tweaks">
@@ -4637,6 +4488,7 @@ function CondoCoreApp() {
         <TweakToggle label="Show nav badges" value={t.showBadges} onChange={(v) => setTweak("showBadges", v)} />
       </TweaksPanel>
     </div>
+    </VendorStoreProvider>
   );
 }
 
