@@ -399,6 +399,24 @@ export function VendorStoreProvider({ children }) {
     }));
   }, []);
 
+  // Soft-delete: marks vendor as archived, preserving all linked data
+  const archiveVendor = React.useCallback((vendorId) => {
+    setVendors((prev) => prev.map((v) =>
+      v.id === vendorId
+        ? { ...v, archived: true, archivedAt: new Date().toISOString() }
+        : v
+    ));
+  }, []);
+
+  // Restore a previously archived vendor
+  const restoreVendor = React.useCallback((vendorId) => {
+    setVendors((prev) => prev.map((v) =>
+      v.id === vendorId
+        ? { ...v, archived: false, archivedAt: null }
+        : v
+    ));
+  }, []);
+
   return (
     <VendorStoreCtx.Provider value={{
       vendors,
@@ -414,6 +432,8 @@ export function VendorStoreProvider({ children }) {
       addCoi,
       updateCoi,
       deleteCoi,
+      archiveVendor,
+      restoreVendor,
     }}>
       {children}
     </VendorStoreCtx.Provider>
@@ -543,15 +563,20 @@ export function VendorsPage({ onViewVendor }) {
   const [search, setSearch] = React.useState('');
   const [view, setView] = React.useState('table');
   const [projectOnly, setProjectOnly] = React.useState(true);
+  const [showArchived, setShowArchived] = React.useState(false);
   const [addOpen, setAddOpen] = React.useState(false);
   const [editVendor, setEditVendor] = React.useState(null);
 
   const vendors = store?.vendors || [];
   const projectVendorIds = store?.projectVendorIds || new Set();
 
+  // Active vendors only (not archived) unless showArchived is on
+  const activeVendors = showArchived ? vendors : vendors.filter((v) => !v.archived);
+  const archivedCount = vendors.filter((v) => v.archived).length;
+
   const base = projectOnly
-    ? vendors.filter((v) => projectVendorIds.has(v.id))
-    : vendors;
+    ? activeVendors.filter((v) => projectVendorIds.has(v.id))
+    : activeVendors;
 
   const filtered = base.filter((v) =>
     (trade === 'All' || v.trade === trade) &&
@@ -641,6 +666,19 @@ export function VendorsPage({ onViewVendor }) {
               {projectOnly ? '712 Driggs only' : 'All vendors'}
             </button>
 
+            {/* Archived toggle — only shown when there are archived vendors */}
+            {archivedCount > 0 && (
+              <button
+                className={`btn btn-sm ${showArchived ? 'btn-secondary' : 'btn-ghost'}`}
+                onClick={() => setShowArchived((p) => !p)}
+                title={showArchived ? 'Hide archived vendors' : `Show ${archivedCount} archived vendor${archivedCount !== 1 ? 's' : ''}`}
+                style={showArchived ? {} : { color: 'var(--text-muted)' }}
+              >
+                <Icon name="folder" size={12} />
+                {showArchived ? 'Hide archived' : `${archivedCount} archived`}
+              </button>
+            )}
+
             <label className="topbar-search" style={{ width: 240, margin: 0 }}>
               <Icon name="search" size={13} />
               <input
@@ -702,14 +740,17 @@ export function VendorsPage({ onViewVendor }) {
                   return (
                     <tr
                       key={v.id}
-                      style={{ cursor: 'pointer' }}
+                      style={{ cursor: 'pointer', opacity: v.archived ? 0.55 : 1 }}
                       onClick={() => onViewVendor?.(v.id)}
                     >
                       <td>
                         <div className="row" style={{ gap: 10 }}>
                           <VendorAvatar init={v.init} color={v.color} size={32} />
                           <div>
-                            <div style={{ fontWeight: 500 }}>{v.name}</div>
+                            <div style={{ fontWeight: 500, textDecoration: v.archived ? 'line-through' : 'none' }}>
+                              {v.name}
+                              {v.archived && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 600, letterSpacing: '0.04em', color: 'var(--text-faint)', textDecoration: 'none', display: 'inline-block' }}>ARCHIVED</span>}
+                            </div>
                             <div className="faint" style={{ fontSize: 11 }}>{v.role} · {v.contact}</div>
                           </div>
                         </div>
@@ -758,13 +799,24 @@ export function VendorsPage({ onViewVendor }) {
                       </td>
                       <td>
                         <div className="row" style={{ gap: 4 }} onClick={(e) => e.stopPropagation()}>
-                          <button
-                            className="iconbtn"
-                            title="Edit vendor"
-                            onClick={(e) => { e.stopPropagation(); setEditVendor(v); }}
-                          >
-                            <Icon name="edit" size={13} />
-                          </button>
+                          {v.archived ? (
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              title="Restore vendor"
+                              style={{ fontSize: 11, padding: '3px 8px', color: 'var(--cc-accent)' }}
+                              onClick={(e) => { e.stopPropagation(); store?.restoreVendor(v.id); }}
+                            >
+                              <Icon name="refresh" size={11} /> Restore
+                            </button>
+                          ) : (
+                            <button
+                              className="iconbtn"
+                              title="Edit vendor"
+                              onClick={(e) => { e.stopPropagation(); setEditVendor(v); }}
+                            >
+                              <Icon name="edit" size={13} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -864,6 +916,7 @@ export function VendorDetailPage({ vendorId, onBack }) {
   const store = useVendorStore();
   const [tab, setTab] = React.useState('profile');
   const [editOpen, setEditOpen] = React.useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
 
   const vendor = store?.vendors.find((v) => v.id === vendorId);
 
@@ -908,8 +961,78 @@ export function VendorDetailPage({ vendorId, onBack }) {
     setEditOpen(false);
   };
 
+  const handleConfirmDelete = () => {
+    store?.archiveVendor(vendor.id);
+    setDeleteConfirmOpen(false);
+    onBack();
+  };
+
   return (
     <>
+      {/* Delete confirmation overlay */}
+      {deleteConfirmOpen && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9000,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+          onClick={() => setDeleteConfirmOpen(false)}
+        >
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 12,
+              padding: '28px 32px',
+              maxWidth: 420,
+              width: '90%',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.22)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 8,
+                background: 'rgba(220,38,38,0.12)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <Icon name="trash" size={16} style={{ color: 'var(--signal-neg)' }} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>Delete vendor?</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{vendor.name}</div>
+              </div>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 20px', lineHeight: 1.6 }}>
+              This vendor will be <strong>archived</strong> — all linked transactions, documents,
+              bids, and COIs are preserved and remain searchable. The vendor will no longer appear
+              in the active vendor list.
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setDeleteConfirmOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-sm"
+                style={{
+                  background: 'var(--signal-neg)',
+                  color: '#fff',
+                  border: 'none',
+                }}
+                onClick={handleConfirmDelete}
+              >
+                <Icon name="trash" size={12} /> Archive vendor
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Back nav + header */}
       <div style={{ marginBottom: 4 }}>
         <button
@@ -920,6 +1043,34 @@ export function VendorDetailPage({ vendorId, onBack }) {
           <Icon name="chevronRight" size={12} style={{ transform: 'rotate(180deg)' }} /> Back to vendors
         </button>
       </div>
+
+      {/* Archived notice banner */}
+      {vendor.archived && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          background: 'rgba(220,38,38,0.07)',
+          border: '1px solid rgba(220,38,38,0.2)',
+          borderRadius: 8,
+          padding: '10px 16px',
+          marginBottom: 16,
+          fontSize: 13,
+        }}>
+          <Icon name="alert" size={14} style={{ color: 'var(--signal-neg)', flexShrink: 0 }} />
+          <span style={{ flex: 1, color: 'var(--text-muted)' }}>
+            This vendor has been <strong>archived</strong>. All historical data is preserved.
+            {vendor.archivedAt && (
+              <> Archived on {new Date(vendor.archivedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.</>
+            )}
+          </span>
+          <button
+            className="btn btn-sm btn-ghost"
+            style={{ color: 'var(--cc-accent)', flexShrink: 0 }}
+            onClick={() => store?.restoreVendor(vendor.id)}
+          >
+            <Icon name="refresh" size={12} /> Restore vendor
+          </button>
+        </div>
+      )}
 
       <div className="vendor-detail-header">
         <VendorAvatar init={vendor.init} color={vendor.color} size={56} />
@@ -945,6 +1096,14 @@ export function VendorDetailPage({ vendorId, onBack }) {
           </button>
           <button className="btn btn-primary btn-sm" onClick={() => setEditOpen(true)}>
             <Icon name="edit" size={12} /> Edit vendor
+          </button>
+          <button
+            className="btn btn-sm btn-ghost"
+            title="Delete vendor"
+            onClick={() => setDeleteConfirmOpen(true)}
+            style={{ color: 'var(--signal-neg)', borderColor: 'var(--signal-neg)' }}
+          >
+            <Icon name="trash" size={12} /> Delete
           </button>
         </div>
       </div>
