@@ -1060,47 +1060,39 @@ export function VendorDetailPage({ vendorId, onBack }) {
       {/* Delete confirmation overlay — rendered via portal to escape stacking contexts */}
       {deleteConfirmOpen && ReactDOM.createPortal(
         <div
-          style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'rgba(0,0,0,0.55)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            backdropFilter: 'blur(2px)',
-          }}
+          className="modal-backdrop"
+          style={{ zIndex: 9999 }}
           onClick={() => setDeleteConfirmOpen(false)}
         >
           <div
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: 12,
-              padding: '28px 32px',
-              maxWidth: 440,
-              width: '90%',
-              boxShadow: '0 16px 60px rgba(0,0,0,0.35)',
-              animation: 'fadeInScale 0.15s ease',
-            }}
+            className="modal"
+            style={{ maxWidth: 440 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 16 }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: 10,
-                background: 'rgba(220,38,38,0.12)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0, marginTop: 2,
-              }}>
-                <Icon name="trash" size={18} style={{ color: 'var(--signal-neg)' }} />
-              </div>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>Archive vendor?</div>
-                <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>{vendor.name}</div>
+            <div className="modal-head">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 8,
+                  background: 'var(--signal-neg-soft)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <Icon name="trash" size={16} style={{ color: 'var(--signal-neg)' }} />
+                </div>
+                <div>
+                  <div className="modal-title">Archive vendor?</div>
+                  <div className="modal-sub">{vendor.name}</div>
+                </div>
               </div>
             </div>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.65 }}>
-              This vendor will be <strong style={{ color: 'var(--text)' }}>archived</strong>, not permanently deleted.
-              All linked transactions, documents, bids, and COIs are preserved and remain searchable.
-              The vendor will no longer appear in the active vendor list.
-            </p>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <div className="modal-body">
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, lineHeight: 1.65 }}>
+                This vendor will be <strong style={{ color: 'var(--text)' }}>archived</strong>, not permanently deleted.
+                All linked transactions, documents, bids, and COIs are preserved and remain searchable.
+                The vendor will no longer appear in the active vendor list.
+              </p>
+            </div>
+            <div className="modal-foot">
               <button
                 className="btn btn-ghost"
                 onClick={() => setDeleteConfirmOpen(false)}
@@ -1113,7 +1105,6 @@ export function VendorDetailPage({ vendorId, onBack }) {
                   background: 'var(--signal-neg)',
                   color: '#fff',
                   border: 'none',
-                  padding: '8px 18px',
                   fontWeight: 600,
                 }}
                 onClick={handleConfirmDelete}
