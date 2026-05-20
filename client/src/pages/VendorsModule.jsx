@@ -280,12 +280,53 @@ function buildVendorTransactions(vendorName) {
 // Vendor Store (React Context for shared mutable state)
 // ============================================================
 const VendorStoreCtx = React.createContext(null);
-
+const STORAGE_KEY_VENDORS = 'cc_vendors_v2';
+const STORAGE_KEY_PROJECT_IDS = 'cc_project_vendor_ids_v2';
+// Fields that are meaningful to show in the audit log when changed
+const AUDITABLE_FIELDS = [
+  'name', 'trade', 'role', 'status', 'contact', 'email', 'phone',
+  'address', 'ein', 'notes', 'contractValue', 'paid', 'coiExpires', 'coiOk',
+  'division', 'defaultDivision',
+];
+const FIELD_LABELS = {
+  name: 'Name', trade: 'Trade', role: 'Role', status: 'Status',
+  contact: 'Primary contact', email: 'Email', phone: 'Phone',
+  address: 'Address', ein: 'EIN / Tax ID', notes: 'Notes',
+  contractValue: 'Contract value', paid: 'Paid to date',
+  coiExpires: 'COI expiry', coiOk: 'COI status',
+  division: 'Division', defaultDivision: 'Default division',
+};
+function loadVendors() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_VENDORS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return SEED_VENDORS;
+}
+function loadProjectIds() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PROJECT_IDS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return new Set(parsed);
+    }
+  } catch (_) {}
+  return new Set(SEED_VENDORS.map((v) => v.id));
+}
 export function VendorStoreProvider({ children }) {
-  const [vendors, setVendors] = React.useState(SEED_VENDORS);
-  const [projectVendorIds, setProjectVendorIds] = React.useState(
-    new Set(SEED_VENDORS.map((v) => v.id))
-  );
+  const [vendors, setVendors] = React.useState(() => loadVendors());
+  const [projectVendorIds, setProjectVendorIds] = React.useState(() => loadProjectIds());
+  // Persist vendors to localStorage whenever they change
+  React.useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY_VENDORS, JSON.stringify(vendors)); } catch (_) {}
+  }, [vendors]);
+  // Persist projectVendorIds to localStorage whenever they change
+  React.useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY_PROJECT_IDS, JSON.stringify([...projectVendorIds])); } catch (_) {}
+  }, [projectVendorIds]);
 
   const addVendor = React.useCallback((data) => {
     const newV = {
@@ -324,7 +365,16 @@ export function VendorStoreProvider({ children }) {
   const updateVendor = React.useCallback((id, patch) => {
     setVendors((prev) => prev.map((v) => {
       if (v.id !== id) return v;
-      const entry = makeAuditEntry('vendor_edited', { fields: Object.keys(patch) });
+      // Build a before/after diff for auditable fields only
+      const changes = Object.keys(patch)
+        .filter((k) => AUDITABLE_FIELDS.includes(k) && String(v[k] ?? '') !== String(patch[k] ?? ''))
+        .map((k) => ({
+          field: k,
+          label: FIELD_LABELS[k] || k,
+          from: v[k] ?? '',
+          to: patch[k] ?? '',
+        }));
+      const entry = makeAuditEntry('vendor_edited', { changes });
       return { ...v, ...patch, auditLog: [...(v.auditLog || []), entry] };
     }));
   }, []);
@@ -2235,7 +2285,15 @@ const AUDIT_ACTION_META = {
 function auditDetail(entry) {
   const { action, detail } = entry;
   if (action === 'vendor_added') return `${detail.name} · ${detail.trade}`;
-  if (action === 'vendor_edited') return detail.fields?.length ? `Fields: ${detail.fields.join(', ')}` : '';
+  if (action === 'vendor_edited') {
+    // New format: changes array with before/after values
+    if (detail.changes?.length) {
+      return detail.changes.map((c) => `${c.label}: "${c.from || '—'}" → "${c.to || '—'}"`).join(' · ');
+    }
+    // Legacy format: just field names
+    if (detail.fields?.length) return `Fields updated: ${detail.fields.join(', ')}`;
+    return 'No auditable fields changed';
+  }
   if (action === 'vendor_archived') return detail.archivedAt ? `on ${new Date(detail.archivedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : '';
   if (action === 'rating_changed') return `${detail.from} → ${detail.to} / 5`;
   if (action === 'transaction_added') return [detail.memo, detail.amount != null ? `$${Number(detail.amount).toLocaleString()}` : null].filter(Boolean).join(' · ');
@@ -2302,10 +2360,30 @@ function VendorActivityTab({ vendor }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 500, fontSize: 13 }}>{meta.label}</span>
-                  {detail && (
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320 }}>{detail}</span>
+                  {/* For vendor_edited with changes array, show inline count */}
+                  {entry.action === 'vendor_edited' && entry.detail?.changes?.length > 0 && (
+                    <span style={{ fontSize: 11, color: 'var(--text-faint)', fontVariantNumeric: 'tabular-nums' }}>
+                      {entry.detail.changes.length} field{entry.detail.changes.length !== 1 ? 's' : ''} changed
+                    </span>
+                  )}
+                  {/* For all other actions, show the detail inline */}
+                  {entry.action !== 'vendor_edited' && detail && (
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 380 }}>{detail}</span>
                   )}
                 </div>
+                {/* For vendor_edited, render each field change as a stacked row */}
+                {entry.action === 'vendor_edited' && entry.detail?.changes?.length > 0 && (
+                  <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {entry.detail.changes.map((c, ci) => (
+                      <div key={ci} style={{ display: 'flex', alignItems: 'baseline', gap: 6, fontSize: 12 }}>
+                        <span style={{ color: 'var(--text-faint)', minWidth: 110, flexShrink: 0 }}>{c.label}</span>
+                        <span style={{ color: 'var(--signal-neg)', textDecoration: 'line-through', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(c.from || '—')}</span>
+                        <span style={{ color: 'var(--text-faint)', fontSize: 10 }}>→</span>
+                        <span style={{ color: 'var(--signal-pos)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(c.to || '—')}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: 12, marginTop: 3, alignItems: 'center', flexWrap: 'wrap' }}>
                   {/* Performed by */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
