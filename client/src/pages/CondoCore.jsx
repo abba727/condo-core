@@ -3399,9 +3399,51 @@ const INITIAL_EXPENSES = DRIGGS_712_EXPENSES.map((row, index) => {
 const STATUS_OPTS = ["Pending", "Approved", "Paid", "Rejected"];
 const METHOD_OPTS = ["ACH", "Wire", "Check", "Credit", "Card"];
 
-function FinancialsPage() {
-  const [budget, setBudget] = React.useState(INITIAL_BUDGET);
+// ── Shared Expense Store (shared between Financials and Vendors) ──────────────
+const ExpenseStoreCtx = React.createContext(null);
+
+export function ExpenseStoreProvider({ children }) {
   const [expenses, setExpenses] = React.useState(INITIAL_EXPENSES);
+
+  const addExpense = React.useCallback((row) => {
+    setExpenses((prev) => [{ ...row, id: row.id || `e${Date.now()}` }, ...prev]);
+  }, []);
+
+  const updateExpense = React.useCallback((row) => {
+    setExpenses((prev) => prev.map((e) => e.id === row.id ? row : e));
+  }, []);
+
+  const deleteExpense = React.useCallback((id) => {
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
+  }, []);
+
+  return (
+    <ExpenseStoreCtx.Provider value={{ expenses, addExpense, updateExpense, deleteExpense }}>
+      {children}
+    </ExpenseStoreCtx.Provider>
+  );
+}
+
+function useExpenseStore() {
+  return React.useContext(ExpenseStoreCtx);
+}
+
+// Make available to VendorsModule via window
+window.useExpenseStore = useExpenseStore;
+
+function FinancialsPage() {
+  const expStore = useExpenseStore();
+  const expenses = expStore?.expenses || INITIAL_EXPENSES;
+  const setExpenses = (fn) => {
+    if (typeof fn === 'function') {
+      const next = fn(expenses);
+      next.forEach((e) => {
+        if (!expenses.find((x) => x.id === e.id)) expStore?.addExpense(e);
+        else expStore?.updateExpense(e);
+      });
+    }
+  };
+  const [budget, setBudget] = React.useState(INITIAL_BUDGET);
   const [tab, setTab] = React.useState("budget");
 
   // modal state
@@ -3427,15 +3469,15 @@ function FinancialsPage() {
 
   const saveExpense = (row) => {
     if (row.id) {
-      setExpenses(expenses.map(e => e.id === row.id ? row : e));
+      expStore?.updateExpense(row);
     } else {
-      setExpenses([{ ...row, id: `e${Date.now()}` }, ...expenses]);
+      expStore?.addExpense({ ...row, id: `e${Date.now()}` });
     }
     setExpenseModal(null);
   };
 
   const deleteExpense = (id) => {
-    setExpenses(expenses.filter(e => e.id !== id));
+    expStore?.deleteExpense(id);
     setExpenseModal(null);
   };
 
@@ -4434,6 +4476,7 @@ function CondoCoreApp() {
     : pageConfig.crumbs;
 
   return (
+    <ExpenseStoreProvider>
     <VendorStoreProvider>
     <div className="condocore-root app-shell">
       <Rail active={route} onNav={handleNav} project={PROJECTS[0]} onProjectSwitch={() => {}} />
@@ -4488,6 +4531,7 @@ function CondoCoreApp() {
       </TweaksPanel>
     </div>
     </VendorStoreProvider>
+    </ExpenseStoreProvider>
   );
 }
 

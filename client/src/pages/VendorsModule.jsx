@@ -310,6 +310,34 @@ export function VendorStoreProvider({ children }) {
     setVendors((prev) => prev.map((v) => v.id === id ? { ...v, ...patch } : v));
   }, []);
 
+  const updateRating = React.useCallback((vendorId, rating) => {
+    setVendors((prev) => prev.map((v) => v.id === vendorId ? { ...v, rating } : v));
+  }, []);
+
+  const addVendorTransaction = React.useCallback((vendorId, txn) => {
+    // Add to vendor's local transaction list
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== vendorId) return v;
+      return { ...v, vendorTxns: [...(v.vendorTxns || []), { id: `vtxn-${Date.now()}`, ...txn }] };
+    }));
+    // Also push to shared expense store if available
+    const expStore = typeof window !== 'undefined' && window.useExpenseStore ? window.useExpenseStore() : null;
+    if (expStore) {
+      expStore.addExpense({
+        id: `e-vtxn-${Date.now()}`,
+        date: txn.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        desc: txn.memo || 'Vendor payment',
+        vendor: txn.vendorName || '',
+        division: txn.division || 'Uncategorized',
+        amount: txn.amount || 0,
+        status: txn.status || 'Paid',
+        invoice: txn.invoice || `VTX-${Date.now()}`,
+        method: txn.method || 'Wire',
+        balance: 0,
+      });
+    }
+  }, []);
+
   const toggleProjectAssignment = React.useCallback((vendorId) => {
     setProjectVendorIds((prev) => {
       const next = new Set(prev);
@@ -377,6 +405,8 @@ export function VendorStoreProvider({ children }) {
       projectVendorIds,
       addVendor,
       updateVendor,
+      updateRating,
+      addVendorTransaction,
       toggleProjectAssignment,
       addBid,
       updateBid,
@@ -399,6 +429,13 @@ function useVendorStore() {
 // ============================================================
 const TRADE_OPTIONS = ['GC', 'Design', 'Engineering', 'Subcontractor', 'Consulting', 'Legal', 'Insurance', 'Brokerage'];
 const STATUS_OPTIONS = ['Active', 'Inactive', 'At risk', 'Prospect'];
+const DIVISION_OPTIONS = [
+  'Soft Costs', 'General Condition', 'Foundation Site Work', 'Superstructure',
+  'Masonry and Stucco', 'Carpentry', 'Roof', 'Windows and Storefront',
+  'Electric', 'HVAC', 'Plumbing and Sprinkler', 'Elevator',
+  'Kitchen, Bathrooms and Fixtures', 'Miscellaneous Site Work',
+  'Equipment and Miscellaneous', 'Land Costs', 'Overhead & Profit', 'Contingencies',
+];
 
 function VendorModal({ open, vendor, onClose, onSave }) {
   const [form, setForm] = React.useState({});
@@ -408,6 +445,7 @@ function VendorModal({ open, vendor, onClose, onSave }) {
       setForm(vendor ? { ...vendor } : {
         name: '', trade: 'Consulting', role: '', contact: '', email: '',
         phone: '', address: '', ein: '', notes: '', status: 'Active',
+        division: 'Soft Costs',
         assignToProject: true,
       });
     }
@@ -462,6 +500,13 @@ function VendorModal({ open, vendor, onClose, onSave }) {
         </Field>
         <Field label="EIN / Tax ID">
           <Input value={form.ein} onChange={set('ein')} placeholder="12-3456789" />
+        </Field>
+        <Field label="Default division (for expenses)">
+          <Select
+            value={form.division || 'Soft Costs'}
+            onChange={set('division')}
+            options={DIVISION_OPTIONS.map((d) => ({ value: d, label: d }))}
+          />
         </Field>
         {!isEdit && (
           <Field label="Assign to active project">
@@ -966,8 +1011,19 @@ export function VendorDetailPage({ vendorId, onBack }) {
 
       {/* Tab content */}
       <div style={{ marginTop: 16 }}>
-        {tab === 'profile' && <VendorProfileTab vendor={vendor} onEdit={() => setEditOpen(true)} />}
-        {tab === 'transactions' && <VendorTransactionsTab vendor={vendor} />}
+        {tab === 'profile' && (
+          <VendorProfileTab
+            vendor={vendor}
+            onEdit={() => setEditOpen(true)}
+            onUpdateRating={(rating) => store?.updateRating(vendor.id, rating)}
+          />
+        )}
+        {tab === 'transactions' && (
+          <VendorTransactionsTab
+            vendor={vendor}
+            onAddTransaction={(txn) => store?.addVendorTransaction(vendor.id, txn)}
+          />
+        )}
         {tab === '1099' && <Vendor1099Tab vendor={vendor} />}
         {tab === 'bids' && <VendorBidsTab vendor={vendor} store={store} />}
         {tab === 'cois' && <VendorCoisTab vendor={vendor} store={store} />}
@@ -980,13 +1036,16 @@ export function VendorDetailPage({ vendorId, onBack }) {
 }
 
 // ── Profile Tab ──────────────────────────────────────────────
-function VendorProfileTab({ vendor, onEdit }) {
+function VendorProfileTab({ vendor, onEdit, onUpdateRating }) {
   const row = (label, value) => (
     <div className="vendor-profile-row" key={label}>
       <span className="vendor-profile-label">{label}</span>
       <span className="vendor-profile-value">{value || '—'}</span>
     </div>
   );
+
+  const [hoverRating, setHoverRating] = React.useState(0);
+  const currentRating = vendor.rating || 0;
 
   return (
     <div className="row" style={{ gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -1004,6 +1063,7 @@ function VendorProfileTab({ vendor, onEdit }) {
           {row('Phone', vendor.phone)}
           {row('Address', vendor.address)}
           {row('EIN / Tax ID', vendor.ein)}
+          {row('Default division', vendor.division || '—')}
           {row('Status', <span className={`pill no-dot ${vendor.status === 'Active' ? 'pos' : vendor.status === 'At risk' ? 'warn' : 'neutral'}`}>{vendor.status}</span>)}
         </div>
       </div>
@@ -1019,6 +1079,33 @@ function VendorProfileTab({ vendor, onEdit }) {
           {row('Contracts', String(vendor.contracts))}
           {row('COI expires', vendor.coiExpires)}
           {row('COI status', vendor.coiOk ? <span className="pill pos no-dot">Current</span> : <span className="pill warn no-dot">Alert</span>)}
+        </div>
+        {/* Rating editor */}
+        <div style={{ borderTop: '1px solid var(--border)', margin: '0 16px' }} />
+        <div className="card-body" style={{ padding: '12px 16px' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', marginBottom: 8 }}>Performance rating</div>
+          <div className="row" style={{ gap: 4, alignItems: 'center' }}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <button
+                key={i}
+                onClick={() => onUpdateRating && onUpdateRating(i)}
+                onMouseEnter={() => setHoverRating(i)}
+                onMouseLeave={() => setHoverRating(0)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer', padding: '2px 3px',
+                  fontSize: 20,
+                  color: i <= (hoverRating || currentRating) ? 'var(--signal-warn)' : 'var(--border-strong)',
+                  transition: 'color 0.1s',
+                  lineHeight: 1,
+                }}
+                title={`Rate ${i} star${i !== 1 ? 's' : ''}`}
+              >★</button>
+            ))}
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 6 }}>
+              {currentRating > 0 ? `${currentRating.toFixed(1)} / 5.0` : 'Not rated'}
+            </span>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>Click a star to update the rating</div>
         </div>
         {vendor.notes && (
           <>
@@ -1036,66 +1123,148 @@ function VendorProfileTab({ vendor, onEdit }) {
 }
 
 // ── Transactions Tab ─────────────────────────────────────────
-function VendorTransactionsTab({ vendor }) {
-  const txns = React.useMemo(() => buildVendorTransactions(vendor.name), [vendor.name]);
+function AddTransactionModal({ open, vendor, onClose, onSave }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [form, setForm] = React.useState({});
+  React.useEffect(() => {
+    if (open) setForm({
+      date: today,
+      type: 'Wire',
+      division: vendor.division || 'Soft Costs',
+      memo: '',
+      amount: '',
+      status: 'Paid',
+      invoice: '',
+    });
+  }, [open, vendor.division, today]);
+  const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
+  const handleSave = () => {
+    if (!form.amount || isNaN(parseFloat(form.amount))) return;
+    onSave({ ...form, amount: parseFloat(form.amount), vendorName: vendor.name });
+  };
+  if (!open) return null;
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-head">
+          <span>Add transaction</span>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="form-grid">
+            <Field label="Date">
+              <Input type="date" value={form.date} onChange={set('date')} />
+            </Field>
+            <Field label="Payment method">
+              <Select value={form.type} onChange={set('type')}
+                options={['Wire','ACH','Check','Credit','Card'].map((v) => ({ value: v, label: v }))} />
+            </Field>
+            <Field label="Division / Category">
+              <Select value={form.division} onChange={set('division')}
+                options={DIVISION_OPTIONS.map((d) => ({ value: d, label: d }))} />
+            </Field>
+            <Field label="Status">
+              <Select value={form.status} onChange={set('status')}
+                options={['Pending','Approved','Paid'].map((v) => ({ value: v, label: v }))} />
+            </Field>
+            <Field label="Amount ($)" span={2}>
+              <Input type="number" value={form.amount} onChange={set('amount')} placeholder="0.00" />
+            </Field>
+            <Field label="Memo / description" span={2}>
+              <Input value={form.memo} onChange={set('memo')} placeholder="Payment description" />
+            </Field>
+            <Field label="Invoice #">
+              <Input value={form.invoice} onChange={set('invoice')} placeholder="INV-001" />
+            </Field>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSave}>Add transaction</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  // CONTRACT rows are now shown in Bids & Contracts tab — only show expense/wire payments here
-  const allTxns = txns;
+function VendorTransactionsTab({ vendor, onAddTransaction }) {
+  const seedTxns = React.useMemo(() => buildVendorTransactions(vendor.name), [vendor.name]);
+  const vendorTxns = (vendor.vendorTxns || []).map((t) => ({
+    id: t.id,
+    date: t.date,
+    type: t.type || 'Wire',
+    category: t.division || 'Uncategorized',
+    memo: t.memo || '',
+    debit: t.amount > 0 ? t.amount : 0,
+    credit: t.amount < 0 ? Math.abs(t.amount) : 0,
+    isManual: true,
+  }));
+  const allTxns = [...vendorTxns, ...seedTxns];
   const totalDebit = allTxns.reduce((s, t) => s + t.debit, 0);
   const totalCredit = allTxns.reduce((s, t) => s + t.credit, 0);
+  const [showAdd, setShowAdd] = React.useState(false);
+
+  const handleSave = (txn) => {
+    onAddTransaction && onAddTransaction(txn);
+    setShowAdd(false);
+  };
 
   return (
-    <div className="card">
-      <div className="card-head">
-        <span style={{ fontWeight: 600, fontSize: 13 }}>Transaction history</span>
-        <div className="row" style={{ gap: 16 }}>
-          <span className="muted" style={{ fontSize: 12 }}>
-            Total paid: <strong className="mono">{typeof fmtUSD === 'function' ? fmtUSD(totalDebit) : '$' + totalDebit.toLocaleString()}</strong>
-          </span>
-          {totalCredit > 0 && (
+    <>
+      <AddTransactionModal open={showAdd} vendor={vendor} onClose={() => setShowAdd(false)} onSave={handleSave} />
+      <div className="card">
+        <div className="card-head">
+          <span style={{ fontWeight: 600, fontSize: 13 }}>Transaction history</span>
+          <div className="row" style={{ gap: 12 }}>
             <span className="muted" style={{ fontSize: 12 }}>
-              Credits: <strong className="mono">{typeof fmtUSD === 'function' ? fmtUSD(totalCredit) : '$' + totalCredit.toLocaleString()}</strong>
+              Total paid: <strong className="mono">{typeof fmtUSD === 'function' ? fmtUSD(totalDebit) : '$' + totalDebit.toLocaleString()}</strong>
             </span>
+            {totalCredit > 0 && (
+              <span className="muted" style={{ fontSize: 12 }}>
+                Credits: <strong className="mono">{typeof fmtUSD === 'function' ? fmtUSD(totalCredit) : '$' + totalCredit.toLocaleString()}</strong>
+              </span>
+            )}
+            <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}>+ Add transaction</button>
+          </div>
+        </div>
+        <div className="card-body-flush">
+          {allTxns.length === 0 ? (
+            <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>
+              No transactions found. Click "+ Add transaction" to record a payment.
+            </div>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>Memo</th>
+                  <th className="num">Debit</th>
+                  <th className="num">Credit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allTxns.map((t) => (
+                  <tr key={t.id} style={t.isManual ? { background: 'var(--surface-raised)' } : {}}>
+                    <td className="mono muted" style={{ fontSize: 12 }}>{t.date}</td>
+                    <td><span className="pill neutral no-dot" style={{ fontSize: 10 }}>{t.type}</span></td>
+                    <td className="muted" style={{ fontSize: 12 }}>{t.category}</td>
+                    <td style={{ fontSize: 13 }}>{t.memo}</td>
+                    <td className="num mono" style={{ color: t.debit > 0 ? 'var(--signal-neg)' : 'inherit' }}>
+                      {t.debit > 0 ? (typeof fmtUSD === 'function' ? fmtUSD(t.debit) : '$' + t.debit.toLocaleString()) : '—'}
+                    </td>
+                    <td className="num mono" style={{ color: t.credit > 0 ? 'var(--signal-pos)' : 'inherit' }}>
+                      {t.credit > 0 ? (typeof fmtUSD === 'function' ? fmtUSD(t.credit) : '$' + t.credit.toLocaleString()) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </div>
-      <div className="card-body-flush">
-        {allTxns.length === 0 ? (
-          <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>
-            No transactions found in the ledger for this vendor.
-          </div>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Category</th>
-                <th>Memo</th>
-                <th className="num">Debit</th>
-                <th className="num">Credit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allTxns.map((t) => (
-                <tr key={t.id}>
-                  <td className="mono muted" style={{ fontSize: 12 }}>{t.date}</td>
-                  <td><span className="pill neutral no-dot" style={{ fontSize: 10 }}>{t.type}</span></td>
-                  <td className="muted" style={{ fontSize: 12 }}>{t.category}</td>
-                  <td style={{ fontSize: 13 }}>{t.memo}</td>
-                  <td className="num mono" style={{ color: t.debit > 0 ? 'var(--signal-neg)' : 'inherit' }}>
-                    {t.debit > 0 ? (typeof fmtUSD === 'function' ? fmtUSD(t.debit) : '$' + t.debit.toLocaleString()) : '—'}
-                  </td>
-                  <td className="num mono" style={{ color: t.credit > 0 ? 'var(--signal-pos)' : 'inherit' }}>
-                    {t.credit > 0 ? (typeof fmtUSD === 'function' ? fmtUSD(t.credit) : '$' + t.credit.toLocaleString()) : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
+    </>
   );
 }
 
