@@ -10,6 +10,7 @@
  */
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { CSI_GROUPS } from './FinancialsModule.jsx';
 import {
   DRIGGS_712_CONTRACTS,
   DRIGGS_712_EXPENSES,
@@ -527,7 +528,7 @@ export function VendorStoreProvider({ children }) {
   );
 }
 
-function useVendorStore() {
+export function useVendorStore() {
   return React.useContext(VendorStoreCtx);
 }
 
@@ -1712,7 +1713,7 @@ function BidModal({ open, bid, onClose, onSave, onDelete }) {
   React.useEffect(() => {
     if (open) setForm(bid || {
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-      scope: '', amount: 0, status: 'Submitted', notes: '',
+      scope: '', amount: 0, status: 'Submitted', notes: '', division: '',
     });
   }, [open, bid]);
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
@@ -1741,6 +1742,16 @@ function BidModal({ open, bid, onClose, onSave, onDelete }) {
         <Field label="Date"><Input value={form.date} onChange={set('date')} placeholder="May 06, 2024" /></Field>
         <Field label="Bid amount"><Input value={form.amount} onChange={(v) => set('amount')(parseFloat(v) || 0)} type="number" prefix="$" /></Field>
         <Field label="Scope / description" span={2}><Input value={form.scope} onChange={set('scope')} placeholder="Foundation work, Phase 1" /></Field>
+        <Field label="Division / Category" span={2}>
+          <Select
+            value={form.division}
+            onChange={set('division')}
+            options={[
+              { value: '', label: 'No division assigned' },
+              ...CSI_GROUPS.map((g) => ({ value: g.label, label: `${g.csi} — ${g.label}` }))
+            ]}
+          />
+        </Field>
         <Field label="Status">
           <Select value={form.status} onChange={set('status')} options={BID_STATUS_OPTS.map((s) => ({ value: s, label: s }))} />
         </Field>

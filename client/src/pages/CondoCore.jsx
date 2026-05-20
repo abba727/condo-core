@@ -11,6 +11,13 @@ import {
   VendorDetailPage as VendorDetailPageImpl,
 } from './VendorsModule.jsx';
 import {
+  BudgetStoreProvider,
+  BudgetTab as BudgetTabNew,
+  ExpenseStoreProvider2,
+  ExpensesTab as ExpensesTabNew,
+  SearchableSelect,
+} from './FinancialsModule.jsx';
+import {
   DRIGGS_712_PROJECT,
   DRIGGS_712_PLAN_TASKS,
   DRIGGS_712_PLAN_MONTHS,
@@ -255,6 +262,14 @@ const ICONS = {
       <path d="M14 2v6h6" />
     </>
   ),
+  percent: (
+    <>
+      <circle cx="9" cy="9" r="2" />
+      <circle cx="15" cy="15" r="2" />
+      <path d="m5 19 14-14" />
+    </>
+  ),
+  sort: <path d="M3 6h18M7 12h10M11 18h2" />,
 };
 
 // ============ DATA ============
@@ -3432,129 +3447,26 @@ function useExpenseStore() {
 window.useExpenseStore = useExpenseStore;
 
 function FinancialsPage() {
-  const expStore = useExpenseStore();
-  const expenses = expStore?.expenses || INITIAL_EXPENSES;
-  const setExpenses = (fn) => {
-    if (typeof fn === 'function') {
-      const next = fn(expenses);
-      next.forEach((e) => {
-        if (!expenses.find((x) => x.id === e.id)) expStore?.addExpense(e);
-        else expStore?.updateExpense(e);
-      });
-    }
-  };
-  const [budget, setBudget] = React.useState(INITIAL_BUDGET);
-  const [tab, setTab] = React.useState("budget");
-
-  // modal state
-  const [budgetModal, setBudgetModal] = React.useState(null); // null | "new" | row
-  const [expenseModal, setExpenseModal] = React.useState(null);
-
-  const totalBudget = budget.reduce((s, r) => s + r.budget, 0);
-  const totalCommitted = budget.reduce((s, r) => s + r.committed, 0);
-  const totalSpent = budget.reduce((s, r) => s + r.spent, 0);
-  const totalForecast = budget.reduce((s, r) => s + r.forecast, 0);
-  const variance = totalBudget - totalForecast;
-  const expensesMTD = expenses.reduce((s, e) => s + (e.amount > 0 ? e.amount : 0), 0);
-  const expensesPending = expenses.filter(e => e.status === "Pending").reduce((s, e) => s + e.amount, 0);
-
-  const saveBudget = (row) => {
-    if (row.id) {
-      setBudget(budget.map(b => b.id === row.id ? row : b));
-    } else {
-      setBudget([...budget, { ...row, id: `b${Date.now()}` }]);
-    }
-    setBudgetModal(null);
-  };
-
-  const saveExpense = (row) => {
-    if (row.id) {
-      expStore?.updateExpense(row);
-    } else {
-      expStore?.addExpense({ ...row, id: `e${Date.now()}` });
-    }
-    setExpenseModal(null);
-  };
-
-  const deleteExpense = (id) => {
-    expStore?.deleteExpense(id);
-    setExpenseModal(null);
-  };
-
+  const [tab, setTab] = React.useState('budget');
   return (
     <>
       <PageHead
         eyebrow="Financials"
         title="712 Driggs · Cost & cash"
-        sub="Budget, committed, expenses, draws, contingency — refreshed nightly from accounting and contract management."
-        actions={
-          <>
-            <select className="select" style={{ width: 160 }}>
-              <option>FY 2024</option>
-              <option>Project to date</option>
-            </select>
-            <button className="btn btn-secondary"><Icon name="download" size={13} /> Export</button>
-            <button className="btn btn-primary" onClick={() => setExpenseModal({})}>
-              <Icon name="plus" size={13} /> Log expense
-            </button>
-          </>
-        }
+        sub="Budget, committed, expenses, draws, contingency."
       />
-
-      <div className="grid-kpis" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
-        <FinKpi label="Hard cost budget" value={fmtUSD(totalBudget, { compact: true })} sub={`${budget.length} divisions`} />
-        <FinKpi label="Committed" value={fmtUSD(totalCommitted, { compact: true })} sub={`${Math.round(totalCommitted / totalBudget * 100)}% of budget`} cls="info" />
-        <FinKpi label="Spent" value={fmtUSD(totalSpent, { compact: true })} sub={`${Math.round(totalSpent / totalBudget * 100)}% of budget`} cls="pos" />
-        <FinKpi label="Expenses (90d)" value={fmtUSD(expensesMTD, { compact: true })} sub={`${expenses.length} entries`} />
-        <FinKpi label="Forecast variance" value={fmtUSD(variance, { compact: true, sign: true })} sub="vs. baseline" cls={variance < 0 ? "neg" : "pos"} />
-      </div>
-
       <div className="tabs" style={{ marginTop: 18 }}>
-        {[["budget", "Budget"], ["expenses", "Expenses"], ["capital", "Capital stack"], ["draws", "Draws & contingency"]].map(([id, label]) => (
-          <button key={id} className={`tab ${tab === id ? "active" : ""}`} onClick={() => setTab(id)}>{label}</button>
+        {[['budget', 'Budget'], ['expenses', 'Expenses'], ['capital', 'Capital stack'], ['draws', 'Draws & contingency']].map(([id, label]) => (
+          <button key={id} className={`tab ${tab === id ? 'active' : ''}`} onClick={() => setTab(id)}>{label}</button>
         ))}
       </div>
-
-      {tab === "budget" && (
-        <BudgetTab
-          rows={budget}
-          totals={{ totalBudget, totalCommitted, totalSpent, variance }}
-          onAdd={() => setBudgetModal({})}
-          onEdit={(r) => setBudgetModal(r)}
-        />
-      )}
-
-      {tab === "expenses" && (
-        <ExpensesTab
-          rows={expenses}
-          divisions={budget}
-          onAdd={() => setExpenseModal({})}
-          onEdit={(r) => setExpenseModal(r)}
-        />
-      )}
-
-      {tab === "capital" && <CapitalTab />}
-      {tab === "draws" && <DrawsTab />}
-
-      <BudgetModal
-        open={!!budgetModal}
-        row={budgetModal}
-        onClose={() => setBudgetModal(null)}
-        onSave={saveBudget}
-      />
-
-      <ExpenseModal
-        open={!!expenseModal}
-        row={expenseModal}
-        divisions={budget}
-        onClose={() => setExpenseModal(null)}
-        onSave={saveExpense}
-        onDelete={deleteExpense}
-      />
+      {tab === 'budget' && <BudgetTabNew />}
+      {tab === 'expenses' && <ExpensesTabNew />}
+      {tab === 'capital' && <CapitalTab />}
+      {tab === 'draws' && <DrawsTab />}
     </>
   );
 }
-
 function BudgetTab({ rows, totals, onAdd, onEdit }) {
   return (
     <div className="card" style={{ marginTop: 16 }}>
@@ -4477,6 +4389,8 @@ function CondoCoreApp() {
 
   return (
     <ExpenseStoreProvider>
+    <BudgetStoreProvider seedBudget={DRIGGS_712_BUDGET}>
+    <ExpenseStoreProvider2 seedExpenses={INITIAL_EXPENSES}>
     <VendorStoreProvider>
     <div className="condocore-root app-shell">
       <Rail active={route} onNav={handleNav} project={PROJECTS[0]} onProjectSwitch={() => {}} />
@@ -4531,6 +4445,8 @@ function CondoCoreApp() {
       </TweaksPanel>
     </div>
     </VendorStoreProvider>
+    </ExpenseStoreProvider2>
+    </BudgetStoreProvider>
     </ExpenseStoreProvider>
   );
 }
