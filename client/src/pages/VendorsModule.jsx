@@ -9,6 +9,7 @@
  *   VENDOR_STORE        — shared mutable vendor state (React context)
  */
 import React from 'react';
+import ReactDOM from 'react-dom';
 import {
   DRIGGS_712_CONTRACTS,
   DRIGGS_712_EXPENSES,
@@ -20,6 +21,19 @@ import {
 
 /* ─── globals injected by CondoCore.jsx ─────────────────────────────────── */
 /* global Icon, Modal, Field, Input, Select, Textarea, PageHead, fmtUSD, Avatar, Stars */
+
+// Current user — will be replaced by auth context when team feature ships
+const CURRENT_USER = { id: 'user-priya', name: 'Priya Desai', role: 'Project Director' };
+
+function makeAuditEntry(action, detail = {}) {
+  return {
+    id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    action,
+    detail,
+    performedBy: { ...CURRENT_USER },
+    timestamp: new Date().toISOString(),
+  };
+}
 
 // ============================================================
 // Helpers
@@ -298,6 +312,7 @@ export function VendorStoreProvider({ children }) {
       projectIds: data.assignToProject ? ['driggs-712'] : [],
       bids: [],
       cois: [],
+      auditLog: [makeAuditEntry('vendor_added', { name: data.name || 'New Vendor', trade: data.trade || 'Consulting' })],
     };
     setVendors((prev) => [newV, ...prev]);
     if (data.assignToProject) {
@@ -307,18 +322,27 @@ export function VendorStoreProvider({ children }) {
   }, [vendors.length]);
 
   const updateVendor = React.useCallback((id, patch) => {
-    setVendors((prev) => prev.map((v) => v.id === id ? { ...v, ...patch } : v));
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== id) return v;
+      const entry = makeAuditEntry('vendor_edited', { fields: Object.keys(patch) });
+      return { ...v, ...patch, auditLog: [...(v.auditLog || []), entry] };
+    }));
   }, []);
 
   const updateRating = React.useCallback((vendorId, rating) => {
-    setVendors((prev) => prev.map((v) => v.id === vendorId ? { ...v, rating } : v));
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== vendorId) return v;
+      const entry = makeAuditEntry('rating_changed', { from: v.rating || 0, to: rating });
+      return { ...v, rating, auditLog: [...(v.auditLog || []), entry] };
+    }));
   }, []);
 
   const addVendorTransaction = React.useCallback((vendorId, txn) => {
     // Add to vendor's local transaction list
     setVendors((prev) => prev.map((v) => {
       if (v.id !== vendorId) return v;
-      return { ...v, vendorTxns: [...(v.vendorTxns || []), { id: `vtxn-${Date.now()}`, ...txn }] };
+      const entry = makeAuditEntry('transaction_added', { amount: txn.amount, memo: txn.memo, type: txn.type });
+      return { ...v, vendorTxns: [...(v.vendorTxns || []), { id: `vtxn-${Date.now()}`, ...txn }], auditLog: [...(v.auditLog || []), entry] };
     }));
     // Also push to shared expense store if available
     const expStore = typeof window !== 'undefined' && window.useExpenseStore ? window.useExpenseStore() : null;
@@ -360,63 +384,75 @@ export function VendorStoreProvider({ children }) {
   const addBid = React.useCallback((vendorId, bid) => {
     setVendors((prev) => prev.map((v) => {
       if (v.id !== vendorId) return v;
-      return { ...v, bids: [...v.bids, { id: `bid-${Date.now()}`, ...bid }] };
+      const entry = makeAuditEntry('bid_added', { scope: bid.scope, amount: bid.amount, status: bid.status });
+      return { ...v, bids: [...v.bids, { id: `bid-${Date.now()}`, ...bid }], auditLog: [...(v.auditLog || []), entry] };
     }));
   }, []);
-
   const updateBid = React.useCallback((vendorId, bidId, patch) => {
     setVendors((prev) => prev.map((v) => {
       if (v.id !== vendorId) return v;
-      return { ...v, bids: v.bids.map((b) => b.id === bidId ? { ...b, ...patch } : b) };
+      const existing = v.bids.find((b) => b.id === bidId);
+      const entry = makeAuditEntry('bid_updated', { scope: existing?.scope || bidId, status: patch.status || existing?.status });
+      return { ...v, bids: v.bids.map((b) => b.id === bidId ? { ...b, ...patch } : b), auditLog: [...(v.auditLog || []), entry] };
     }));
   }, []);
-
   const deleteBid = React.useCallback((vendorId, bidId) => {
     setVendors((prev) => prev.map((v) => {
       if (v.id !== vendorId) return v;
-      return { ...v, bids: v.bids.filter((b) => b.id !== bidId) };
+      const existing = v.bids.find((b) => b.id === bidId);
+      const entry = makeAuditEntry('bid_deleted', { scope: existing?.scope || bidId });
+      return { ...v, bids: v.bids.filter((b) => b.id !== bidId), auditLog: [...(v.auditLog || []), entry] };
     }));
   }, []);
-
   const addCoi = React.useCallback((vendorId, coi) => {
     setVendors((prev) => prev.map((v) => {
       if (v.id !== vendorId) return v;
-      return { ...v, cois: [...v.cois, { id: `coi-${Date.now()}`, ...coi }] };
+      const entry = makeAuditEntry('coi_added', { type: coi.type, carrier: coi.carrier, expires: coi.expires });
+      return { ...v, cois: [...v.cois, { id: `coi-${Date.now()}`, ...coi }], auditLog: [...(v.auditLog || []), entry] };
     }));
   }, []);
-
   const updateCoi = React.useCallback((vendorId, coiId, patch) => {
     setVendors((prev) => prev.map((v) => {
       if (v.id !== vendorId) return v;
-      return { ...v, cois: v.cois.map((c) => c.id === coiId ? { ...c, ...patch } : c) };
+      const existing = v.cois.find((c) => c.id === coiId);
+      const entry = makeAuditEntry('coi_updated', { type: existing?.type || coiId, status: patch.status || existing?.status });
+      return { ...v, cois: v.cois.map((c) => c.id === coiId ? { ...c, ...patch } : c), auditLog: [...(v.auditLog || []), entry] };
     }));
   }, []);
-
   const deleteCoi = React.useCallback((vendorId, coiId) => {
     setVendors((prev) => prev.map((v) => {
       if (v.id !== vendorId) return v;
-      return { ...v, cois: v.cois.filter((c) => c.id !== coiId) };
+      const existing = v.cois.find((c) => c.id === coiId);
+      const entry = makeAuditEntry('coi_deleted', { type: existing?.type || coiId });
+      return { ...v, cois: v.cois.filter((c) => c.id !== coiId), auditLog: [...(v.auditLog || []), entry] };
     }));
   }, []);
 
   // Soft-delete: marks vendor as archived, preserving all linked data
   const archiveVendor = React.useCallback((vendorId) => {
-    setVendors((prev) => prev.map((v) =>
-      v.id === vendorId
-        ? { ...v, archived: true, archivedAt: new Date().toISOString() }
-        : v
-    ));
+    const archivedAt = new Date().toISOString();
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== vendorId) return v;
+      const entry = makeAuditEntry('vendor_archived', { archivedAt });
+      return { ...v, archived: true, archivedAt, auditLog: [...(v.auditLog || []), entry] };
+    }));
   }, []);
-
-  // Restore a previously archived vendor
+   // Restore a previously archived vendor
   const restoreVendor = React.useCallback((vendorId) => {
-    setVendors((prev) => prev.map((v) =>
-      v.id === vendorId
-        ? { ...v, archived: false, archivedAt: null }
-        : v
-    ));
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== vendorId) return v;
+      const entry = makeAuditEntry('vendor_restored', {});
+      return { ...v, archived: false, archivedAt: null, auditLog: [...(v.auditLog || []), entry] };
+    }));
   }, []);
-
+  // Log a document upload event to the audit trail
+  const addDocumentAudit = React.useCallback((vendorId, fileName) => {
+    setVendors((prev) => prev.map((v) => {
+      if (v.id !== vendorId) return v;
+      const entry = makeAuditEntry('document_uploaded', { name: fileName });
+      return { ...v, auditLog: [...(v.auditLog || []), entry] };
+    }));
+  }, []);
   return (
     <VendorStoreCtx.Provider value={{
       vendors,
@@ -434,6 +470,7 @@ export function VendorStoreProvider({ children }) {
       deleteCoi,
       archiveVendor,
       restoreVendor,
+      addDocumentAudit,
     }}>
       {children}
     </VendorStoreCtx.Provider>
@@ -563,18 +600,18 @@ export function VendorsPage({ onViewVendor }) {
   const [search, setSearch] = React.useState('');
   const [view, setView] = React.useState('table');
   const [projectOnly, setProjectOnly] = React.useState(true);
-  const [showArchived, setShowArchived] = React.useState(false);
+   const [showArchived, setShowArchived] = React.useState(false);
   const [addOpen, setAddOpen] = React.useState(false);
   const [editVendor, setEditVendor] = React.useState(null);
-
   const vendors = store?.vendors || [];
   const projectVendorIds = store?.projectVendorIds || new Set();
-
-  // Active vendors only (not archived) unless showArchived is on
-  const activeVendors = showArchived ? vendors : vendors.filter((v) => !v.archived);
   const archivedCount = vendors.filter((v) => v.archived).length;
-
-  const base = projectOnly
+  // When showArchived is true, show ONLY archived vendors (separate view)
+  // When false, show only active (non-archived) vendors
+  const activeVendors = showArchived
+    ? vendors.filter((v) => v.archived)
+    : vendors.filter((v) => !v.archived);
+  const base = (!showArchived && projectOnly)
     ? activeVendors.filter((v) => projectVendorIds.has(v.id))
     : activeVendors;
 
@@ -666,16 +703,16 @@ export function VendorsPage({ onViewVendor }) {
               {projectOnly ? '712 Driggs only' : 'All vendors'}
             </button>
 
-            {/* Archived toggle — only shown when there are archived vendors */}
+            {/* Archived view toggle — only shown when there are archived vendors */}
             {archivedCount > 0 && (
               <button
                 className={`btn btn-sm ${showArchived ? 'btn-secondary' : 'btn-ghost'}`}
                 onClick={() => setShowArchived((p) => !p)}
-                title={showArchived ? 'Hide archived vendors' : `Show ${archivedCount} archived vendor${archivedCount !== 1 ? 's' : ''}`}
-                style={showArchived ? {} : { color: 'var(--text-muted)' }}
+                title={showArchived ? 'Back to active vendors' : `View ${archivedCount} archived vendor${archivedCount !== 1 ? 's' : ''}`}
+                style={showArchived ? { color: 'var(--signal-neg)' } : { color: 'var(--text-muted)' }}
               >
                 <Icon name="folder" size={12} />
-                {showArchived ? 'Hide archived' : `${archivedCount} archived`}
+                {showArchived ? '← Active vendors' : `${archivedCount} archived`}
               </button>
             )}
 
@@ -910,6 +947,7 @@ const DETAIL_TABS = [
   { id: 'bids', label: 'Bids & Contracts', icon: 'list' },
   { id: 'cois', label: 'COIs', icon: 'shield' },
   { id: 'documents', label: 'Documents', icon: 'folder' },
+  { id: 'activity', label: 'Activity', icon: 'clock' },
 ];
 
 export function VendorDetailPage({ vendorId, onBack }) {
@@ -969,13 +1007,14 @@ export function VendorDetailPage({ vendorId, onBack }) {
 
   return (
     <>
-      {/* Delete confirmation overlay */}
-      {deleteConfirmOpen && (
+      {/* Delete confirmation overlay — rendered via portal to escape stacking contexts */}
+      {deleteConfirmOpen && ReactDOM.createPortal(
         <div
           style={{
-            position: 'fixed', inset: 0, zIndex: 9000,
-            background: 'rgba(0,0,0,0.45)',
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.55)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(2px)',
           }}
           onClick={() => setDeleteConfirmOpen(false)}
         >
@@ -985,52 +1024,56 @@ export function VendorDetailPage({ vendorId, onBack }) {
               border: '1px solid var(--border)',
               borderRadius: 12,
               padding: '28px 32px',
-              maxWidth: 420,
+              maxWidth: 440,
               width: '90%',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.22)',
+              boxShadow: '0 16px 60px rgba(0,0,0,0.35)',
+              animation: 'fadeInScale 0.15s ease',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 16 }}>
               <div style={{
-                width: 36, height: 36, borderRadius: 8,
+                width: 40, height: 40, borderRadius: 10,
                 background: 'rgba(220,38,38,0.12)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
+                flexShrink: 0, marginTop: 2,
               }}>
-                <Icon name="trash" size={16} style={{ color: 'var(--signal-neg)' }} />
+                <Icon name="trash" size={18} style={{ color: 'var(--signal-neg)' }} />
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>Delete vendor?</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{vendor.name}</div>
+                <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>Archive vendor?</div>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>{vendor.name}</div>
               </div>
             </div>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 20px', lineHeight: 1.6 }}>
-              This vendor will be <strong>archived</strong> — all linked transactions, documents,
-              bids, and COIs are preserved and remain searchable. The vendor will no longer appear
-              in the active vendor list.
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.65 }}>
+              This vendor will be <strong style={{ color: 'var(--text)' }}>archived</strong>, not permanently deleted.
+              All linked transactions, documents, bids, and COIs are preserved and remain searchable.
+              The vendor will no longer appear in the active vendor list.
             </p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
-                className="btn btn-ghost btn-sm"
+                className="btn btn-ghost"
                 onClick={() => setDeleteConfirmOpen(false)}
               >
                 Cancel
               </button>
               <button
-                className="btn btn-sm"
+                className="btn"
                 style={{
                   background: 'var(--signal-neg)',
                   color: '#fff',
                   border: 'none',
+                  padding: '8px 18px',
+                  fontWeight: 600,
                 }}
                 onClick={handleConfirmDelete}
               >
-                <Icon name="trash" size={12} /> Archive vendor
+                <Icon name="trash" size={13} /> Archive vendor
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Back nav + header */}
@@ -1186,7 +1229,8 @@ export function VendorDetailPage({ vendorId, onBack }) {
         {tab === '1099' && <Vendor1099Tab vendor={vendor} />}
         {tab === 'bids' && <VendorBidsTab vendor={vendor} store={store} />}
         {tab === 'cois' && <VendorCoisTab vendor={vendor} store={store} />}
-        {tab === 'documents' && <VendorDocumentsTab vendor={vendor} />}
+        {tab === 'documents' && <VendorDocumentsTab vendor={vendor} store={store} />}
+        {tab === 'activity' && <VendorActivityTab vendor={vendor} />}
       </div>
 
       <VendorModal open={editOpen} vendor={vendor} onClose={() => setEditOpen(false)} onSave={handleSaveEdit} />
@@ -1593,7 +1637,7 @@ NOTE: This is a summary for review only. File the official IRS Form 1099-NEC.
 const BID_STATUS_OPTS = ['Submitted', 'Under review', 'Approved', 'Contracted', 'Declined', 'Withdrawn'];
 
 // Simulated file upload — stores file metadata in state
-function useFileUpload() {
+function useFileUpload(onUpload) {
   const [files, setFiles] = React.useState([]);
   const inputRef = React.useRef(null);
   const trigger = () => inputRef.current?.click();
@@ -1611,6 +1655,10 @@ function useFileUpload() {
         url: URL.createObjectURL(f),
       }))
     ]);
+    // Log each uploaded file to the audit trail
+    if (typeof onUpload === 'function') {
+      picked.forEach((f) => onUpload(f.name));
+    }
     e.target.value = '';
   };
   const remove = (id) => setFiles((prev) => prev.filter((f) => f.id !== id));
@@ -2088,8 +2136,10 @@ function VendorCoisTab({ vendor, store }) {
 }
 
 // ── Documents Tab ─────────────────────────────────────────────
-function VendorDocumentsTab({ vendor }) {
-  const upload = useFileUpload();
+function VendorDocumentsTab({ vendor, store }) {
+  const upload = useFileUpload((fileName) => {
+    store?.addDocumentAudit?.(vendor.id, fileName);
+  });
 
   const fmtBytes = (b) => {
     if (!b) return '';
@@ -2164,6 +2214,127 @@ function VendorDocumentsTab({ vendor }) {
   );
 }
 
+// ============================================================
+// Activity / Audit Log Tab
+// ============================================================
+const AUDIT_ACTION_META = {
+  vendor_added:      { label: 'Vendor added',          icon: 'plus',    color: 'var(--signal-pos)' },
+  vendor_edited:     { label: 'Vendor profile updated', icon: 'edit',    color: 'var(--signal-info)' },
+  vendor_archived:   { label: 'Vendor archived',        icon: 'trash',   color: 'var(--signal-neg)' },
+  vendor_restored:   { label: 'Vendor restored',        icon: 'refresh', color: 'var(--signal-pos)' },
+  rating_changed:    { label: 'Rating updated',         icon: 'star',    color: 'var(--signal-warn)' },
+  transaction_added: { label: 'Transaction added',      icon: 'dollar',  color: 'var(--signal-info)' },
+  bid_added:         { label: 'Bid added',              icon: 'list',    color: 'var(--cc-accent)' },
+  bid_updated:       { label: 'Bid updated',            icon: 'list',    color: 'var(--signal-info)' },
+  bid_deleted:       { label: 'Bid deleted',            icon: 'trash',   color: 'var(--signal-neg)' },
+  coi_added:         { label: 'COI added',              icon: 'shield',  color: 'var(--cc-accent)' },
+  coi_updated:       { label: 'COI updated',            icon: 'shield',  color: 'var(--signal-info)' },
+  coi_deleted:       { label: 'COI deleted',            icon: 'trash',   color: 'var(--signal-neg)' },
+  document_uploaded: { label: 'Document uploaded',      icon: 'doc',     color: 'var(--cc-accent)' },
+};
+function auditDetail(entry) {
+  const { action, detail } = entry;
+  if (action === 'vendor_added') return `${detail.name} · ${detail.trade}`;
+  if (action === 'vendor_edited') return detail.fields?.length ? `Fields: ${detail.fields.join(', ')}` : '';
+  if (action === 'vendor_archived') return detail.archivedAt ? `on ${new Date(detail.archivedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : '';
+  if (action === 'rating_changed') return `${detail.from} → ${detail.to} / 5`;
+  if (action === 'transaction_added') return [detail.memo, detail.amount != null ? `$${Number(detail.amount).toLocaleString()}` : null].filter(Boolean).join(' · ');
+  if (action === 'bid_added') return [detail.scope, detail.amount != null ? `$${Number(detail.amount).toLocaleString()}` : null, detail.status].filter(Boolean).join(' · ');
+  if (action === 'bid_updated') return [detail.scope, detail.status].filter(Boolean).join(' · ');
+  if (action === 'bid_deleted') return detail.scope || '';
+  if (action === 'coi_added') return [detail.type, detail.carrier, detail.expires].filter(Boolean).join(' · ');
+  if (action === 'coi_updated') return [detail.type, detail.status].filter(Boolean).join(' · ');
+  if (action === 'coi_deleted') return detail.type || '';
+  if (action === 'document_uploaded') return detail.name || '';
+  return '';
+}
+function fmtAuditTime(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now - d;
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHr = Math.floor(diffMs / 3600000);
+  const diffDay = Math.floor(diffMs / 86400000);
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffHr < 24) return `${diffHr}h ago`;
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function VendorActivityTab({ vendor }) {
+  const log = [...(vendor.auditLog || [])].reverse(); // newest first
+  if (log.length === 0) {
+    return (
+      <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-faint)' }}>
+        <Icon name="clock" size={28} style={{ marginBottom: 12, opacity: 0.4 }} />
+        <div style={{ fontSize: 14 }}>No activity recorded yet.</div>
+        <div style={{ fontSize: 12, marginTop: 4 }}>Actions like edits, bids, and COI changes will appear here.</div>
+      </div>
+    );
+  }
+  return (
+    <div className="card" style={{ padding: '0 0 8px' }}>
+      <div className="card-head" style={{ padding: '14px 20px 12px' }}>
+        <div style={{ fontWeight: 600, fontSize: 13 }}>Activity log</div>
+        <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>{log.length} event{log.length !== 1 ? 's' : ''}</div>
+      </div>
+      <div style={{ padding: '0 0 4px' }}>
+        {log.map((entry, idx) => {
+          const meta = AUDIT_ACTION_META[entry.action] || { label: entry.action, icon: 'doc', color: 'var(--text-muted)' };
+          const detail = auditDetail(entry);
+          const isLast = idx === log.length - 1;
+          return (
+            <div key={entry.id} style={{
+              display: 'flex', gap: 14, padding: '12px 20px',
+              borderBottom: isLast ? 'none' : '1px solid var(--border)',
+              alignItems: 'flex-start',
+            }}>
+              {/* Icon column */}
+              <div style={{
+                width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+                background: 'var(--bg-sunk)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginTop: 1,
+              }}>
+                <Icon name={meta.icon} size={14} style={{ color: meta.color }} />
+              </div>
+              {/* Content */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: 500, fontSize: 13 }}>{meta.label}</span>
+                  {detail && (
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320 }}>{detail}</span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 12, marginTop: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Performed by */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <div style={{
+                      width: 18, height: 18, borderRadius: '50%',
+                      background: 'var(--accent-soft)', color: 'var(--accent-soft-text)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 9, fontWeight: 700, flexShrink: 0,
+                    }}>
+                      {(entry.performedBy?.name || 'U').split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                    </div>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                      {entry.performedBy?.name || 'Unknown'}
+                      {entry.performedBy?.role ? ` · ${entry.performedBy.role}` : ''}
+                    </span>
+                  </div>
+                  {/* Timestamp */}
+                  <span style={{ fontSize: 11, color: 'var(--text-faint)' }} title={new Date(entry.timestamp).toLocaleString()}>
+                    {fmtAuditTime(entry.timestamp)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 // ============================================================
 // Shared sub-components
 // ============================================================

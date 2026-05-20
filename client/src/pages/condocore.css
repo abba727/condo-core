@@ -1389,6 +1389,7 @@ a {
   animation: modalFade 120ms ease;
 }
 @keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeInScale { from { opacity: 0; transform: scale(0.94) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 .modal {
   width: 100%;
   background: var(--bg-elev);
