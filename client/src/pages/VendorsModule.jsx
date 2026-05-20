@@ -932,7 +932,7 @@ export function VendorDetailPage({ vendorId, onBack }) {
           <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
             {vendor.role}
             {vendor.contact && vendor.contact !== '—' && ` · ${vendor.contact}`}
-            {vendor.email && <> · <a href={`mailto:${vendor.email}`} style={{ color: 'var(--accent)' }}>{vendor.email}</a></>}
+            {vendor.email && <> · <a href={`mailto:${vendor.email}`} style={{ color: 'var(--cc-accent)' }}>{vendor.email}</a></>}
             {vendor.phone && ` · ${vendor.phone}`}
           </div>
         </div>
@@ -1059,7 +1059,7 @@ function VendorProfileTab({ vendor, onEdit, onUpdateRating }) {
           {row('Trade', vendor.trade)}
           {row('Role', vendor.role)}
           {row('Primary contact', vendor.contact)}
-          {row('Email', vendor.email ? <a href={`mailto:${vendor.email}`} style={{ color: 'var(--accent)' }}>{vendor.email}</a> : null)}
+          {row('Email', vendor.email ? <a href={`mailto:${vendor.email}`} style={{ color: 'var(--cc-accent)' }}>{vendor.email}</a> : null)}
           {row('Phone', vendor.phone)}
           {row('Address', vendor.address)}
           {row('EIN / Tax ID', vendor.ein)}
@@ -1642,7 +1642,7 @@ function VendorBidsTab({ vendor, store }) {
                     {(bidDocs[b.id] || []).map((doc) => (
                       <tr key={doc.id} style={{ background: 'var(--surface-raised)' }}>
                         <td colSpan={2} style={{ paddingLeft: 24 }}>
-                          <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--cc-accent)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                             <Icon name="doc" size={11} style={{ flexShrink: 0 }} />{doc.name}
                           </a>
                           <span className="muted" style={{ fontSize: 11, marginLeft: 8 }}>{doc.uploadedAt}</span>
@@ -1878,7 +1878,7 @@ function VendorCoisTab({ vendor, store }) {
                         {(coiDocs[c.id] || []).map((doc) => (
                           <tr key={doc.id} style={{ background: 'var(--surface-raised)' }}>
                             <td colSpan={3} style={{ paddingLeft: 24 }}>
-                              <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--cc-accent)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                 <Icon name="doc" size={11} style={{ flexShrink: 0 }} />{doc.name}
                               </a>
                               <span className="muted" style={{ fontSize: 11, marginLeft: 8 }}>{doc.uploadedAt}</span>
@@ -1975,7 +1975,7 @@ function VendorDocumentsTab({ vendor }) {
               {upload.files.map((f) => (
                 <tr key={f.id}>
                   <td>
-                    <a href={f.url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                    <a href={f.url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--cc-accent)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
                       <Icon name="doc" size={13} style={{ flexShrink: 0 }} />
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
                     </a>
