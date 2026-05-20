@@ -1676,6 +1676,7 @@ a {
   letter-spacing: 0.06em;
 }
 .vendor-profile-value { color: var(--text); flex: 1; }
+.vendor-profile-value a { color: var(--accent) !important; }
 
 /* 1099 preview */
 .vendor-1099-preview {

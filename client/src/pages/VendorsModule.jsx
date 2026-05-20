@@ -1105,7 +1105,40 @@ function Vendor1099Tab({ vendor }) {
   const [taxYear, setTaxYear] = React.useState(String(currentYear));
   const [printed, setPrinted] = React.useState(false);
 
-  const totalPayments = vendor.paid;
+  // Filter transactions by selected tax year
+  const allTransactions = React.useMemo(() => {
+    // Gather all wire/expense transactions from seed data for this vendor
+    const txns = [];
+    DRIGGS_712_EXPENSES.forEach((row) => {
+      const vendorName = String(row.Vendor || row['Paid To'] || row.Payee || '');
+      if (vendorName.toLowerCase().includes(vendor.name.toLowerCase().slice(0, 8))) {
+        const d = new Date(row.Date || row.date || '');
+        if (!isNaN(d.getTime())) {
+          txns.push({ date: d, amount: trackerAmt(row.Amount || row.Debit || row.amount || 0) });
+        }
+      }
+    });
+    // Also include contract payments from DRIGGS_712_CONTRACTS
+    DRIGGS_712_CONTRACTS.forEach((row) => {
+      const vendorName = String(row.Vendor || '');
+      if (vendorName.toLowerCase().includes(vendor.name.toLowerCase().slice(0, 8))) {
+        const d = new Date(row.Date || '');
+        if (!isNaN(d.getTime())) {
+          txns.push({ date: d, amount: trackerAmt(row['Total Paid'] || 0) });
+        }
+      }
+    });
+    return txns;
+  }, [vendor.name]);
+
+  const totalPayments = React.useMemo(() => {
+    const yr = parseInt(taxYear, 10);
+    const filtered = allTransactions.filter((t) => t.date.getFullYear() === yr);
+    // If no transactions found for the year, fall back to vendor.paid for current year
+    if (filtered.length === 0 && yr === currentYear) return vendor.paid;
+    return filtered.reduce((s, t) => s + t.amount, 0);
+  }, [allTransactions, taxYear, currentYear, vendor.paid]);
+
   const eligible = totalPayments >= 600;
 
   const handlePrint = () => {
@@ -1440,8 +1473,8 @@ function VendorBidsTab({ vendor, store }) {
                     {(bidDocs[b.id] || []).map((doc) => (
                       <tr key={doc.id} style={{ background: 'var(--surface-raised)' }}>
                         <td colSpan={2} style={{ paddingLeft: 24 }}>
-                          <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)' }}>
-                            <Icon name="doc" size={11} style={{ marginRight: 4 }} />{doc.name}
+                          <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <Icon name="doc" size={11} style={{ flexShrink: 0 }} />{doc.name}
                           </a>
                           <span className="muted" style={{ fontSize: 11, marginLeft: 8 }}>{doc.uploadedAt}</span>
                         </td>
@@ -1453,7 +1486,7 @@ function VendorBidsTab({ vendor, store }) {
                               [b.id]: (prev[b.id] || []).map((d) => d.id === doc.id ? { ...d, description: e.target.value } : d)
                             }))}
                             placeholder="Add description…"
-                            style={{ fontSize: 12, background: 'transparent', border: 'none', outline: 'none', width: '100%', color: 'var(--text-body)' }}
+                            style={{ fontSize: 12, background: 'transparent', border: 'none', outline: 'none', width: '100%', color: 'var(--text)' }}
                           />
                         </td>
                         <td colSpan={2} style={{ textAlign: 'right' }}>
@@ -1676,8 +1709,8 @@ function VendorCoisTab({ vendor, store }) {
                         {(coiDocs[c.id] || []).map((doc) => (
                           <tr key={doc.id} style={{ background: 'var(--surface-raised)' }}>
                             <td colSpan={3} style={{ paddingLeft: 24 }}>
-                              <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)' }}>
-                                <Icon name="doc" size={11} style={{ marginRight: 4 }} />{doc.name}
+                              <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                <Icon name="doc" size={11} style={{ flexShrink: 0 }} />{doc.name}
                               </a>
                               <span className="muted" style={{ fontSize: 11, marginLeft: 8 }}>{doc.uploadedAt}</span>
                             </td>
@@ -1689,7 +1722,7 @@ function VendorCoisTab({ vendor, store }) {
                                   [c.id]: (prev[c.id] || []).map((d) => d.id === doc.id ? { ...d, description: e.target.value } : d)
                                 }))}
                                 placeholder="Add description…"
-                                style={{ fontSize: 12, background: 'transparent', border: 'none', outline: 'none', width: '100%', color: 'var(--text-body)' }}
+                                style={{ fontSize: 12, background: 'transparent', border: 'none', outline: 'none', width: '100%', color: 'var(--text)' }}
                               />
                             </td>
                             <td colSpan={2} style={{ textAlign: 'right' }}>
@@ -1773,8 +1806,9 @@ function VendorDocumentsTab({ vendor }) {
               {upload.files.map((f) => (
                 <tr key={f.id}>
                   <td>
-                    <a href={f.url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Icon name="doc" size={13} />{f.name}
+                    <a href={f.url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                      <Icon name="doc" size={13} style={{ flexShrink: 0 }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
                     </a>
                   </td>
                   <td>
@@ -1782,7 +1816,7 @@ function VendorDocumentsTab({ vendor }) {
                       value={f.description}
                       onChange={(e) => upload.setDesc(f.id, e.target.value)}
                       placeholder="Add description…"
-                      style={{ fontSize: 12, background: 'transparent', border: 'none', outline: 'none', width: '100%', color: 'var(--text-body)' }}
+                      style={{ fontSize: 12, background: 'transparent', border: 'none', outline: 'none', width: '100%', color: 'var(--text)' }}
                     />
                   </td>
                   <td className="muted" style={{ fontSize: 12 }}>{f.uploadedAt}</td>
