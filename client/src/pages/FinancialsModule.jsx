@@ -652,7 +652,7 @@ export function BudgetTab({ expenses }) {
                     onDragEnd={handleGroupDragEnd}
                     style={{
                       background: 'var(--bg-sunk)',
-                      cursor: 'grab',
+                      cursor: 'default',
                       userSelect: 'none',
                       borderTop: '2px solid var(--border)',
                       opacity: isDraggingGroup ? 0.4 : 1,
@@ -661,7 +661,7 @@ export function BudgetTab({ expenses }) {
                   >
                     <td style={{ paddingLeft: 10 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <span style={{ color: 'var(--text-faint)' }}><Icon name="grip" size={11} /></span>
+                        <span style={{ color: 'var(--text-faint)', cursor: 'grab' }}><Icon name="grip" size={11} /></span>
                         <Icon name={group.collapsed ? 'chevronRight' : 'chevronDown'} size={11} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
                         <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{group.csi}</span>
                       </div>
@@ -714,14 +714,14 @@ export function BudgetTab({ expenses }) {
                         style={{
                           opacity: isDraggingLine ? 0.4 : 1,
                           background: line.isContingency ? 'color-mix(in srgb, var(--bg-sunk) 60%, transparent)' : undefined,
-                          cursor: line.isContingency ? 'default' : 'grab',
+                          cursor: 'default',
                         }}
                       >
                         <td className="mono" style={{ fontSize: 11, color: 'var(--text-faint)', paddingLeft: 28 }}>{line.csi}</td>
                         <td style={{ paddingLeft: 8 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             {!line.isContingency && (
-                              <span style={{ color: 'var(--text-faint)', flexShrink: 0 }}><Icon name="grip" size={10} /></span>
+                              <span style={{ color: 'var(--text-faint)', flexShrink: 0, cursor: 'grab' }}><Icon name="grip" size={10} /></span>
                             )}
                             {line.isContingency && (
                               <span className="pill warn no-dot" style={{ fontSize: 10, flexShrink: 0 }}>CONT.</span>
@@ -827,46 +827,43 @@ export function BudgetTab({ expenses }) {
 // ─── Group Modal ─────────────────────────────────────────────────────────────
 function GroupModal({ open, group, onClose, onSave, onDelete }) {
   const [form, setForm] = React.useState({});
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
   React.useEffect(() => {
-    if (open) setForm(group ? { ...group } : { label: '', csi: '', csiGroupId: CSI_GROUPS[0].id });
+    if (open) { setForm(group ? { ...group } : { label: '' }); setConfirmDelete(false); }
   }, [open, group]);
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
   const isEdit = !!form.id;
-  const csiOptions = CSI_GROUPS.map((g) => ({ value: g.id, label: `${g.csi} — ${g.label}` }));
   return (
     <Modal
       open={open}
       onClose={onClose}
       title={isEdit ? 'Edit group' : 'Add budget group'}
-      subtitle="Groups organize budget lines by CSI division"
-      width={520}
+      subtitle="CSI number is assigned automatically based on sort order"
+      width={480}
       footer={
         <>
-          {isEdit && <button className="btn btn-ghost" style={{ color: 'var(--signal-neg)', marginRight: 'auto' }} onClick={() => onDelete(form.id)}><Icon name="trash" size={13} /> Delete group</button>}
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={() => {
-            const csiGroup = CSI_GROUPS.find((g) => g.id === form.csiGroupId) || CSI_GROUPS[0];
-            onSave({ ...form, csi: csiGroup.csi, label: form.label || csiGroup.label });
-          }}>
-            {isEdit ? 'Save changes' : 'Add group'}
-          </button>
+          {isEdit && !confirmDelete && (
+            <button className="btn btn-ghost" style={{ color: 'var(--signal-neg)', marginRight: 'auto' }} onClick={() => setConfirmDelete(true)}><Icon name="trash" size={13} /> Delete group</button>
+          )}
+          {isEdit && confirmDelete && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 'auto' }}>
+              <span style={{ fontSize: 13, color: 'var(--signal-neg)' }}>Delete this group and all its lines?</span>
+              <button className="btn btn-ghost btn-sm" style={{ color: 'var(--signal-neg)' }} onClick={() => onDelete(form.id)}>Yes, delete</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setConfirmDelete(false)}>Cancel</button>
+            </div>
+          )}
+          {!confirmDelete && <button className="btn btn-ghost" onClick={onClose}>Cancel</button>}
+          {!confirmDelete && (
+            <button className="btn btn-primary" onClick={() => onSave({ ...form })}>
+              {isEdit ? 'Save changes' : 'Add group'}
+            </button>
+          )}
         </>
       }
     >
       <div className="form-grid">
-        <Field label="CSI Division" span={2}>
-          <SearchableSelect
-            value={form.csiGroupId}
-            onChange={(v) => {
-              const csiGroup = CSI_GROUPS.find((g) => g.id === v);
-              setForm((f) => ({ ...f, csiGroupId: v, label: csiGroup?.label || f.label, csi: csiGroup?.csi || f.csi }));
-            }}
-            options={csiOptions}
-            placeholder="Select CSI division…"
-          />
-        </Field>
-        <Field label="Group label (override)" span={2}>
-          <Input value={form.label} onChange={set('label')} placeholder="e.g. Foundation Site Work" />
+        <Field label="Group name" span={2}>
+          <Input value={form.label} onChange={set('label')} placeholder="e.g. Foundation Site Work" autoFocus />
         </Field>
       </div>
     </Modal>
@@ -876,8 +873,10 @@ function GroupModal({ open, group, onClose, onSave, onDelete }) {
 // ─── Line Modal ──────────────────────────────────────────────────────────────
 function LineModal({ open, groupId, line, isContingency, group, groupOptions, onGroupChange, onClose, onSave, onDelete }) {
   const [form, setForm] = React.useState({});
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
   React.useEffect(() => {
     if (!open) return;
+    setConfirmDelete(false);
     if (line) {
       setForm({ ...line });
     } else if (isContingency) {
@@ -919,11 +918,22 @@ function LineModal({ open, groupId, line, isContingency, group, groupOptions, on
       width={520}
       footer={
         <>
-          {isEdit && <button className="btn btn-ghost" style={{ color: 'var(--signal-neg)', marginRight: 'auto' }} onClick={() => onDelete(groupId, form.id)}><Icon name="trash" size={13} /> Delete</button>}
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={() => onSave(groupId, form)}>
-            {isEdit ? 'Save changes' : 'Add line'}
-          </button>
+          {isEdit && !confirmDelete && (
+            <button className="btn btn-ghost" style={{ color: 'var(--signal-neg)', marginRight: 'auto' }} onClick={() => setConfirmDelete(true)}><Icon name="trash" size={13} /> Delete</button>
+          )}
+          {isEdit && confirmDelete && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 'auto' }}>
+              <span style={{ fontSize: 13, color: 'var(--signal-neg)' }}>Delete this line item?</span>
+              <button className="btn btn-ghost btn-sm" style={{ color: 'var(--signal-neg)' }} onClick={() => onDelete(groupId, form.id)}>Yes, delete</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setConfirmDelete(false)}>Cancel</button>
+            </div>
+          )}
+          {!confirmDelete && <button className="btn btn-ghost" onClick={onClose}>Cancel</button>}
+          {!confirmDelete && (
+            <button className="btn btn-primary" onClick={() => onSave(groupId, form)}>
+              {isEdit ? 'Save changes' : 'Add line'}
+            </button>
+          )}
         </>
       }
     >
