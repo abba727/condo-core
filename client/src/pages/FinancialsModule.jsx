@@ -542,18 +542,44 @@ export function BudgetTab({ expenses }) {
   };
   const handleLineDragEnd = () => setDragState(null);
 
+  // Compute grand totals for stats bar
+  const totalBudget = grandTotals.budget;
+  const totalCommitted = grandTotals.committed;
+  const totalSpent = grandTotals.spent;
+  const totalRemaining = totalBudget - totalSpent;
+  const totalVariance = totalCommitted - totalSpent;
+
   return (
     <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 0 }}>
-      {/* Toolbar */}
+
+      {/* ── Summary stats bar ── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, 1fr)',
+        gap: 0,
+        borderBottom: '1px solid var(--border)',
+        marginBottom: 20,
+        paddingBottom: 20,
+      }}>
+        {[
+          { label: 'TOTAL BUDGET', value: totalBudget, sub: `${groups.length} divisions · ${groups.reduce((s,g)=>s+g.lines.length,0)} lines`, color: undefined },
+          { label: 'COMMITTED', value: totalCommitted, sub: `${totalBudget > 0 ? Math.round(totalCommitted/totalBudget*100) : 0}% of budget`, color: undefined },
+          { label: 'SPENT', value: totalSpent, sub: `${totalBudget > 0 ? Math.round(totalSpent/totalBudget*100) : 0}% of budget`, color: undefined },
+          { label: 'REMAINING', value: totalRemaining, sub: 'Available to draw', color: undefined },
+          { label: 'VARIANCE', value: totalVariance, sub: 'On baseline', color: totalVariance < 0 ? 'var(--signal-neg)' : totalVariance === 0 ? 'var(--text-muted)' : 'var(--signal-pos)' },
+        ].map(({ label, value, sub, color }) => (
+          <div key={label} style={{ padding: '4px 20px 4px 0' }}>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', color: 'var(--text-faint)', marginBottom: 4 }}>{label}</div>
+            <div className="mono" style={{ fontSize: 22, fontWeight: 700, color: color || 'var(--text)', lineHeight: 1.1 }}>
+              {fmtUSD(value, { compact: true, sign: label === 'VARIANCE' })}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 3 }}>{sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Toolbar ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1, flexWrap: 'wrap' }}>
-          <button className={`chip ${filterGroup === 'All' ? 'active' : ''}`} onClick={() => setFilterGroup('All')}>All groups</button>
-          {groups.map((g) => (
-            <button key={g.id} className={`chip ${filterGroup === g.id ? 'active' : ''}`} onClick={() => setFilterGroup(g.id)}>
-              {g.label}
-            </button>
-          ))}
-        </div>
         <div style={{ display: 'flex', gap: 6 }}>
           <button className="btn btn-ghost btn-sm" onClick={handleExportCSV}><Icon name="download" size={12} /> CSV</button>
           <button className="btn btn-ghost btn-sm" onClick={handleExportPDF}><Icon name="download" size={12} /> PDF</button>
@@ -561,188 +587,178 @@ export function BudgetTab({ expenses }) {
         </div>
       </div>
 
-      {/* Groups */}
-      {filteredGroups.map((group) => {
-        const groupBudget = group.lines.filter((l) => !l.isContingency).reduce((s, l) => s + (l.budget || 0), 0);
-        const lineCount = group.lines.filter((l) => !l.isContingency).length;
-        const groupCommitted = committedByDivision[group.label] || group.lines.filter((l) => !l.isContingency).reduce((s, l) => s + (l.committed || 0), 0);
-        const groupSpent = spentByDivision[group.label] || group.lines.filter((l) => !l.isContingency).reduce((s, l) => s + (l.spent || 0), 0);
-        const groupVariance = groupCommitted - groupSpent;
-        const contingencyLines = group.lines.filter((l) => l.isContingency);
-        const contingencyTotal = contingencyLines.reduce((s, l) => s + groupBudget * (l.contingencyPct || 0) / 100, 0);
+      {/* ── Single flat table ── */}
+      <div className="card" style={{ overflow: 'hidden' }}>
+        <table className="table" style={{ tableLayout: 'fixed', width: '100%' }}>
+          <colgroup>
+            <col style={{ width: 80 }} />
+            <col />
+            <col style={{ width: 100 }} />
+            <col style={{ width: 100 }} />
+            <col style={{ width: 80 }} />
+            <col style={{ width: 160 }} />
+            <col style={{ width: 90 }} />
+            <col style={{ width: 28 }} />
+          </colgroup>
+          <thead>
+            <tr style={{ position: 'sticky', top: 0, zIndex: 2, background: 'var(--bg-elev)' }}>
+              <th style={{ fontSize: 11 }}>CSI</th>
+              <th style={{ fontSize: 11 }}>ITEM</th>
+              <th className="num" style={{ fontSize: 11 }}>BUDGET</th>
+              <th className="num" style={{ fontSize: 11 }}>COMMITTED</th>
+              <th className="num" style={{ fontSize: 11 }}>SPENT</th>
+              <th style={{ fontSize: 11 }}>PROGRESS</th>
+              <th className="num" style={{ fontSize: 11 }}>VARIANCE</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredGroups.map((group) => {
+              const groupBudget = group.lines.filter((l) => !l.isContingency).reduce((s, l) => s + (l.budget || 0), 0);
+              const lineCount = group.lines.filter((l) => !l.isContingency).length;
+              const groupCommitted = committedByDivision[group.label] || group.lines.filter((l) => !l.isContingency).reduce((s, l) => s + (l.committed || 0), 0);
+              const groupSpent = spentByDivision[group.label] || group.lines.filter((l) => !l.isContingency).reduce((s, l) => s + (l.spent || 0), 0);
+              const groupVariance = groupCommitted - groupSpent;
+              const contingencyLines = group.lines.filter((l) => l.isContingency);
+              const contingencyTotal = contingencyLines.reduce((s, l) => s + groupBudget * (l.contingencyPct || 0) / 100, 0);
+              const progressPct = groupBudget > 0 ? Math.min(100, Math.round(groupSpent / groupBudget * 100)) : 0;
+              const csiShort = group.csi ? group.csi.replace(' 00 00', '') : '';
 
-        return (
-          <div key={group.id} className="card" style={{ marginBottom: 12 }}>
-            {/* Group header */}
-            <div
-              className="card-head"
-              style={{ cursor: 'pointer', userSelect: 'none' }}
-              onClick={() => store.updateGroup(group.id, { collapsed: !group.collapsed })}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
-                <Icon name={group.collapsed ? 'chevronRight' : 'chevronDown'} size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className="mono faint" style={{ fontSize: 11 }}>{group.csi}</span>
-                    <span style={{ fontWeight: 600, fontSize: 13 }}>{group.label}</span>
-                    <span className="muted" style={{ fontSize: 11 }}>{lineCount} line{lineCount !== 1 ? 's' : ''}</span>
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginRight: 8 }}>
-                <div style={{ textAlign: 'right' }}>
-                  <div className="mono" style={{ fontSize: 13, fontWeight: 600 }}>{fmtUSD(groupBudget, { compact: true })}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-faint)' }}>budget</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div className="mono" style={{ fontSize: 13, color: 'var(--cc-accent)' }}>{fmtUSD(groupCommitted, { compact: true })}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-faint)' }}>committed</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div className="mono" style={{ fontSize: 13 }}>{fmtUSD(groupSpent, { compact: true })}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-faint)' }}>spent</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div className="mono" style={{ fontSize: 13, color: groupVariance < 0 ? 'var(--signal-neg)' : groupVariance > 0 ? 'var(--signal-pos)' : 'var(--text-muted)' }}>
-                    {groupVariance === 0 ? '—' : fmtUSD(groupVariance, { compact: true, sign: true })}
-                  </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-faint)' }}>variance</div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 4 }} onClick={(e) => e.stopPropagation()}>
-                <button className="btn btn-ghost btn-sm" onClick={() => setLineModal({ groupId: group.id, line: null })}>
-                  <Icon name="plus" size={11} /> Line
-                </button>
-                <button className="btn btn-ghost btn-sm" onClick={() => setLineModal({ groupId: group.id, line: null, isContingency: true })}>
-                  <Icon name="percent" size={11} /> Contingency
-                </button>
-                <button className="iconbtn" onClick={() => setGroupModal(group)} title="Edit group">
-                  <Icon name="edit" size={12} />
-                </button>
-              </div>
-            </div>
+              return (
+                <React.Fragment key={group.id}>
+                  {/* Group header row */}
+                  <tr
+                    style={{
+                      background: 'var(--bg-sunk)',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      borderTop: '2px solid var(--border)',
+                    }}
+                    onClick={() => store.updateGroup(group.id, { collapsed: !group.collapsed })}
+                  >
+                    <td style={{ paddingLeft: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Icon name={group.collapsed ? 'chevronRight' : 'chevronDown'} size={11} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                        <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{csiShort}</span>
+                      </div>
+                    </td>
+                    <td style={{ fontWeight: 700, fontSize: 13 }}>{group.label}</td>
+                    <td className="num mono" style={{ fontWeight: 700, fontSize: 13 }}>{fmtUSD(groupBudget + contingencyTotal, { compact: true })}</td>
+                    <td className="num mono" style={{ fontWeight: 700, fontSize: 13 }}>{fmtUSD(groupCommitted, { compact: true })}</td>
+                    <td className="num mono" style={{ fontWeight: 700, fontSize: 13 }}>{fmtUSD(groupSpent, { compact: true })}</td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ flex: 1, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
+                          <div style={{ width: `${progressPct}%`, height: '100%', background: progressPct >= 100 ? 'var(--signal-neg)' : 'var(--cc-accent)', borderRadius: 2, transition: 'width 0.3s' }} />
+                        </div>
+                        <span style={{ fontSize: 11, color: 'var(--text-faint)', minWidth: 28, textAlign: 'right' }}>{progressPct}%</span>
+                      </div>
+                    </td>
+                    <td className="num mono" style={{ fontWeight: 700, fontSize: 13, color: groupVariance < 0 ? 'var(--signal-neg)' : groupVariance > 0 ? 'var(--signal-pos)' : 'var(--text-muted)' }}>
+                      {groupVariance === 0 ? '—' : fmtUSD(groupVariance, { compact: true, sign: true })}
+                    </td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <div style={{ display: 'flex', gap: 2 }}>
+                        <button className="iconbtn" title="Add line" onClick={() => setLineModal({ groupId: group.id, line: null })}><Icon name="plus" size={11} /></button>
+                        <button className="iconbtn" title="Edit group" onClick={() => setGroupModal(group)}><Icon name="edit" size={11} /></button>
+                      </div>
+                    </td>
+                  </tr>
 
-            {/* Line items */}
-            {!group.collapsed && (
-              <div className="card-body-flush">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 24 }}></th>
-                      <th style={{ width: 90 }}>CSI</th>
-                      <th>Line item</th>
-                      <th className="num">Budget</th>
-                      <th className="num">Committed</th>
-                      <th className="num">Spent</th>
-                      <th className="num">Variance</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {group.lines.map((line) => {
-                      const lineCommitted = line.isContingency
-                        ? groupBudget * (line.contingencyPct || 0) / 100
-                        : (committedByDivision[group.label]
-                          ? committedByDivision[group.label] / Math.max(1, lineCount)
-                          : (line.committed || 0));
-                      const lineSpent = line.isContingency ? 0
-                        : (spentByDivision[group.label]
-                          ? spentByDivision[group.label] / Math.max(1, lineCount)
-                          : (line.spent || 0));
-                      const lineVariance = lineCommitted - lineSpent;
-                      const isDragging = dragState?.lineId === line.id;
-                      return (
-                        <tr
-                          key={line.id}
-                          draggable={!line.isContingency}
-                          onDragStart={() => handleLineDragStart(group.id, line.id)}
-                          onDragOver={(e) => handleLineDragOver(e, group.id, line.id)}
-                          onDragEnd={handleLineDragEnd}
-                          style={{
-                            cursor: line.isContingency ? 'default' : 'grab',
-                            opacity: isDragging ? 0.4 : 1,
-                            background: line.isContingency ? 'var(--bg-sunk)' : undefined,
-                          }}
-                        >
-                          <td style={{ color: 'var(--text-faint)', fontSize: 11, cursor: 'grab' }}>
-                            {!line.isContingency && <Icon name="grip" size={11} />}
-                          </td>
-                          <td className="mono faint" style={{ fontSize: 11 }}>{line.csi}</td>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              {line.isContingency && (
-                                <span className="pill warn no-dot" style={{ fontSize: 10 }}>CONTINGENCY</span>
-                              )}
-                              <span style={{ fontWeight: line.isContingency ? 400 : 500 }}>{line.name}</span>
-                              {line.isContingency && (
-                                <span className="muted" style={{ fontSize: 11 }}>{line.contingencyPct}% of group</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="num mono">{fmtUSD(line.isContingency ? groupBudget * (line.contingencyPct || 0) / 100 : (line.budget || 0), { compact: true })}</td>
-                          <td className="num mono muted">{fmtUSD(lineCommitted, { compact: true })}</td>
-                          <td className="num mono">{fmtUSD(lineSpent, { compact: true })}</td>
-                          <td className="num mono" style={{ color: lineVariance < 0 ? 'var(--signal-neg)' : lineVariance > 0 ? 'var(--signal-pos)' : 'var(--text-muted)' }}>
-                            {lineVariance === 0 ? '—' : fmtUSD(lineVariance, { compact: true, sign: true })}
-                          </td>
-                          <td>
-                            <button className="iconbtn" onClick={() => setLineModal({ groupId: group.id, line, isContingency: line.isContingency })}>
-                              <Icon name="edit" size={12} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                  {group.lines.length > 0 && (
-                    <tfoot>
-                      <tr style={{ background: 'var(--bg-sunk)', fontWeight: 600 }}>
-                        <td colSpan="3">Group total{contingencyTotal > 0 ? ` (incl. ${fmtUSD(contingencyTotal, { compact: true })} contingency)` : ''}</td>
-                        <td className="num mono">{fmtUSD(groupBudget + contingencyTotal, { compact: true })}</td>
-                        <td className="num mono">{fmtUSD(groupCommitted, { compact: true })}</td>
-                        <td className="num mono">{fmtUSD(groupSpent, { compact: true })}</td>
-                        <td className="num mono" style={{ color: groupVariance < 0 ? 'var(--signal-neg)' : 'var(--signal-pos)' }}>
-                          {groupVariance === 0 ? '—' : fmtUSD(groupVariance, { compact: true, sign: true })}
+                  {/* Line item rows */}
+                  {!group.collapsed && group.lines.map((line) => {
+                    const lineCommitted = line.isContingency
+                      ? groupBudget * (line.contingencyPct || 0) / 100
+                      : (committedByDivision[group.label]
+                        ? committedByDivision[group.label] / Math.max(1, lineCount)
+                        : (line.committed || 0));
+                    const lineSpent = line.isContingency ? 0
+                      : (spentByDivision[group.label]
+                        ? spentByDivision[group.label] / Math.max(1, lineCount)
+                        : (line.spent || 0));
+                    const lineVariance = lineCommitted - lineSpent;
+                    const lineBudget = line.isContingency ? groupBudget * (line.contingencyPct || 0) / 100 : (line.budget || 0);
+                    const lineProgressPct = lineBudget > 0 ? Math.min(100, Math.round(lineSpent / lineBudget * 100)) : 0;
+                    const isDragging = dragState?.lineId === line.id;
+                    return (
+                      <tr
+                        key={line.id}
+                        draggable={!line.isContingency}
+                        onDragStart={() => handleLineDragStart(group.id, line.id)}
+                        onDragOver={(e) => handleLineDragOver(e, group.id, line.id)}
+                        onDragEnd={handleLineDragEnd}
+                        style={{
+                          opacity: isDragging ? 0.4 : 1,
+                          background: line.isContingency ? 'color-mix(in srgb, var(--bg-sunk) 60%, transparent)' : undefined,
+                        }}
+                      >
+                        <td className="mono" style={{ fontSize: 11, color: 'var(--text-faint)', paddingLeft: 24 }}>{line.csi}</td>
+                        <td style={{ paddingLeft: 8 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {!line.isContingency && (
+                              <span style={{ color: 'var(--text-faint)', cursor: 'grab', flexShrink: 0 }}><Icon name="grip" size={10} /></span>
+                            )}
+                            {line.isContingency && (
+                              <span className="pill warn no-dot" style={{ fontSize: 10, flexShrink: 0 }}>CONT.</span>
+                            )}
+                            <span style={{ fontSize: 13 }}>{line.name}</span>
+                            {line.isContingency && (
+                              <span className="muted" style={{ fontSize: 11 }}>({line.contingencyPct}%)</span>
+                            )}
+                          </div>
                         </td>
-                        <td></td>
+                        <td className="num mono" style={{ fontSize: 13 }}>{fmtUSD(lineBudget, { compact: true })}</td>
+                        <td className="num mono" style={{ fontSize: 13, color: 'var(--text-muted)' }}>{fmtUSD(lineCommitted, { compact: true })}</td>
+                        <td className="num mono" style={{ fontSize: 13 }}>{fmtUSD(lineSpent, { compact: true })}</td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ flex: 1, height: 3, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
+                              <div style={{ width: `${lineProgressPct}%`, height: '100%', background: lineProgressPct >= 100 ? 'var(--signal-neg)' : 'var(--cc-accent)', borderRadius: 2 }} />
+                            </div>
+                            <span style={{ fontSize: 10, color: 'var(--text-faint)', minWidth: 24, textAlign: 'right' }}>—</span>
+                          </div>
+                        </td>
+                        <td className="num mono" style={{ fontSize: 13, color: lineVariance < 0 ? 'var(--signal-neg)' : lineVariance > 0 ? 'var(--signal-pos)' : 'var(--text-muted)' }}>
+                          {lineVariance === 0 ? '—' : fmtUSD(lineVariance, { compact: true, sign: true })}
+                        </td>
+                        <td>
+                          <button className="iconbtn" onClick={() => setLineModal({ groupId: group.id, line, isContingency: line.isContingency })}>
+                            <Icon name="edit" size={11} />
+                          </button>
+                        </td>
                       </tr>
-                    </tfoot>
-                  )}
-                </table>
-              </div>
-            )}
-          </div>
-        );
-      })}
-
-      {/* Grand total */}
-      {filterGroup === 'All' && groups.length > 0 && (
-        <div className="card" style={{ background: 'var(--bg-sunk)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
-            <span style={{ fontWeight: 700, fontSize: 13 }}>GRAND TOTAL</span>
-            <div style={{ display: 'flex', gap: 32 }}>
-              <div style={{ textAlign: 'right' }}>
-                <div className="mono" style={{ fontWeight: 700 }}>{fmtUSD(grandTotals.budget, { compact: true })}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-faint)' }}>budget</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="mono" style={{ fontWeight: 700, color: 'var(--cc-accent)' }}>{fmtUSD(grandTotals.committed, { compact: true })}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-faint)' }}>committed</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="mono" style={{ fontWeight: 700 }}>{fmtUSD(grandTotals.spent, { compact: true })}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-faint)' }}>spent</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="mono" style={{ fontWeight: 700, color: grandTotals.variance < 0 ? 'var(--signal-neg)' : 'var(--signal-pos)' }}>
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+          {/* Grand total footer */}
+          {filterGroup === 'All' && groups.length > 0 && (
+            <tfoot>
+              <tr style={{ background: 'var(--bg-inv, #1a1a1a)', color: 'var(--text-inv, #fff)', fontWeight: 700, borderTop: '2px solid var(--border)' }}>
+                <td style={{ paddingLeft: 12, fontSize: 12, color: 'inherit' }}></td>
+                <td style={{ fontSize: 13, color: 'inherit' }}>Grand total</td>
+                <td className="num mono" style={{ fontSize: 13, color: 'inherit' }}>{fmtUSD(grandTotals.budget, { compact: true })}</td>
+                <td className="num mono" style={{ fontSize: 13, color: 'inherit' }}>{fmtUSD(grandTotals.committed, { compact: true })}</td>
+                <td className="num mono" style={{ fontSize: 13, color: 'inherit' }}>{fmtUSD(grandTotals.spent, { compact: true })}</td>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{ width: `${grandTotals.budget > 0 ? Math.min(100, Math.round(grandTotals.spent/grandTotals.budget*100)) : 0}%`, height: '100%', background: 'var(--cc-accent)', borderRadius: 2 }} />
+                    </div>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', minWidth: 28, textAlign: 'right' }}>—</span>
+                  </div>
+                </td>
+                <td className="num mono" style={{ fontSize: 13, color: grandTotals.variance < 0 ? '#f87171' : grandTotals.variance === 0 ? 'rgba(255,255,255,0.5)' : '#4ade80' }}>
                   {fmtUSD(grandTotals.variance, { compact: true, sign: true })}
-                </div>
-                <div style={{ fontSize: 10, color: 'var(--text-faint)' }}>variance</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
 
       {/* Group modal */}
       {groupModal && (
@@ -758,7 +774,6 @@ export function BudgetTab({ expenses }) {
           onDelete={(id) => { store.deleteGroup(id); setGroupModal(null); }}
         />
       )}
-
       {/* Line modal */}
       {lineModal && (
         <LineModal
@@ -1188,14 +1203,28 @@ export function ExpensesTab({ seedExpenses }) {
 function ExpenseModal({ open, expense, vendorOptions, divisionOptions, onClose, onSave, onDelete }) {
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
   const [form, setForm] = React.useState({});
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [amountError, setAmountError] = React.useState('');
   React.useEffect(() => {
-    if (open) setForm(expense || {
-      date: today, vendor: '', desc: '', division: '', amount: 0,
-      status: 'Pending', method: 'ACH', invoice: '', reference: '', notes: '',
-    });
+    if (open) {
+      setForm(expense || {
+        date: today, vendor: '', desc: '', division: '', amount: 0,
+        status: 'Pending', method: 'ACH', invoice: '', reference: '', notes: '',
+      });
+      setConfirmDelete(false);
+      setAmountError('');
+    }
   }, [open, expense]);
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
-  const num = (k) => (v) => setForm((f) => ({ ...f, [k]: parseFloat(v) || 0 }));
+  const num = (k) => (v) => {
+    const parsed = parseFloat(v) || 0;
+    if (k === 'amount' && parsed < 0) {
+      setAmountError('Amount cannot be negative.');
+    } else {
+      setAmountError('');
+    }
+    setForm((f) => ({ ...f, [k]: parsed }));
+  };
   const isEdit = !!form.id;
 
   const divOptions = [
@@ -1214,15 +1243,32 @@ function ExpenseModal({ open, expense, vendorOptions, divisionOptions, onClose, 
       width={600}
       footer={
         <>
-          {isEdit && <button className="btn btn-ghost" style={{ color: 'var(--signal-neg)', marginRight: 'auto' }} onClick={() => onDelete(form.id)}><Icon name="trash" size={13} /> Delete</button>}
+          {isEdit && !confirmDelete && (
+            <button className="btn btn-ghost" style={{ color: 'var(--signal-neg)', marginRight: 'auto' }} onClick={() => setConfirmDelete(true)}>
+              <Icon name="trash" size={13} /> Delete
+            </button>
+          )}
+          {isEdit && confirmDelete && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 'auto' }}>
+              <span style={{ fontSize: 12, color: 'var(--signal-neg)', fontWeight: 500 }}>Delete this expense?</span>
+              <button className="btn btn-ghost btn-sm" style={{ color: 'var(--signal-neg)' }} onClick={() => onDelete(form.id)}>Yes, delete</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setConfirmDelete(false)}>Cancel</button>
+            </div>
+          )}
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={() => onSave(form)}>{isEdit ? 'Save changes' : 'Add expense'}</button>
+          <button className="btn btn-primary" onClick={() => {
+            if ((form.amount || 0) < 0) { setAmountError('Amount cannot be negative.'); return; }
+            onSave(form);
+          }}>{isEdit ? 'Save changes' : 'Add expense'}</button>
         </>
       }
     >
       <div className="form-grid">
         <Field label="Date"><Input value={form.date} onChange={set('date')} placeholder="May 20, 2026" /></Field>
-        <Field label="Amount"><Input value={form.amount} onChange={num('amount')} type="number" prefix="$" /></Field>
+        <Field label="Amount">
+          <Input value={form.amount} onChange={num('amount')} type="number" prefix="$" min={0} />
+          {amountError && <div style={{ color: 'var(--signal-neg)', fontSize: 11, marginTop: 3 }}>{amountError}</div>}
+        </Field>
         <Field label="Vendor" span={2}>
           <SearchableSelect
             value={form.vendor}
