@@ -427,12 +427,27 @@ function SearchableDropdown({ anchor, query, onQuery, filtered, onSelect, inputR
 export function BudgetTab({ expenses }) {
   const store = useBudgetStore();
   const vendorStore = useVendorStore();
-  const [filterGroup, setFilterGroup] = React.useState('All');
-  const [groupModal, setGroupModal] = React.useState(null); // null | 'new' | group
-  const [lineModal, setLineModal] = React.useState(null); // null | { groupId, line }
-  const [dragState, setDragState] = React.useState(null);
+  const [groupModal, setGroupModal] = React.useState(null);
+  const [lineModal, setLineModal] = React.useState(null);
+  const [dragState, setDragState] = React.useState(null); // { type:'group'|'line', groupId?, id }
 
   const groups = store?.groups || [];
+
+  // ── Auto-assign CSI numbers based on sort order ──────────────────────────
+  // Groups get sequential two-digit codes: 01, 02, 03 …
+  // Lines within a group get: GG.LL.00 where GG = group index, LL = line index
+  const groupsWithCsi = React.useMemo(() => {
+    return groups.map((g, gi) => {
+      const groupCsi = String(gi + 1).padStart(2, '0');
+      const linesWithCsi = g.lines.map((l, li) => ({
+        ...l,
+        csi: l.isContingency
+          ? `${groupCsi}.C${String(li + 1).padStart(2, '0')}`
+          : `${groupCsi}.${String(li + 1).padStart(2, '0')}.00`,
+      }));
+      return { ...g, csi: groupCsi, lines: linesWithCsi };
+    });
+  }, [groups]);
 
   // Compute committed from vendor bids per group label
   const committedByDivision = React.useMemo(() => {
@@ -461,12 +476,10 @@ export function BudgetTab({ expenses }) {
     return map;
   }, [expenses]);
 
-  const filteredGroups = filterGroup === 'All' ? groups : groups.filter((g) => g.id === filterGroup);
-
   // Grand totals
   const grandTotals = React.useMemo(() => {
     let budget = 0, committed = 0, spent = 0;
-    groups.forEach((g) => {
+    groupsWithCsi.forEach((g) => {
       g.lines.forEach((l) => {
         budget += l.budget || 0;
         if (l.isContingency) {
@@ -479,11 +492,11 @@ export function BudgetTab({ expenses }) {
       });
     });
     return { budget, committed, spent, variance: committed - spent };
-  }, [groups, committedByDivision, spentByDivision]);
+  }, [groupsWithCsi, committedByDivision, spentByDivision]);
 
   const handleExportCSV = () => {
     const rows = [['Group', 'CSI', 'Line Item', 'Budget', 'Committed', 'Spent', 'Variance']];
-    groups.forEach((g) => {
+    groupsWithCsi.forEach((g) => {
       g.lines.forEach((l) => {
         const committed = l.isContingency
           ? g.lines.filter((x) => !x.isContingency).reduce((s, x) => s + (x.budget || 0), 0) * (l.contingencyPct || 0) / 100
@@ -498,6 +511,7 @@ export function BudgetTab({ expenses }) {
     const a = document.createElement('a'); a.href = url; a.download = 'budget.csv'; a.click();
     URL.revokeObjectURL(url);
   };
+
   const handleExportPDF = () => {
     const doc = new jsPDF({ orientation: 'landscape' });
     doc.setFontSize(14);
@@ -507,7 +521,7 @@ export function BudgetTab({ expenses }) {
     const head = [['Group', 'CSI', 'Line Item', 'Budget', 'Committed', 'Spent', 'Variance']];
     const body = [];
     let grandBudget = 0, grandCommitted = 0, grandSpent = 0;
-    groups.forEach((g) => {
+    groupsWithCsi.forEach((g) => {
       const gBudget = g.lines.reduce((s, l) => s + (l.isContingency ? 0 : (l.budget || 0)), 0);
       const gCommitted = committedByDivision[g.label] || 0;
       const gSpent = spentByDivision[g.label] || 0;
@@ -524,56 +538,69 @@ export function BudgetTab({ expenses }) {
     doc.save('budget.pdf');
   };
 
-  // Drag-and-drop for line items within a group
-  const handleLineDragStart = (groupId, lineId) => setDragState({ groupId, lineId });
+  // ── Drag-and-drop: groups ────────────────────────────────────────────────
+  const handleGroupDragStart = (groupId) => setDragState({ type: 'group', id: groupId });
+  const handleGroupDragOver = (e, groupId) => {
+    e.preventDefault();
+    if (!dragState || dragState.type !== 'group' || dragState.id === groupId) return;
+    const fromIdx = groups.findIndex((g) => g.id === dragState.id);
+    const toIdx = groups.findIndex((g) => g.id === groupId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const newGroups = [...groups];
+    const [moved] = newGroups.splice(fromIdx, 1);
+    newGroups.splice(toIdx, 0, moved);
+    store.reorderGroups(newGroups);
+  };
+  const handleGroupDragEnd = () => setDragState(null);
+
+  // ── Drag-and-drop: lines within a group ──────────────────────────────────
+  const handleLineDragStart = (groupId, lineId) => setDragState({ type: 'line', groupId, id: lineId });
   const handleLineDragOver = (e, groupId, lineId) => {
     e.preventDefault();
-    if (!dragState || dragState.groupId !== groupId || dragState.lineId === lineId) return;
+    if (!dragState || dragState.type !== 'line' || dragState.groupId !== groupId || dragState.id === lineId) return;
     const g = groups.find((x) => x.id === groupId);
     if (!g) return;
-    const fromIdx = g.lines.findIndex((l) => l.id === dragState.lineId);
+    const fromIdx = g.lines.findIndex((l) => l.id === dragState.id);
     const toIdx = g.lines.findIndex((l) => l.id === lineId);
     if (fromIdx === -1 || toIdx === -1) return;
     const newLines = [...g.lines];
     const [moved] = newLines.splice(fromIdx, 1);
     newLines.splice(toIdx, 0, moved);
     store.reorderLines(groupId, newLines);
-    setDragState({ groupId, lineId: dragState.lineId });
   };
   const handleLineDragEnd = () => setDragState(null);
 
-  // Compute grand totals for stats bar
   const totalBudget = grandTotals.budget;
   const totalCommitted = grandTotals.committed;
   const totalSpent = grandTotals.spent;
   const totalRemaining = totalBudget - totalSpent;
   const totalVariance = totalCommitted - totalSpent;
 
+  const groupOptions = groupsWithCsi.map((g) => ({ value: g.id, label: `${g.csi} — ${g.label}` }));
+
   return (
     <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 0 }}>
 
-      {/* ── Summary stats bar ── */}
+      {/* ── Summary stat cards ── */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(5, 1fr)',
-        gap: 0,
-        borderBottom: '1px solid var(--border)',
+        gap: 12,
         marginBottom: 20,
-        paddingBottom: 20,
       }}>
         {[
-          { label: 'TOTAL BUDGET', value: totalBudget, sub: `${groups.length} divisions · ${groups.reduce((s,g)=>s+g.lines.length,0)} lines`, color: undefined },
+          { label: 'TOTAL BUDGET', value: totalBudget, sub: `${groupsWithCsi.length} divisions \u00b7 ${groupsWithCsi.reduce((s,g)=>s+g.lines.length,0)} lines`, color: undefined },
           { label: 'COMMITTED', value: totalCommitted, sub: `${totalBudget > 0 ? Math.round(totalCommitted/totalBudget*100) : 0}% of budget`, color: undefined },
           { label: 'SPENT', value: totalSpent, sub: `${totalBudget > 0 ? Math.round(totalSpent/totalBudget*100) : 0}% of budget`, color: undefined },
           { label: 'REMAINING', value: totalRemaining, sub: 'Available to draw', color: undefined },
           { label: 'VARIANCE', value: totalVariance, sub: 'On baseline', color: totalVariance < 0 ? 'var(--signal-neg)' : totalVariance === 0 ? 'var(--text-muted)' : 'var(--signal-pos)' },
         ].map(({ label, value, sub, color }) => (
-          <div key={label} style={{ padding: '4px 20px 4px 0' }}>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', color: 'var(--text-faint)', marginBottom: 4 }}>{label}</div>
-            <div className="mono" style={{ fontSize: 22, fontWeight: 700, color: color || 'var(--text)', lineHeight: 1.1 }}>
+          <div key={label} className="card" style={{ padding: '14px 16px' }}>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.07em', color: 'var(--text-faint)', marginBottom: 6 }}>{label}</div>
+            <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: color || 'var(--text)', lineHeight: 1.1 }}>
               {fmtUSD(value, { compact: true, sign: label === 'VARIANCE' })}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 3 }}>{sub}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>{sub}</div>
           </div>
         ))}
       </div>
@@ -584,36 +611,27 @@ export function BudgetTab({ expenses }) {
           <button className="btn btn-ghost btn-sm" onClick={handleExportCSV}><Icon name="download" size={12} /> CSV</button>
           <button className="btn btn-ghost btn-sm" onClick={handleExportPDF}><Icon name="download" size={12} /> PDF</button>
           <button className="btn btn-secondary btn-sm" onClick={() => setGroupModal('new')}><Icon name="plus" size={12} /> Add group</button>
+          <button className="btn btn-primary btn-sm" onClick={() => setLineModal({ groupId: groupsWithCsi[0]?.id || null, line: null })}><Icon name="plus" size={12} /> Add line item</button>
         </div>
       </div>
 
       {/* ── Single flat table ── */}
       <div className="card" style={{ overflow: 'hidden' }}>
-        <table className="table" style={{ tableLayout: 'fixed', width: '100%' }}>
-          <colgroup>
-            <col style={{ width: 80 }} />
-            <col />
-            <col style={{ width: 100 }} />
-            <col style={{ width: 100 }} />
-            <col style={{ width: 80 }} />
-            <col style={{ width: 160 }} />
-            <col style={{ width: 90 }} />
-            <col style={{ width: 28 }} />
-          </colgroup>
+        <table className="table" style={{ tableLayout: 'auto', width: '100%' }}>
           <thead>
             <tr style={{ position: 'sticky', top: 0, zIndex: 2, background: 'var(--bg-elev)' }}>
-              <th style={{ fontSize: 11 }}>CSI</th>
+              <th style={{ fontSize: 11, width: 90 }}>CSI</th>
               <th style={{ fontSize: 11 }}>ITEM</th>
-              <th className="num" style={{ fontSize: 11 }}>BUDGET</th>
-              <th className="num" style={{ fontSize: 11 }}>COMMITTED</th>
-              <th className="num" style={{ fontSize: 11 }}>SPENT</th>
-              <th style={{ fontSize: 11 }}>PROGRESS</th>
-              <th className="num" style={{ fontSize: 11 }}>VARIANCE</th>
-              <th></th>
+              <th className="num" style={{ fontSize: 11, width: 100 }}>BUDGET</th>
+              <th className="num" style={{ fontSize: 11, width: 110 }}>COMMITTED</th>
+              <th className="num" style={{ fontSize: 11, width: 80 }}>SPENT</th>
+              <th style={{ fontSize: 11, width: 160 }}>PROGRESS</th>
+              <th className="num" style={{ fontSize: 11, width: 100 }}>VARIANCE</th>
+              <th style={{ width: 64 }}></th>
             </tr>
           </thead>
           <tbody>
-            {filteredGroups.map((group) => {
+            {groupsWithCsi.map((group) => {
               const groupBudget = group.lines.filter((l) => !l.isContingency).reduce((s, l) => s + (l.budget || 0), 0);
               const lineCount = group.lines.filter((l) => !l.isContingency).length;
               const groupCommitted = committedByDivision[group.label] || group.lines.filter((l) => !l.isContingency).reduce((s, l) => s + (l.committed || 0), 0);
@@ -622,24 +640,30 @@ export function BudgetTab({ expenses }) {
               const contingencyLines = group.lines.filter((l) => l.isContingency);
               const contingencyTotal = contingencyLines.reduce((s, l) => s + groupBudget * (l.contingencyPct || 0) / 100, 0);
               const progressPct = groupBudget > 0 ? Math.min(100, Math.round(groupSpent / groupBudget * 100)) : 0;
-              const csiShort = group.csi ? group.csi.replace(' 00 00', '') : '';
+              const isDraggingGroup = dragState?.type === 'group' && dragState?.id === group.id;
 
               return (
                 <React.Fragment key={group.id}>
                   {/* Group header row */}
                   <tr
+                    draggable
+                    onDragStart={() => handleGroupDragStart(group.id)}
+                    onDragOver={(e) => handleGroupDragOver(e, group.id)}
+                    onDragEnd={handleGroupDragEnd}
                     style={{
                       background: 'var(--bg-sunk)',
-                      cursor: 'pointer',
+                      cursor: 'grab',
                       userSelect: 'none',
                       borderTop: '2px solid var(--border)',
+                      opacity: isDraggingGroup ? 0.4 : 1,
                     }}
                     onClick={() => store.updateGroup(group.id, { collapsed: !group.collapsed })}
                   >
-                    <td style={{ paddingLeft: 12 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <td style={{ paddingLeft: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <span style={{ color: 'var(--text-faint)' }}><Icon name="grip" size={11} /></span>
                         <Icon name={group.collapsed ? 'chevronRight' : 'chevronDown'} size={11} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                        <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{csiShort}</span>
+                        <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{group.csi}</span>
                       </div>
                     </td>
                     <td style={{ fontWeight: 700, fontSize: 13 }}>{group.label}</td>
@@ -655,12 +679,12 @@ export function BudgetTab({ expenses }) {
                       </div>
                     </td>
                     <td className="num mono" style={{ fontWeight: 700, fontSize: 13, color: groupVariance < 0 ? 'var(--signal-neg)' : groupVariance > 0 ? 'var(--signal-pos)' : 'var(--text-muted)' }}>
-                      {groupVariance === 0 ? '—' : fmtUSD(groupVariance, { compact: true, sign: true })}
+                      {groupVariance === 0 ? '\u2014' : fmtUSD(groupVariance, { compact: true, sign: true })}
                     </td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <div style={{ display: 'flex', gap: 2 }}>
-                        <button className="iconbtn" title="Add line" onClick={() => setLineModal({ groupId: group.id, line: null })}><Icon name="plus" size={11} /></button>
-                        <button className="iconbtn" title="Edit group" onClick={() => setGroupModal(group)}><Icon name="edit" size={11} /></button>
+                    <td onClick={(e) => e.stopPropagation()} style={{ whiteSpace: 'nowrap', paddingRight: 10 }}>
+                      <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                        <button className="iconbtn" title="Add line" onClick={() => setLineModal({ groupId: group.id, line: null })}><Icon name="plus" size={12} /></button>
+                        <button className="iconbtn" title="Edit group" onClick={() => setGroupModal(group)}><Icon name="edit" size={12} /></button>
                       </div>
                     </td>
                   </tr>
@@ -679,7 +703,7 @@ export function BudgetTab({ expenses }) {
                     const lineVariance = lineCommitted - lineSpent;
                     const lineBudget = line.isContingency ? groupBudget * (line.contingencyPct || 0) / 100 : (line.budget || 0);
                     const lineProgressPct = lineBudget > 0 ? Math.min(100, Math.round(lineSpent / lineBudget * 100)) : 0;
-                    const isDragging = dragState?.lineId === line.id;
+                    const isDraggingLine = dragState?.type === 'line' && dragState?.id === line.id;
                     return (
                       <tr
                         key={line.id}
@@ -688,15 +712,16 @@ export function BudgetTab({ expenses }) {
                         onDragOver={(e) => handleLineDragOver(e, group.id, line.id)}
                         onDragEnd={handleLineDragEnd}
                         style={{
-                          opacity: isDragging ? 0.4 : 1,
+                          opacity: isDraggingLine ? 0.4 : 1,
                           background: line.isContingency ? 'color-mix(in srgb, var(--bg-sunk) 60%, transparent)' : undefined,
+                          cursor: line.isContingency ? 'default' : 'grab',
                         }}
                       >
-                        <td className="mono" style={{ fontSize: 11, color: 'var(--text-faint)', paddingLeft: 24 }}>{line.csi}</td>
+                        <td className="mono" style={{ fontSize: 11, color: 'var(--text-faint)', paddingLeft: 28 }}>{line.csi}</td>
                         <td style={{ paddingLeft: 8 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             {!line.isContingency && (
-                              <span style={{ color: 'var(--text-faint)', cursor: 'grab', flexShrink: 0 }}><Icon name="grip" size={10} /></span>
+                              <span style={{ color: 'var(--text-faint)', flexShrink: 0 }}><Icon name="grip" size={10} /></span>
                             )}
                             {line.isContingency && (
                               <span className="pill warn no-dot" style={{ fontSize: 10, flexShrink: 0 }}>CONT.</span>
@@ -715,16 +740,18 @@ export function BudgetTab({ expenses }) {
                             <div style={{ flex: 1, height: 3, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
                               <div style={{ width: `${lineProgressPct}%`, height: '100%', background: lineProgressPct >= 100 ? 'var(--signal-neg)' : 'var(--cc-accent)', borderRadius: 2 }} />
                             </div>
-                            <span style={{ fontSize: 10, color: 'var(--text-faint)', minWidth: 24, textAlign: 'right' }}>—</span>
+                            <span style={{ fontSize: 10, color: 'var(--text-faint)', minWidth: 24, textAlign: 'right' }}>\u2014</span>
                           </div>
                         </td>
                         <td className="num mono" style={{ fontSize: 13, color: lineVariance < 0 ? 'var(--signal-neg)' : lineVariance > 0 ? 'var(--signal-pos)' : 'var(--text-muted)' }}>
-                          {lineVariance === 0 ? '—' : fmtUSD(lineVariance, { compact: true, sign: true })}
+                          {lineVariance === 0 ? '\u2014' : fmtUSD(lineVariance, { compact: true, sign: true })}
                         </td>
-                        <td>
-                          <button className="iconbtn" onClick={() => setLineModal({ groupId: group.id, line, isContingency: line.isContingency })}>
-                            <Icon name="edit" size={11} />
-                          </button>
+                        <td style={{ paddingRight: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <button className="iconbtn" onClick={() => setLineModal({ groupId: group.id, line, isContingency: line.isContingency })}>
+                              <Icon name="edit" size={12} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -734,7 +761,7 @@ export function BudgetTab({ expenses }) {
             })}
           </tbody>
           {/* Grand total footer */}
-          {filterGroup === 'All' && groups.length > 0 && (
+          {groups.length > 0 && (
             <tfoot>
               <tr style={{ background: 'var(--bg-inv, #1a1a1a)', color: 'var(--text-inv, #fff)', fontWeight: 700, borderTop: '2px solid var(--border)' }}>
                 <td style={{ paddingLeft: 12, fontSize: 12, color: 'inherit' }}></td>
@@ -747,7 +774,7 @@ export function BudgetTab({ expenses }) {
                     <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 2, overflow: 'hidden' }}>
                       <div style={{ width: `${grandTotals.budget > 0 ? Math.min(100, Math.round(grandTotals.spent/grandTotals.budget*100)) : 0}%`, height: '100%', background: 'var(--cc-accent)', borderRadius: 2 }} />
                     </div>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', minWidth: 28, textAlign: 'right' }}>—</span>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', minWidth: 28, textAlign: 'right' }}>\u2014</span>
                   </div>
                 </td>
                 <td className="num mono" style={{ fontSize: 13, color: grandTotals.variance < 0 ? '#f87171' : grandTotals.variance === 0 ? 'rgba(255,255,255,0.5)' : '#4ade80' }}>
@@ -781,7 +808,9 @@ export function BudgetTab({ expenses }) {
           groupId={lineModal.groupId}
           line={lineModal.line}
           isContingency={lineModal.isContingency}
-          group={groups.find((g) => g.id === lineModal.groupId)}
+          group={groupsWithCsi.find((g) => g.id === lineModal.groupId)}
+          groupOptions={groupOptions}
+          onGroupChange={(gid) => setLineModal((prev) => ({ ...prev, groupId: gid }))}
           onClose={() => setLineModal(null)}
           onSave={(groupId, line) => {
             if (line.id) store.updateLine(groupId, line.id, line);
@@ -845,7 +874,7 @@ function GroupModal({ open, group, onClose, onSave, onDelete }) {
 }
 
 // ─── Line Modal ──────────────────────────────────────────────────────────────
-function LineModal({ open, groupId, line, isContingency, group, onClose, onSave, onDelete }) {
+function LineModal({ open, groupId, line, isContingency, group, groupOptions, onGroupChange, onClose, onSave, onDelete }) {
   const [form, setForm] = React.useState({});
   React.useEffect(() => {
     if (!open) return;
@@ -887,7 +916,6 @@ function LineModal({ open, groupId, line, isContingency, group, onClose, onSave,
       open={open}
       onClose={onClose}
       title={isEdit ? 'Edit line item' : (isContingency || form.isContingency) ? 'Add contingency line' : 'Add line item'}
-      subtitle={group ? `Group: ${group.label}` : ''}
       width={520}
       footer={
         <>
@@ -900,8 +928,17 @@ function LineModal({ open, groupId, line, isContingency, group, onClose, onSave,
       }
     >
       <div className="form-grid">
-        <Field label="CSI number"><Input value={form.csi} onChange={set('csi')} placeholder="03 01 00" /></Field>
-        <Field label="Line item name"><Input value={form.name} onChange={set('name')} placeholder="Concrete formwork" /></Field>
+        {!isEdit && groupOptions && groupOptions.length > 0 && (
+          <Field label="Group" span={2}>
+            <SearchableSelect
+              value={groupId}
+              onChange={(v) => onGroupChange && onGroupChange(v)}
+              options={groupOptions}
+              placeholder="Select group…"
+            />
+          </Field>
+        )}
+        <Field label="Line item name" span={2}><Input value={form.name} onChange={set('name')} placeholder="Concrete formwork" /></Field>
         {form.isContingency ? (
           <Field label="Contingency %" span={2}>
             <Input value={form.contingencyPct} onChange={num('contingencyPct')} type="number" hint="% of group subtotal" />
