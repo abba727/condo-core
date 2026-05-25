@@ -589,7 +589,7 @@ export function BudgetTab({ expenses }) {
         marginBottom: 20,
       }}>
         {[
-          { label: 'TOTAL BUDGET', value: totalBudget, sub: `${groupsWithCsi.length} divisions \u00b7 ${groupsWithCsi.reduce((s,g)=>s+g.lines.length,0)} lines`, color: undefined },
+          { label: 'TOTAL BUDGET', value: totalBudget, sub: `${groupsWithCsi.length} divisions · ${groupsWithCsi.reduce((s,g)=>s+g.lines.length,0)} lines`, color: undefined },
           { label: 'COMMITTED', value: totalCommitted, sub: `${totalBudget > 0 ? Math.round(totalCommitted/totalBudget*100) : 0}% of budget`, color: undefined },
           { label: 'SPENT', value: totalSpent, sub: `${totalBudget > 0 ? Math.round(totalSpent/totalBudget*100) : 0}% of budget`, color: undefined },
           { label: 'REMAINING', value: totalRemaining, sub: 'Available to draw', color: undefined },
@@ -679,7 +679,7 @@ export function BudgetTab({ expenses }) {
                       </div>
                     </td>
                     <td className="num mono" style={{ fontWeight: 700, fontSize: 13, color: groupVariance < 0 ? 'var(--signal-neg)' : groupVariance > 0 ? 'var(--signal-pos)' : 'var(--text-muted)' }}>
-                      {groupVariance === 0 ? '\u2014' : fmtUSD(groupVariance, { compact: true, sign: true })}
+                      {groupVariance === 0 ? '—' : fmtUSD(groupVariance, { compact: true, sign: true })}
                     </td>
                     <td onClick={(e) => e.stopPropagation()} style={{ whiteSpace: 'nowrap', paddingRight: 10 }}>
                       <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
@@ -740,11 +740,11 @@ export function BudgetTab({ expenses }) {
                             <div style={{ flex: 1, height: 3, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
                               <div style={{ width: `${lineProgressPct}%`, height: '100%', background: lineProgressPct >= 100 ? 'var(--signal-neg)' : 'var(--cc-accent)', borderRadius: 2 }} />
                             </div>
-                            <span style={{ fontSize: 10, color: 'var(--text-faint)', minWidth: 24, textAlign: 'right' }}>\u2014</span>
+                            <span style={{ fontSize: 10, color: 'var(--text-faint)', minWidth: 24, textAlign: 'right' }}>—</span>
                           </div>
                         </td>
                         <td className="num mono" style={{ fontSize: 13, color: lineVariance < 0 ? 'var(--signal-neg)' : lineVariance > 0 ? 'var(--signal-pos)' : 'var(--text-muted)' }}>
-                          {lineVariance === 0 ? '\u2014' : fmtUSD(lineVariance, { compact: true, sign: true })}
+                          {lineVariance === 0 ? '—' : fmtUSD(lineVariance, { compact: true, sign: true })}
                         </td>
                         <td style={{ paddingRight: 10 }}>
                           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -774,7 +774,7 @@ export function BudgetTab({ expenses }) {
                     <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 2, overflow: 'hidden' }}>
                       <div style={{ width: `${grandTotals.budget > 0 ? Math.min(100, Math.round(grandTotals.spent/grandTotals.budget*100)) : 0}%`, height: '100%', background: 'var(--cc-accent)', borderRadius: 2 }} />
                     </div>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', minWidth: 28, textAlign: 'right' }}>\u2014</span>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', minWidth: 28, textAlign: 'right' }}>—</span>
                   </div>
                 </td>
                 <td className="num mono" style={{ fontSize: 13, color: grandTotals.variance < 0 ? '#f87171' : grandTotals.variance === 0 ? 'rgba(255,255,255,0.5)' : '#4ade80' }}>
