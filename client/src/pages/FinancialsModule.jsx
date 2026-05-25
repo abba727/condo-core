@@ -424,9 +424,11 @@ function SearchableDropdown({ anchor, query, onQuery, filtered, onSelect, inputR
 }
 
 // ─── Budget Tab ──────────────────────────────────────────────────────────────
-export function BudgetTab({ expenses }) {
+export function BudgetTab() {
   const store = useBudgetStore();
   const vendorStore = useVendorStore();
+  const expenseStore = useExpenseStore2();
+  const expenses = expenseStore?.expenses || [];
   const [groupModal, setGroupModal] = React.useState(null);
   const [lineModal, setLineModal] = React.useState(null);
   const [dragState, setDragState] = React.useState(null); // { type:'group'|'line', groupId?, id }
@@ -1016,6 +1018,7 @@ const STATUS_CLS = { Pending: 'warn', Approved: 'info', Paid: 'pos', Rejected: '
 export function ExpensesTab({ seedExpenses }) {
   const store = useExpenseStore2();
   const vendorStore = useVendorStore();
+  const budgetStore = useBudgetStore();
 
   const expenses = store?.expenses || seedExpenses || [];
   const projectVendors = React.useMemo(() => {
@@ -1034,7 +1037,13 @@ export function ExpensesTab({ seedExpenses }) {
   const [sortDir, setSortDir] = React.useState('desc');
   const [expModal, setExpModal] = React.useState(null); // null | 'new' | expense
 
-  const allDivisions = React.useMemo(() => [...new Set(expenses.map((e) => e.division).filter(Boolean))].sort(), [expenses]);
+  // Division options = budget group labels (so expenses can be tagged to match budget groups)
+  // Fall back to unique divisions already in expenses if budget store not available
+  const allDivisions = React.useMemo(() => {
+    const budgetGroups = (budgetStore?.groups || []).map((g) => g.label).filter(Boolean);
+    const expDivisions = expenses.map((e) => e.division).filter(Boolean);
+    return [...new Set([...budgetGroups, ...expDivisions])].sort();
+  }, [budgetStore?.groups, expenses]);
   const allVendors = React.useMemo(() => [...new Set(expenses.map((e) => e.vendor).filter(Boolean))].sort(), [expenses]);
 
   const filtered = React.useMemo(() => {
