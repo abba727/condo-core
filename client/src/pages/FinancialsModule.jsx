@@ -577,6 +577,7 @@ export function BudgetTab() {
   const totalSpent = grandTotals.spent;
   const totalRemaining = totalBudget - totalSpent;
   const totalVariance = totalCommitted - totalSpent;
+  const totalRemainingToCommit = totalBudget - totalCommitted;
 
   const groupOptions = groupsWithCsi.map((g) => ({ value: g.id, label: `${g.csi} — ${g.label}` }));
 
@@ -586,13 +587,14 @@ export function BudgetTab() {
       {/* ── Summary stat cards ── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
+        gridTemplateColumns: 'repeat(6, 1fr)',
         gap: 12,
         marginBottom: 20,
       }}>
         {[
           { label: 'TOTAL BUDGET', value: totalBudget, sub: `${groupsWithCsi.length} divisions · ${groupsWithCsi.reduce((s,g)=>s+g.lines.length,0)} lines`, color: undefined },
           { label: 'COMMITTED', value: totalCommitted, sub: `${totalBudget > 0 ? Math.round(totalCommitted/totalBudget*100) : 0}% of budget`, color: undefined },
+          { label: 'TO COMMIT', value: totalRemainingToCommit, sub: 'Budget not yet committed', color: totalRemainingToCommit < 0 ? 'var(--signal-neg)' : totalRemainingToCommit === 0 ? 'var(--text-muted)' : 'var(--signal-warn, #b45309)' },
           { label: 'SPENT', value: totalSpent, sub: `${totalBudget > 0 ? Math.round(totalSpent/totalBudget*100) : 0}% of budget`, color: undefined },
           { label: 'REMAINING', value: totalRemaining, sub: 'Available to draw', color: undefined },
           { label: 'VARIANCE', value: totalVariance, sub: 'On baseline', color: totalVariance < 0 ? 'var(--signal-neg)' : totalVariance === 0 ? 'var(--text-muted)' : 'var(--signal-pos)' },

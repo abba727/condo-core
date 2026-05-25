@@ -10,7 +10,7 @@
  */
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { CSI_GROUPS } from './FinancialsModule.jsx';
+import { CSI_GROUPS, useBudgetStore } from './FinancialsModule.jsx';
 import {
   DRIGGS_712_CONTRACTS,
   DRIGGS_712_EXPENSES,
@@ -1708,7 +1708,7 @@ function useFileUpload(onUpload) {
   return { files, trigger, onPick, remove, setDesc, inputRef };
 }
 
-function BidModal({ open, bid, onClose, onSave, onDelete }) {
+function BidModal({ open, bid, budgetGroupLabels = [], onClose, onSave, onDelete }) {
   const [form, setForm] = React.useState({});
   React.useEffect(() => {
     if (open) setForm(bid || {
@@ -1742,13 +1742,15 @@ function BidModal({ open, bid, onClose, onSave, onDelete }) {
         <Field label="Date"><Input value={form.date} onChange={set('date')} placeholder="May 06, 2024" /></Field>
         <Field label="Bid amount"><Input value={form.amount} onChange={(v) => set('amount')(parseFloat(v) || 0)} type="number" prefix="$" /></Field>
         <Field label="Scope / description" span={2}><Input value={form.scope} onChange={set('scope')} placeholder="Foundation work, Phase 1" /></Field>
-        <Field label="Division / Category" span={2}>
+        <Field label="Division / Budget Group" span={2}>
           <Select
             value={form.division}
             onChange={set('division')}
             options={[
               { value: '', label: 'No division assigned' },
-              ...CSI_GROUPS.map((g) => ({ value: g.label, label: `${g.csi} — ${g.label}` }))
+              ...(budgetGroupLabels.length > 0
+                ? budgetGroupLabels.map((label) => ({ value: label, label }))
+                : CSI_GROUPS.map((g) => ({ value: g.label, label: `${g.csi} — ${g.label}` })))
             ]}
           />
         </Field>
@@ -1763,6 +1765,10 @@ function BidModal({ open, bid, onClose, onSave, onDelete }) {
 
 function VendorBidsTab({ vendor, store }) {
   const [bidModal, setBidModal] = React.useState({ open: false, bid: null });
+  const budgetStore = useBudgetStore();
+  const budgetGroupLabels = React.useMemo(() => {
+    return (budgetStore?.groups || []).map((g) => g.label).filter(Boolean);
+  }, [budgetStore?.groups]);
   const upload = useFileUpload();
   // Per-bid document state: { [bidId]: File[] }
   const [bidDocs, setBidDocs] = React.useState({});
@@ -1938,6 +1944,7 @@ function VendorBidsTab({ vendor, store }) {
       <BidModal
         open={bidModal.open}
         bid={bidModal.bid}
+        budgetGroupLabels={budgetGroupLabels}
         onClose={() => setBidModal({ open: false, bid: null })}
         onSave={(form) => {
           if (bidModal.bid?.id) store?.updateBid(vendor.id, bidModal.bid.id, form);
