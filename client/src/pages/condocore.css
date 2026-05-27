@@ -904,6 +904,10 @@ a {
   background: var(--bg-hover);
 }
 
+.table .grand-total-row:hover td {
+  background: var(--bg-inv, #1a1a1a) !important;
+}
+
 .table .num {
   font-variant-numeric: tabular-nums;
   text-align: right;

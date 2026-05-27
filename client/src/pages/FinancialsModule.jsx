@@ -432,6 +432,7 @@ export function BudgetTab() {
   const [groupModal, setGroupModal] = React.useState(null);
   const [lineModal, setLineModal] = React.useState(null);
   const [dragState, setDragState] = React.useState(null); // { type:'group'|'line', groupId?, id }
+  const [inlineEdit, setInlineEdit] = React.useState(null); // { groupId, lineId, value }
 
   const groups = store?.groups || [];
 
@@ -445,7 +446,7 @@ export function BudgetTab() {
         ...l,
         csi: l.isContingency
           ? `${groupCsi}.C${String(li + 1).padStart(2, '0')}`
-          : `${groupCsi}.${String(li + 1).padStart(2, '0')}.00`,
+          : `${groupCsi}.${String(li + 1).padStart(2, '0')}`,
       }));
       return { ...g, csi: groupCsi, lines: linesWithCsi };
     });
@@ -581,6 +582,20 @@ export function BudgetTab() {
 
   const groupOptions = groupsWithCsi.map((g) => ({ value: g.id, label: `${g.csi} — ${g.label}` }));
 
+  const allCollapsed = groupsWithCsi.every((g) => g.collapsed);
+  const handleCollapseAll = () => groupsWithCsi.forEach((g) => store.updateGroup(g.id, { collapsed: true }));
+  const handleExpandAll = () => groupsWithCsi.forEach((g) => store.updateGroup(g.id, { collapsed: false }));
+
+  const handleInlineEditStart = (groupId, lineId, currentBudget) => {
+    setInlineEdit({ groupId, lineId, value: String(currentBudget || 0) });
+  };
+  const handleInlineEditCommit = () => {
+    if (!inlineEdit) return;
+    const parsed = parseFloat(inlineEdit.value.replace(/[^0-9.]/g, '')) || 0;
+    store.updateLine(inlineEdit.groupId, inlineEdit.lineId, { budget: parsed });
+    setInlineEdit(null);
+  };
+
   return (
     <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 0 }}>
 
@@ -611,11 +626,20 @@ export function BudgetTab() {
 
       {/* ── Toolbar ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <button className="btn btn-ghost btn-sm" onClick={handleExportCSV}><Icon name="download" size={12} /> CSV</button>
           <button className="btn btn-ghost btn-sm" onClick={handleExportPDF}><Icon name="download" size={12} /> PDF</button>
+          <div style={{ width: 1, height: 20, background: 'var(--border)', alignSelf: 'center', margin: '0 2px' }} />
+          <button className="btn btn-ghost btn-sm" onClick={allCollapsed ? handleExpandAll : handleCollapseAll}>
+            <Icon name={allCollapsed ? 'chevronDown' : 'chevronRight'} size={12} />
+            {allCollapsed ? 'Expand all' : 'Collapse all'}
+          </button>
+          <div style={{ width: 1, height: 20, background: 'var(--border)', alignSelf: 'center', margin: '0 2px' }} />
           <button className="btn btn-secondary btn-sm" onClick={() => setGroupModal('new')}><Icon name="plus" size={12} /> Add group</button>
-          <button className="btn btn-primary btn-sm" onClick={() => setLineModal({ groupId: groupsWithCsi[0]?.id || null, line: null })}><Icon name="plus" size={12} /> Add line item</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setLineModal({ groupId: groupsWithCsi[0]?.id || null, line: null, isContingency: false })}><Icon name="plus" size={12} /> Add line item</button>
+          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--signal-warn, #b45309)' }} onClick={() => setLineModal({ groupId: null, line: null, isContingency: true, isBudgetContingency: true })}>
+            <Icon name="plus" size={12} /> Add contingency
+          </button>
         </div>
       </div>
 
@@ -736,7 +760,25 @@ export function BudgetTab() {
                             )}
                           </div>
                         </td>
-                        <td className="num mono" style={{ fontSize: 13 }}>{fmtUSD(lineBudget, { compact: true })}</td>
+                        <td
+                          className="num mono"
+                          style={{ fontSize: 13, cursor: line.isContingency ? 'default' : 'text', userSelect: 'none' }}
+                          onDoubleClick={() => !line.isContingency && handleInlineEditStart(group.id, line.id, line.budget || 0)}
+                          title={line.isContingency ? '' : 'Double-click to edit'}
+                        >
+                          {inlineEdit?.groupId === group.id && inlineEdit?.lineId === line.id ? (
+                            <input
+                              autoFocus
+                              type="number"
+                              value={inlineEdit.value}
+                              onChange={(e) => setInlineEdit((prev) => ({ ...prev, value: e.target.value }))}
+                              onBlur={handleInlineEditCommit}
+                              onKeyDown={(e) => { if (e.key === 'Enter') handleInlineEditCommit(); if (e.key === 'Escape') setInlineEdit(null); }}
+                              style={{ width: 80, textAlign: 'right', fontSize: 13, background: 'var(--bg-elev)', border: '1px solid var(--cc-accent)', borderRadius: 4, padding: '2px 4px', color: 'var(--text)', outline: 'none' }}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          ) : fmtUSD(lineBudget, { compact: true })}
+                        </td>
                         <td className="num mono" style={{ fontSize: 13, color: 'var(--text-muted)' }}>{fmtUSD(lineCommitted, { compact: true })}</td>
                         <td className="num mono" style={{ fontSize: 13 }}>{fmtUSD(lineSpent, { compact: true })}</td>
                         <td>
@@ -767,7 +809,7 @@ export function BudgetTab() {
           {/* Grand total footer */}
           {groups.length > 0 && (
             <tfoot>
-              <tr style={{ background: 'var(--bg-inv, #1a1a1a)', color: 'var(--text-inv, #fff)', fontWeight: 700, borderTop: '2px solid var(--border)' }}>
+              <tr className="grand-total-row" style={{ background: 'var(--bg-inv, #1a1a1a)', color: 'var(--text-inv, #fff)', fontWeight: 700, borderTop: '2px solid var(--border)' }}>
                 <td style={{ paddingLeft: 12, fontSize: 12, color: 'inherit' }}></td>
                 <td style={{ fontSize: 13, color: 'inherit' }}>Grand total</td>
                 <td className="num mono" style={{ fontSize: 13, color: 'inherit' }}>{fmtUSD(grandTotals.budget, { compact: true })}</td>
@@ -1035,8 +1077,21 @@ export function ExpensesTab({ seedExpenses }) {
   const [filterStatus, setFilterStatus] = React.useState('');
   const [filterDateFrom, setFilterDateFrom] = React.useState('');
   const [filterDateTo, setFilterDateTo] = React.useState('');
+  const [searchText, setSearchText] = React.useState('');
   const [sortCol, setSortCol] = React.useState('date');
   const [sortDir, setSortDir] = React.useState('desc');
+
+  // Robust date parser: handles ISO (2024-01-08) and human (Jan 08, 2024) formats
+  const parseExpDate = React.useCallback((dateStr) => {
+    if (!dateStr) return null;
+    // Try ISO first
+    const iso = new Date(dateStr);
+    if (!isNaN(iso.getTime()) && dateStr.includes('-')) return iso;
+    // Try human format like "Jan 08, 2024" or "Jan 8, 2024"
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) return parsed;
+    return null;
+  }, []);
   const [expModal, setExpModal] = React.useState(null); // null | 'new' | expense
 
   // Division options = budget group labels (so expenses can be tagged to match budget groups)
@@ -1050,22 +1105,38 @@ export function ExpensesTab({ seedExpenses }) {
 
   const filtered = React.useMemo(() => {
     let list = [...expenses];
-    if (filterVendor) list = list.filter((e) => e.vendor === filterVendor);
-    if (filterDivision) list = list.filter((e) => e.division === filterDivision);
-    if (filterStatus) list = list.filter((e) => e.status === filterStatus);
-    if (filterDateFrom) list = list.filter((e) => new Date(e.date) >= new Date(filterDateFrom));
-    if (filterDateTo) list = list.filter((e) => new Date(e.date) <= new Date(filterDateTo));
+    if (filterVendor) list = list.filter((e) => (e.vendor || '').toLowerCase() === filterVendor.toLowerCase());
+    if (filterDivision) list = list.filter((e) => (e.division || '').toLowerCase() === filterDivision.toLowerCase());
+    if (filterStatus) list = list.filter((e) => (e.status || '').toLowerCase() === filterStatus.toLowerCase());
+    if (filterDateFrom) {
+      const fromDate = new Date(filterDateFrom + 'T00:00:00');
+      list = list.filter((e) => { const d = parseExpDate(e.date); return d && d >= fromDate; });
+    }
+    if (filterDateTo) {
+      const toDate = new Date(filterDateTo + 'T23:59:59');
+      list = list.filter((e) => { const d = parseExpDate(e.date); return d && d <= toDate; });
+    }
+    if (searchText.trim()) {
+      const q = searchText.trim().toLowerCase();
+      list = list.filter((e) =>
+        (e.vendor || '').toLowerCase().includes(q) ||
+        (e.description || '').toLowerCase().includes(q) ||
+        (e.division || '').toLowerCase().includes(q) ||
+        (e.ref || '').toLowerCase().includes(q) ||
+        String(e.amount || '').includes(q)
+      );
+    }
 
     list.sort((a, b) => {
       let av = a[sortCol], bv = b[sortCol];
       if (sortCol === 'amount') { av = Number(av); bv = Number(bv); }
-      if (sortCol === 'date') { av = new Date(av); bv = new Date(bv); }
+      if (sortCol === 'date') { av = parseExpDate(av) || new Date(0); bv = parseExpDate(bv) || new Date(0); }
       if (av < bv) return sortDir === 'asc' ? -1 : 1;
       if (av > bv) return sortDir === 'asc' ? 1 : -1;
       return 0;
     });
     return list;
-  }, [expenses, filterVendor, filterDivision, filterStatus, filterDateFrom, filterDateTo, sortCol, sortDir]);
+  }, [expenses, filterVendor, filterDivision, filterStatus, filterDateFrom, filterDateTo, searchText, sortCol, sortDir, parseExpDate]);
 
   const totalAmount = filtered.reduce((s, e) => s + (e.amount > 0 ? e.amount : 0), 0);
 
@@ -1122,6 +1193,17 @@ export function ExpensesTab({ seedExpenses }) {
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
         {/* Filters */}
         <div style={{ display: 'flex', gap: 6, flex: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ position: 'relative', minWidth: 180 }}>
+            <Icon name="search" size={13} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', pointerEvents: 'none' }} />
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search expenses…"
+              className="input"
+              style={{ paddingLeft: 28, fontSize: 13, width: '100%' }}
+            />
+          </div>
           <SearchableSelect
             value={filterVendor}
             onChange={setFilterVendor}
@@ -1163,8 +1245,8 @@ export function ExpensesTab({ seedExpenses }) {
               style={{ width: 130, fontSize: 12 }}
             />
           </div>
-          {(filterVendor || filterDivision || filterStatus || filterDateFrom || filterDateTo) && (
-            <button className="btn btn-ghost btn-sm" onClick={() => { setFilterVendor(''); setFilterDivision(''); setFilterStatus(''); setFilterDateFrom(''); setFilterDateTo(''); }}>
+          {(filterVendor || filterDivision || filterStatus || filterDateFrom || filterDateTo || searchText) && (
+            <button className="btn btn-ghost btn-sm" onClick={() => { setFilterVendor(''); setFilterDivision(''); setFilterStatus(''); setFilterDateFrom(''); setFilterDateTo(''); setSearchText(''); }}>
               <Icon name="x" size={11} /> Clear
             </button>
           )}
