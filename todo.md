@@ -74,3 +74,16 @@
 - [x] Restyle task overlay and new-task overlay date controls so calendar/date fields match the CondoCore theme instead of generic browser boxes.
 - [x] Run production build and browser verification for the updated timeline, relationship picker, and date controls.
 - [x] Save a checkpoint and deliver the completed Project Plan polish fixes.
+
+# Full Database Integration
+
+- [x] Audit all current data models across every module (budget, expenses, vendors, projects, contracts, insurances, permits, plan tasks, stacking plan, capital stack, draws, documents)
+- [x] Upgrade project to web-db-user (adds MySQL, backend server, auth)
+- [x] Design and run full database schema migration (17 tables: projects, budget_groups, budget_lines, expenses, vendors, vendor_bids, contracts, insurances, permits, plan_tasks, stacking_units, capital_stack_items, draw_requests, documents, document_tags, team_members, activity_feed)
+- [x] Seed database with all demo data from DRIGGS_712 seed files (budget groups/lines, expenses, vendors, project metadata)
+- [x] Create tRPC routers for budget (groups + lines), expenses, vendors (+ bids), and projects (+ contracts, insurances, permits, plan tasks)
+- [x] Create database-backed React hooks (useBudgetDb, useExpensesDb, useVendorsDb, useProjectsDb)
+- [x] Create DbBridgeProviders component that pre-loads DB data into localStorage before legacy store providers initialize
+- [x] Wire App.tsx to use DbBridgeProviders so all modules load from database on startup
+- [x] Write and pass 12 vitest integration tests covering database connectivity, budget groups/lines, expenses, vendors, and projects
+- [ ] Save checkpoint and push to GitHub

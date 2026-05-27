@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { DbBridgeProviders } from "./components/DbBridgeProviders";
 import CondoCore from "./pages/CondoCore.jsx";
 
 function App() {
@@ -15,7 +16,9 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <CondoCore />
+          <DbBridgeProviders>
+            <CondoCore />
+          </DbBridgeProviders>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
