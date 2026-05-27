@@ -301,10 +301,29 @@ export function BudgetStoreProvider({ children, seedBudget, expensesByCategory =
     setGroups((prev) => prev.map((g) => g.id === groupId ? { ...g, lines: newLines } : g));
   }, []);
 
+  // Auto-create a "Contingency" group if it doesn't exist, then add the line to it
+  const addContingencyLine = React.useCallback((line) => {
+    setGroups((prev) => {
+      const existing = prev.find((g) => g.isContingencyGroup);
+      if (existing) {
+        return prev.map((g) => {
+          if (g.id !== existing.id) return g;
+          const newLine = { ...line, id: `line-${Date.now()}`, order: g.lines.length, isContingency: true };
+          return { ...g, lines: [...g.lines, newLine] };
+        });
+      } else {
+        const newGroupId = `grp-contingency-${Date.now()}`;
+        const newLine = { ...line, id: `line-${Date.now()}`, order: 0, isContingency: true };
+        const newGroup = { id: newGroupId, label: 'Contingency', lines: [newLine], order: prev.length, isContingencyGroup: true, collapsed: false };
+        return [...prev, newGroup];
+      }
+    });
+  }, []);
+
   return (
     <BudgetStoreCtx.Provider value={{
       groups, addGroup, updateGroup, deleteGroup, reorderGroups,
-      addLine, updateLine, deleteLine, reorderLines,
+      addLine, updateLine, deleteLine, reorderLines, addContingencyLine,
     }}>
       {children}
     </BudgetStoreCtx.Provider>
@@ -321,6 +340,7 @@ export function SearchableSelect({ value, onChange, options, placeholder = 'Sele
   const [query, setQuery] = React.useState('');
   const ref = React.useRef(null);
   const inputRef = React.useRef(null);
+  const dropdownRef = React.useRef(null);
 
   const filtered = options.filter((o) =>
     (o.label || o.value || '').toLowerCase().includes(query.toLowerCase())
@@ -329,7 +349,11 @@ export function SearchableSelect({ value, onChange, options, placeholder = 'Sele
 
   React.useEffect(() => {
     if (!open) return;
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const handler = (e) => {
+      const inAnchor = ref.current && ref.current.contains(e.target);
+      const inDropdown = dropdownRef.current && dropdownRef.current.contains(e.target);
+      if (!inAnchor && !inDropdown) setOpen(false);
+    };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
@@ -359,6 +383,7 @@ export function SearchableSelect({ value, onChange, options, placeholder = 'Sele
           filtered={filtered}
           onSelect={(v) => { onChange(v); setOpen(false); setQuery(''); }}
           inputRef={inputRef}
+          dropdownRef={dropdownRef}
         />,
         document.body
       )}
@@ -366,19 +391,29 @@ export function SearchableSelect({ value, onChange, options, placeholder = 'Sele
   );
 }
 
-function SearchableDropdown({ anchor, query, onQuery, filtered, onSelect, inputRef }) {
+function SearchableDropdown({ anchor, query, onQuery, filtered, onSelect, inputRef, dropdownRef }) {
   const [rect, setRect] = React.useState(null);
   React.useEffect(() => {
-    if (anchor) setRect(anchor.getBoundingClientRect());
+    if (!anchor) return;
+    const update = () => setRect(anchor.getBoundingClientRect());
+    update();
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => { window.removeEventListener('scroll', update, true); window.removeEventListener('resize', update); };
   }, [anchor]);
   if (!rect) return null;
-  const top = rect.bottom + window.scrollY + 4;
-  const left = rect.left + window.scrollX;
-  const width = rect.width;
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const dropUp = spaceBelow < 240 && rect.top > 240;
+  const top = dropUp ? rect.top - 4 : rect.bottom + 4;
+  const left = rect.left;
+  const width = Math.max(rect.width, 180);
   return (
-    <div style={{
-      position: 'absolute',
-      top, left, width,
+    <div ref={dropdownRef} style={{
+      position: 'fixed',
+      top: dropUp ? undefined : top,
+      bottom: dropUp ? window.innerHeight - rect.top + 4 : undefined,
+      left, width,
+      transform: 'none',
       background: 'var(--bg-elev)',
       border: '1px solid var(--border)',
       borderRadius: 8,
@@ -637,7 +672,7 @@ export function BudgetTab() {
           <div style={{ width: 1, height: 20, background: 'var(--border)', alignSelf: 'center', margin: '0 2px' }} />
           <button className="btn btn-secondary btn-sm" onClick={() => setGroupModal('new')}><Icon name="plus" size={12} /> Add group</button>
           <button className="btn btn-ghost btn-sm" onClick={() => setLineModal({ groupId: groupsWithCsi[0]?.id || null, line: null, isContingency: false })}><Icon name="plus" size={12} /> Add line item</button>
-          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--signal-warn, #b45309)' }} onClick={() => setLineModal({ groupId: null, line: null, isContingency: true, isBudgetContingency: true })}>
+          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--signal-warn, #b45309)' }} onClick={() => setLineModal({ groupId: '__contingency__', line: null, isContingency: true })}>
             <Icon name="plus" size={12} /> Add contingency
           </button>
         </div>
@@ -719,8 +754,9 @@ export function BudgetTab() {
 
                   {/* Line item rows */}
                   {!group.collapsed && group.lines.map((line) => {
+                    const contingencyAmt = line.isContingency ? totalBudget * (line.contingencyPct || 0) / 100 : 0;
                     const lineCommitted = line.isContingency
-                      ? groupBudget * (line.contingencyPct || 0) / 100
+                      ? contingencyAmt
                       : (committedByDivision[group.label]
                         ? committedByDivision[group.label] / Math.max(1, lineCount)
                         : (line.committed || 0));
@@ -729,7 +765,7 @@ export function BudgetTab() {
                         ? spentByDivision[group.label] / Math.max(1, lineCount)
                         : (line.spent || 0));
                     const lineVariance = lineCommitted - lineSpent;
-                    const lineBudget = line.isContingency ? groupBudget * (line.contingencyPct || 0) / 100 : (line.budget || 0);
+                    const lineBudget = line.isContingency ? contingencyAmt : (line.budget || 0);
                     const lineProgressPct = lineBudget > 0 ? Math.min(100, Math.round(lineSpent / lineBudget * 100)) : 0;
                     const isDraggingLine = dragState?.type === 'line' && dragState?.id === line.id;
                     return (
@@ -859,8 +895,14 @@ export function BudgetTab() {
           onGroupChange={(gid) => setLineModal((prev) => ({ ...prev, groupId: gid }))}
           onClose={() => setLineModal(null)}
           onSave={(groupId, line) => {
-            if (line.id) store.updateLine(groupId, line.id, line);
-            else store.addLine(groupId, line);
+            if (line.id) {
+              // Edit: find the actual group
+              store.updateLine(groupId, line.id, line);
+            } else if (groupId === '__contingency__') {
+              store.addContingencyLine(line);
+            } else {
+              store.addLine(groupId, line);
+            }
             setLineModal(null);
           }}
           onDelete={(groupId, lineId) => { store.deleteLine(groupId, lineId); setLineModal(null); }}
@@ -984,7 +1026,7 @@ function LineModal({ open, groupId, line, isContingency, group, groupOptions, on
       }
     >
       <div className="form-grid">
-        {!isEdit && groupOptions && groupOptions.length > 0 && (
+        {!isEdit && !isContingency && !form.isContingency && groupOptions && groupOptions.length > 0 && (
           <Field label="Group" span={2}>
             <SearchableSelect
               value={groupId}
@@ -994,10 +1036,15 @@ function LineModal({ open, groupId, line, isContingency, group, groupOptions, on
             />
           </Field>
         )}
+        {(isContingency || form.isContingency) && (
+          <div span={2} style={{ gridColumn: '1 / -1', padding: '6px 10px', background: 'var(--bg-sunk)', borderRadius: 6, fontSize: 12, color: 'var(--text-muted)' }}>
+            This line will be added to the <strong>Contingency</strong> group (created automatically if it doesn’t exist).
+          </div>
+        )}
         <Field label="Line item name" span={2}><Input value={form.name} onChange={set('name')} placeholder="Concrete formwork" /></Field>
         {form.isContingency ? (
           <Field label="Contingency %" span={2}>
-            <Input value={form.contingencyPct} onChange={num('contingencyPct')} type="number" hint="% of group subtotal" />
+            <Input value={form.contingencyPct} onChange={num('contingencyPct')} type="number" hint="% of total project budget" />
           </Field>
         ) : (
           <>
