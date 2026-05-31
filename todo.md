@@ -98,3 +98,10 @@
 - [x] Replace flat Division/Category dropdown with grouped CSI budget picker
 - [x] Group headers are non-selectable, line items are selectable with CSI prefix
 - [x] Search/filter within the grouped CSI picker
+
+# Bug Fix: Budget Committed/Spent Column Accuracy
+
+- [x] Zero out committed for contingency lines (no vendor bids should appear there)
+- [x] Fix spent column: expenses tagged to a group label show only on the group row, not duplicated across each line
+- [x] Fix spent column: expenses tagged to a CSI line label show on that specific line only
+- [x] Grand total spent correctly sums group-level spent once (not per-line)

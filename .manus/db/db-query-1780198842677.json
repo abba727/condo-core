@@ -1,0 +1,160 @@
+{
+  "query": "SELECT id, vendorName, amount, division FROM expenses ORDER BY division LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute SELECT id, vendorName, amount, division FROM expenses ORDER BY division LIMIT 30;",
+  "rows": [
+    {
+      "id": "exp-seed-1",
+      "vendorName": "Project capital account",
+      "amount": "290000.00",
+      "division": "Capital / contributions"
+    },
+    {
+      "id": "exp-seed-3",
+      "vendorName": "Project capital account",
+      "amount": "50000.00",
+      "division": "Capital / contributions"
+    },
+    {
+      "id": "exp-seed-16",
+      "vendorName": "Project capital account",
+      "amount": "50000.00",
+      "division": "Capital / contributions"
+    },
+    {
+      "id": "exp-seed-24",
+      "vendorName": "Project capital account",
+      "amount": "25000.00",
+      "division": "Capital / contributions"
+    },
+    {
+      "id": "exp-seed-22",
+      "vendorName": "Project capital account",
+      "amount": "2690.17",
+      "division": "Capital / contributions"
+    },
+    {
+      "id": "exp-seed-20",
+      "vendorName": "Project capital account",
+      "amount": "10000.00",
+      "division": "Capital / contributions"
+    },
+    {
+      "id": "exp-seed-2",
+      "vendorName": "712 Driggs ledger",
+      "amount": "290000.00",
+      "division": "Land Costs"
+    },
+    {
+      "id": "exp-seed-13",
+      "vendorName": "Marcus Attorneys PLLC",
+      "amount": "1080.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-6",
+      "vendorName": "Preferred Bank",
+      "amount": "5000.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-5",
+      "vendorName": "International Office of Architects",
+      "amount": "20000.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-18",
+      "vendorName": "Yaker Engineering",
+      "amount": "16650.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-21",
+      "vendorName": "International Office of Architects",
+      "amount": "30000.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-17",
+      "vendorName": "International Office of Architects",
+      "amount": "14427.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-10",
+      "vendorName": "DGM CPA",
+      "amount": "375.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-8",
+      "vendorName": "Stroh Engineering Services",
+      "amount": "4500.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-19",
+      "vendorName": "WJY MEP Consulting Services, Inc",
+      "amount": "4000.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-12",
+      "vendorName": "Boyd Consulting",
+      "amount": "1800.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-15",
+      "vendorName": "Exterior Design Renterings",
+      "amount": "622.99",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-4",
+      "vendorName": "5 Borough Mapping NY",
+      "amount": "750.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-14",
+      "vendorName": "Preferred Bank",
+      "amount": "350.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-25",
+      "vendorName": "International Office of Architects",
+      "amount": "26250.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-7",
+      "vendorName": "Middleton Environmental",
+      "amount": "1800.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-11",
+      "vendorName": "DGM CPA",
+      "amount": "375.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-9",
+      "vendorName": "DGM CPA",
+      "amount": "613.00",
+      "division": "Soft Costs"
+    },
+    {
+      "id": "exp-seed-23",
+      "vendorName": "712 Driggs ledger",
+      "amount": "2540.17",
+      "division": "Uncategorized"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tvendorName\tamount\tdivision\nexp-seed-1\tProject capital account\t290000.00\tCapital / contributions\nexp-seed-3\tProject capital account\t50000.00\tCapital / contributions\nexp-seed-16\tProject capital account\t50000.00\tCapital / contributions\nexp-seed-24\tProject capital account\t25000.00\tCapital / contributions\nexp-seed-22\tProject capital account\t2690.17\tCapital / contributions\nexp-seed-20\tProject capital account\t10000.00\tCapital / contributions\nexp-seed-2\t712 Driggs ledger\t290000.00\tLand Costs\nexp-seed-13\tMarcus Attorneys PLLC\t1080.00\tSoft Costs\nexp-seed-6\tPreferred Bank\t5000.00\tSoft Costs\nexp-seed-5\tInternational Office of Architects\t20000.00\tSoft Costs\nexp-seed-18\tYaker Engineering\t16650.00\tSoft Costs\nexp-seed-21\tInternational Office of Architects\t30000.00\tSoft Costs\nexp-seed-17\tInternational Office of Architects\t14427.00\tSoft Costs\nexp-seed-10\tDGM CPA\t375.00\tSoft Costs\nexp-seed-8\tStroh Engineering Services\t4500.00\tSoft Costs\nexp-seed-19\tWJY MEP Consulting Services, Inc\t4000.00\tSoft Costs\nexp-seed-12\tBoyd Consulting\t1800.00\tSoft Costs\nexp-seed-15\tExterior Design Renterings\t622.99\tSoft Costs\nexp-seed-4\t5 Borough Mapping NY\t750.00\tSoft Costs\nexp-seed-14\tPreferred Bank\t350.00\tSoft Costs\nexp-seed-25\tInternational Office of Architects\t26250.00\tSoft Costs\nexp-seed-7\tMiddleton Environmental\t1800.00\tSoft Costs\nexp-seed-11\tDGM CPA\t375.00\tSoft Costs\nexp-seed-9\tDGM CPA\t613.00\tSoft Costs\nexp-seed-23\t712 Driggs ledger\t2540.17\tUncategorized\n",
+  "stderr": "",
+  "execution_time_ms": 291
+}

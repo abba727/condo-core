@@ -502,8 +502,9 @@ export function BudgetTab() {
     return map;
   }, [vendorStore?.vendors]);
 
-  // Compute spent from expenses per division
-  const spentByDivision = React.useMemo(() => {
+  // Compute spent from expenses keyed by the division label stored in expense.division
+  // Division values may be CSI line labels ("01.01 — Temp. Facility...") or legacy group labels ("Soft Costs")
+  const spentByLabel = React.useMemo(() => {
     const map = {};
     (expenses || []).forEach((e) => {
       if (e.amount > 0) {
@@ -514,23 +515,36 @@ export function BudgetTab() {
     return map;
   }, [expenses]);
 
+  // Build a Set of all group labels so we can distinguish group-level vs line-level expense assignments
+  const groupLabelSet = React.useMemo(() => {
+    const s = new Set();
+    groups.forEach((g) => s.add(g.label));
+    return s;
+  }, [groups]);
+
   // Grand totals
   const grandTotals = React.useMemo(() => {
     let budget = 0, committed = 0, spent = 0;
     groupsWithCsi.forEach((g) => {
+      const nonContingencyLines = g.lines.filter((x) => !x.isContingency);
+      // Line-level CSI matches (preferred)
+      const lineLevelSpent = nonContingencyLines.reduce((s, l) => {
+        const csiLabel = l.csi ? `${l.csi} — ${l.name}` : l.name;
+        return s + (spentByLabel[csiLabel] || (!groupLabelSet.has(l.name) ? (spentByLabel[l.name] || 0) : 0));
+      }, 0);
+      // Group-level fallback (counted once, not per line)
+      const groupLevelSpent = lineLevelSpent > 0 ? lineLevelSpent : (spentByLabel[g.label] || nonContingencyLines.reduce((s, l) => s + (l.spent || 0), 0));
       g.lines.forEach((l) => {
         budget += l.budget || 0;
-        if (l.isContingency) {
-          const groupBudget = g.lines.filter((x) => !x.isContingency).reduce((s, x) => s + (x.budget || 0), 0);
-          committed += groupBudget * (l.contingencyPct || 0) / 100;
-        } else {
-          committed += committedByDivision[g.label] ? committedByDivision[g.label] / Math.max(1, g.lines.filter((x) => !x.isContingency).length) : (l.committed || 0);
+        if (!l.isContingency) {
+          committed += committedByDivision[g.label] ? committedByDivision[g.label] / Math.max(1, nonContingencyLines.length) : (l.committed || 0);
         }
-        spent += spentByDivision[g.label] ? spentByDivision[g.label] / Math.max(1, g.lines.filter((x) => !x.isContingency).length) : (l.spent || 0);
       });
+      // Add group spent once (not per line)
+      spent += groupLevelSpent;
     });
     return { budget, committed, spent, variance: committed - spent };
-  }, [groupsWithCsi, committedByDivision, spentByDivision]);
+  }, [groupsWithCsi, committedByDivision, spentByLabel, groupLabelSet]);
 
   const handleExportCSV = () => {
     const rows = [['Group', 'CSI', 'Line Item', 'Budget', 'Committed', 'Spent', 'Variance']];
@@ -539,7 +553,11 @@ export function BudgetTab() {
         const committed = l.isContingency
           ? g.lines.filter((x) => !x.isContingency).reduce((s, x) => s + (x.budget || 0), 0) * (l.contingencyPct || 0) / 100
           : (committedByDivision[g.label] ? committedByDivision[g.label] / Math.max(1, g.lines.filter((x) => !x.isContingency).length) : (l.committed || 0));
-        const spent = spentByDivision[g.label] ? spentByDivision[g.label] / Math.max(1, g.lines.filter((x) => !x.isContingency).length) : (l.spent || 0);
+        const csiLabel = l.csi ? `${l.csi} — ${l.name}` : l.name;
+        const lineSpentFromCsi = spentByLabel[csiLabel] || (!groupLabelSet.has(l.name) ? (spentByLabel[l.name] || 0) : 0);
+        const nonContLinesCount = g.lines.filter((x) => !x.isContingency).length;
+        const grpLabelSpent = spentByLabel[g.label] || 0;
+        const spent = l.isContingency ? 0 : (lineSpentFromCsi > 0 ? lineSpentFromCsi : (grpLabelSpent / Math.max(1, nonContLinesCount)));
         rows.push([g.label, l.csi, l.name, l.budget, Math.round(committed), Math.round(spent), Math.round(committed - spent)]);
       });
     });
@@ -698,7 +716,15 @@ export function BudgetTab() {
               const groupBudget = group.lines.filter((l) => !l.isContingency).reduce((s, l) => s + (l.budget || 0), 0);
               const lineCount = group.lines.filter((l) => !l.isContingency).length;
               const groupCommitted = committedByDivision[group.label] || group.lines.filter((l) => !l.isContingency).reduce((s, l) => s + (l.committed || 0), 0);
-              const groupSpent = spentByDivision[group.label] || group.lines.filter((l) => !l.isContingency).reduce((s, l) => s + (l.spent || 0), 0);
+              // Group spent: prefer sum of CSI-matched line amounts; fall back to group-label total (once)
+              const nonContLines = group.lines.filter((l) => !l.isContingency);
+              const lineLevelGroupSpent = nonContLines.reduce((s, l) => {
+                const csiLbl = l.csi ? `${l.csi} — ${l.name}` : l.name;
+                return s + (spentByLabel[csiLbl] || (!groupLabelSet.has(l.name) ? (spentByLabel[l.name] || 0) : 0));
+              }, 0);
+              const groupSpent = lineLevelGroupSpent > 0
+                ? lineLevelGroupSpent
+                : (spentByLabel[group.label] || nonContLines.reduce((s, l) => s + (l.spent || 0), 0));
               const groupVariance = groupCommitted - groupSpent;
               const contingencyLines = group.lines.filter((l) => l.isContingency);
               const contingencyTotal = contingencyLines.reduce((s, l) => s + totalBudget * (l.contingencyPct || 0) / 100, 0);
@@ -755,15 +781,18 @@ export function BudgetTab() {
                   {/* Line item rows */}
                   {!group.collapsed && group.lines.map((line) => {
                     const contingencyAmt = line.isContingency ? totalBudget * (line.contingencyPct || 0) / 100 : 0;
+                    // Contingency lines: committed = $0 (no vendor bids), spent = $0
                     const lineCommitted = line.isContingency
-                      ? contingencyAmt
+                      ? 0
                       : (committedByDivision[group.label]
                         ? committedByDivision[group.label] / Math.max(1, lineCount)
                         : (line.committed || 0));
-                    const lineSpent = line.isContingency ? 0
-                      : (spentByDivision[group.label]
-                        ? spentByDivision[group.label] / Math.max(1, lineCount)
-                        : (line.spent || 0));
+                    // Spent: match by CSI label or exact line name only.
+                    // If the division is a group label (not a line label), show $0 on individual lines
+                    // — the group row already shows the group-label total.
+                    const lineCsiLabel = line.csi ? `${line.csi} — ${line.name}` : line.name;
+                    const lineSpentFromCsi = spentByLabel[lineCsiLabel] || (!groupLabelSet.has(line.name) ? (spentByLabel[line.name] || 0) : 0);
+                    const lineSpent = line.isContingency ? 0 : (lineSpentFromCsi || (line.spent || 0));
                     const lineVariance = lineCommitted - lineSpent;
                     const lineBudget = line.isContingency ? contingencyAmt : (line.budget || 0);
                     const lineProgressPct = lineBudget > 0 ? Math.min(100, Math.round(lineSpent / lineBudget * 100)) : 0;
