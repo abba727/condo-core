@@ -86,4 +86,8 @@
 - [x] Create DbBridgeProviders component that pre-loads DB data into localStorage before legacy store providers initialize
 - [x] Wire App.tsx to use DbBridgeProviders so all modules load from database on startup
 - [x] Write and pass 12 vitest integration tests covering database connectivity, budget groups/lines, expenses, vendors, and projects
-- [ ] Save checkpoint and push to GitHub
+- [x] Save checkpoint and push to GitHub
+
+# Bug Fix: Contingency Group Total
+
+- [x] Fix contingency group row total not reflecting contingency line items — changed base from groupBudget (which is $0 for a pure contingency group) to totalBudget, matching the line-level calculation

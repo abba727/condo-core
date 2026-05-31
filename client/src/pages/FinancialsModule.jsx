@@ -701,7 +701,7 @@ export function BudgetTab() {
               const groupSpent = spentByDivision[group.label] || group.lines.filter((l) => !l.isContingency).reduce((s, l) => s + (l.spent || 0), 0);
               const groupVariance = groupCommitted - groupSpent;
               const contingencyLines = group.lines.filter((l) => l.isContingency);
-              const contingencyTotal = contingencyLines.reduce((s, l) => s + groupBudget * (l.contingencyPct || 0) / 100, 0);
+              const contingencyTotal = contingencyLines.reduce((s, l) => s + totalBudget * (l.contingencyPct || 0) / 100, 0);
               const progressPct = groupBudget > 0 ? Math.min(100, Math.round(groupSpent / groupBudget * 100)) : 0;
               const isDraggingGroup = dragState?.type === 'group' && dragState?.id === group.id;
 
