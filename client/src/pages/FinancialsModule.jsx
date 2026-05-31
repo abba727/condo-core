@@ -29,6 +29,8 @@ import ReactDOM from 'react-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useVendorStore } from './VendorsModule.jsx';
+import { useBudgetDb } from '@/hooks/useBudgetDb';
+import { useExpensesDb } from '@/hooks/useExpensesDb';
 
 // ─── Shared UI helpers (mirrors CondoCore.jsx definitions) ───────────────────
 const FM_ICONS = {
@@ -189,149 +191,53 @@ const CATEGORY_TO_CSI = {
   'Soft Costs': 'gSC',
 };
 
-// ─── Budget Store ────────────────────────────────────────────────────────────
-const BUDGET_STORAGE_KEY = 'cc_budget_v2';
-const BUDGET_GROUPS_STORAGE_KEY = 'cc_budget_groups_v3';
-
-function loadBudgetFromStorage() {
-  try {
-    const raw = localStorage.getItem(BUDGET_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (_) {}
-  return null;
-}
-function loadGroupsFromStorage() {
-  try {
-    const raw = localStorage.getItem(BUDGET_GROUPS_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (_) {}
-  return null;
-}
-
-// Build initial budget groups from seed data
-function buildInitialBudget(seedBudget, expensesByCategory = {}) {
-  // Group seed rows by category
-  const grouped = {};
-  seedBudget.forEach((row) => {
-    const cat = row.Category || 'Uncategorized';
-    if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(row);
-  });
-
-  const groups = [];
-  let groupOrder = 0;
-  Object.entries(grouped).forEach(([cat, rows]) => {
-    const csiGroupId = CATEGORY_TO_CSI[cat] || 'g01';
-    const csiGroup = CSI_GROUPS.find((g) => g.id === csiGroupId) || CSI_GROUPS[0];
-    const groupId = `grp-${Date.now()}-${groupOrder++}`;
-    const lines = rows.map((row, li) => {
-      const budget = Number(row.Amount || 0);
-      const spent = expensesByCategory[cat] ? expensesByCategory[cat] / rows.length : 0;
-      return {
-        id: `line-${groupId}-${li}`,
-        csi: `${csiGroup.csi.replace(' 00 00', '')} ${String(li + 1).padStart(2, '0')} 00`,
-        name: row['Sub-Category'] || cat,
-        budget,
-        committed: row.Status && row.Status !== 'Open' ? budget : 0,
-        spent: Math.round(spent),
-        notes: '',
-        isContingency: false,
-        contingencyPct: 0,
-        order: li,
-      };
-    });
-    groups.push({
-      id: groupId,
-      csiGroupId,
-      label: cat,
-      csi: csiGroup.csi,
-      collapsed: false,
-      order: groupOrder,
-      lines,
-    });
-  });
-  return groups;
-}
-
+// ─── Budget Store (DB-backed via useBudgetDb) ────────────────────────────────
 const BudgetStoreCtx = React.createContext(null);
 
-export function BudgetStoreProvider({ children, seedBudget, expensesByCategory = {} }) {
-  const [groups, setGroups] = React.useState(() => {
-    const saved = loadGroupsFromStorage();
-    if (saved) return saved;
-    return buildInitialBudget(seedBudget, expensesByCategory);
-  });
+export function BudgetStoreProvider({ children }) {
+  const db = useBudgetDb();
 
-  // Persist on every change
-  React.useEffect(() => {
-    try { localStorage.setItem(BUDGET_GROUPS_STORAGE_KEY, JSON.stringify(groups)); } catch (_) {}
-  }, [groups]);
-
-  const addGroup = React.useCallback((group) => {
-    setGroups((prev) => [...prev, { ...group, id: `grp-${Date.now()}`, lines: [], order: prev.length }]);
-  }, []);
-
-  const updateGroup = React.useCallback((groupId, patch) => {
-    setGroups((prev) => prev.map((g) => g.id === groupId ? { ...g, ...patch } : g));
-  }, []);
-
-  const deleteGroup = React.useCallback((groupId) => {
-    setGroups((prev) => prev.filter((g) => g.id !== groupId));
-  }, []);
-
+  // Provide the same interface as the old localStorage-backed store
+  // All mutations go directly to the DB via tRPC
   const reorderGroups = React.useCallback((newOrder) => {
-    setGroups(newOrder);
-  }, []);
-
-  const addLine = React.useCallback((groupId, line) => {
-    setGroups((prev) => prev.map((g) => {
-      if (g.id !== groupId) return g;
-      const newLine = { ...line, id: `line-${Date.now()}`, order: g.lines.length };
-      return { ...g, lines: [...g.lines, newLine] };
-    }));
-  }, []);
-
-  const updateLine = React.useCallback((groupId, lineId, patch) => {
-    setGroups((prev) => prev.map((g) => {
-      if (g.id !== groupId) return g;
-      return { ...g, lines: g.lines.map((l) => l.id === lineId ? { ...l, ...patch } : l) };
-    }));
-  }, []);
-
-  const deleteLine = React.useCallback((groupId, lineId) => {
-    setGroups((prev) => prev.map((g) => {
-      if (g.id !== groupId) return g;
-      return { ...g, lines: g.lines.filter((l) => l.id !== lineId) };
-    }));
-  }, []);
+    // Reorder by updating sortOrder for each group
+    newOrder.forEach((g, i) => {
+      if (g.order !== i) db.updateGroup(g.id, { sortOrder: i });
+    });
+  }, [db]);
 
   const reorderLines = React.useCallback((groupId, newLines) => {
-    setGroups((prev) => prev.map((g) => g.id === groupId ? { ...g, lines: newLines } : g));
-  }, []);
-
-  // Auto-create a "Contingency" group if it doesn't exist, then add the line to it
-  const addContingencyLine = React.useCallback((line) => {
-    setGroups((prev) => {
-      const existing = prev.find((g) => g.isContingencyGroup);
-      if (existing) {
-        return prev.map((g) => {
-          if (g.id !== existing.id) return g;
-          const newLine = { ...line, id: `line-${Date.now()}`, order: g.lines.length, isContingency: true };
-          return { ...g, lines: [...g.lines, newLine] };
-        });
-      } else {
-        const newGroupId = `grp-contingency-${Date.now()}`;
-        const newLine = { ...line, id: `line-${Date.now()}`, order: 0, isContingency: true };
-        const newGroup = { id: newGroupId, label: 'Contingency', lines: [newLine], order: prev.length, isContingencyGroup: true, collapsed: false };
-        return [...prev, newGroup];
-      }
+    newLines.forEach((l, i) => {
+      if (l.order !== i) db.updateLine(groupId, l.id, { sortOrder: i });
     });
-  }, []);
+  }, [db]);
+
+  const addContingencyLine = React.useCallback((line) => {
+    // Find or use the contingency group
+    const contingencyGroup = db.groups.find((g) => g.isContingencyGroup);
+    if (contingencyGroup) {
+      db.addLine(contingencyGroup.id, { ...line, isContingency: true });
+    } else {
+      // Add to first group as fallback
+      if (db.groups.length > 0) {
+        db.addLine(db.groups[0].id, { ...line, isContingency: true });
+      }
+    }
+  }, [db]);
 
   return (
     <BudgetStoreCtx.Provider value={{
-      groups, addGroup, updateGroup, deleteGroup, reorderGroups,
-      addLine, updateLine, deleteLine, reorderLines, addContingencyLine,
+      groups: db.groups,
+      isLoading: db.isLoading,
+      addGroup: db.addGroup,
+      updateGroup: db.updateGroup,
+      deleteGroup: db.deleteGroup,
+      reorderGroups,
+      addLine: db.addLine,
+      updateLine: db.updateLine,
+      deleteLine: db.deleteLine,
+      reorderLines,
+      addContingencyLine,
     }}>
       {children}
     </BudgetStoreCtx.Provider>
@@ -1124,40 +1030,20 @@ function LineModal({ open, groupId, line, isContingency, group, groupOptions, on
   );
 }
 
-// ─── Expense Store (localStorage-backed) ────────────────────────────────────
-const EXP_STORAGE_KEY = 'cc_expenses_v3';
-
-function loadExpenses(seedExpenses) {
-  try {
-    const raw = localStorage.getItem(EXP_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (_) {}
-  return seedExpenses;
-}
-
+// ─── Expense Store (DB-backed via useExpensesDb) ────────────────────────────────
 const ExpenseStoreCtx2 = React.createContext(null);
 
-export function ExpenseStoreProvider2({ children, seedExpenses }) {
-  const [expenses, setExpenses] = React.useState(() => loadExpenses(seedExpenses));
-
-  React.useEffect(() => {
-    try { localStorage.setItem(EXP_STORAGE_KEY, JSON.stringify(expenses)); } catch (_) {}
-  }, [expenses]);
-
-  const addExpense = React.useCallback((exp) => {
-    setExpenses((prev) => [{ ...exp, id: `exp-${Date.now()}` }, ...prev]);
-  }, []);
-
-  const updateExpense = React.useCallback((id, patch) => {
-    setExpenses((prev) => prev.map((e) => e.id === id ? { ...e, ...patch } : e));
-  }, []);
-
-  const deleteExpense = React.useCallback((id) => {
-    setExpenses((prev) => prev.filter((e) => e.id !== id));
-  }, []);
+export function ExpenseStoreProvider2({ children }) {
+  const db = useExpensesDb();
 
   return (
-    <ExpenseStoreCtx2.Provider value={{ expenses, addExpense, updateExpense, deleteExpense }}>
+    <ExpenseStoreCtx2.Provider value={{
+      expenses: db.expenses,
+      isLoading: db.isLoading,
+      addExpense: db.addExpense,
+      updateExpense: db.updateExpense,
+      deleteExpense: db.deleteExpense,
+    }}>
       {children}
     </ExpenseStoreCtx2.Provider>
   );

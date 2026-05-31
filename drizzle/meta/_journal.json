@@ -29,6 +29,13 @@
       "when": 1780205777924,
       "tag": "0003_parched_power_man",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1780233209796,
+      "tag": "0004_modern_fat_cobra",
+      "breakpoints": true
     }
   ]
 }

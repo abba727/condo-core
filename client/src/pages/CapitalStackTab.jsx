@@ -1,5 +1,4 @@
 import React from 'react';
-import { getDataStore } from '@/data/dataStore';
 import { trpc } from '@/lib/trpc';
 /* global Icon, fmtUSD, Modal, Field, Input, Select, Textarea */
 
@@ -24,10 +23,14 @@ function getTierConfig(tier) {
   return TIER_CONFIG[tier] || TIER_CONFIG.other;
 }
 
-// ── Dollar formatter with comma separators ─────────────────────────────────────
+// ── Dollar formatter — compact display (e.g. $36.0M) for labels
 function fmtDollar(n) {
   if (!n && n !== 0) return "$0";
-  return "$" + Math.abs(Math.round(n)).toLocaleString("en-US");
+  const abs = Math.abs(Math.round(n));
+  if (abs >= 1e9) return `$${(abs / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `$${(abs / 1e6).toFixed(1)}M`;
+  if (abs >= 1e3) return `$${(abs / 1e3).toFixed(0)}K`;
+  return `$${abs.toLocaleString("en-US")}`;
 }
 
 // ── Fallback data ──────────────────────────────────────────────────────────────
@@ -538,33 +541,26 @@ const USE_CATEGORY_LABELS = {
 };
 const USE_CATEGORY_ORDER = ["land_acquisition", "hard_costs", "soft_costs", "financing_carry", "contingency"];
 
-/** Read budget groups from localStorage and sum line budgets per useCategory */
-function computeUsesFromBudget() {
-  try {
-    const raw = localStorage.getItem("cc_budget_groups_v3");
-    if (!raw) return null;
-    const groups = JSON.parse(raw);
-    if (!Array.isArray(groups) || groups.length === 0) return null;
-    const hasCategories = groups.some((g) => g.useCategory);
-    if (!hasCategories) return null;
-    const totals = {};
-    groups.forEach((g) => {
-      const cat = g.useCategory;
-      if (!cat) return;
-      const groupBudget = (g.lines || []).reduce((s, l) => s + (l.budget || 0), 0);
-      totals[cat] = (totals[cat] || 0) + groupBudget;
-    });
-    return totals;
-  } catch (_) {
-    return null;
-  }
+/** Compute uses totals from budget groups data (passed as prop from tRPC query) */
+function computeUsesFromBudget(groups) {
+  if (!Array.isArray(groups) || groups.length === 0) return null;
+  const hasCategories = groups.some((g) => g.useCategory);
+  if (!hasCategories) return null;
+  const totals = {};
+  groups.forEach((g) => {
+    const cat = g.useCategory;
+    if (!cat) return;
+    const groupBudget = (g.lines || []).reduce((s, l) => s + Number(l.budgetAmount ?? l.budget ?? 0), 0);
+    totals[cat] = (totals[cat] || 0) + groupBudget;
+  });
+  return totals;
 }
 
 // ── Sources & Uses panel ───────────────────────────────────────────────────────
-function SourcesUsesPanel({ tranches, total }) {
+function SourcesUsesPanel({ tranches, total, budgetGroups }) {
   const sourcesTotal = tranches.reduce((s, t) => s + t.amount, 0);
 
-  const liveTotals = computeUsesFromBudget();
+  const liveTotals = computeUsesFromBudget(budgetGroups || []);
   const usesData = liveTotals
     ? USE_CATEGORY_ORDER.map((cat) => ({
         label: USE_CATEGORY_LABELS[cat],
@@ -725,7 +721,7 @@ function buildTranchesFromDb(dbItems) {
       tier,
       label: item.label,
       lender: item.lender ?? "",
-      amount: item.amount ?? 0,
+      amount: Number(item.amount ?? 0),
       notes: item.notes ?? "",
       status: item.status ?? "proposed",
       participants: item.participants ?? [],
@@ -735,14 +731,20 @@ function buildTranchesFromDb(dbItems) {
 
 // ── Main CapitalStackTab ───────────────────────────────────────────────────────
 export function CapitalStackTab() {
-  const [tranches, setTranches] = React.useState(() => {
-    const ds = getDataStore();
-    if (ds.dbLoaded && ds.capitalStack && ds.capitalStack.length > 0) {
-      const fromDb = buildTranchesFromDb(ds.capitalStack);
-      if (fromDb && fromDb.length > 0) return fromDb;
+  // Load tranches from DB via tRPC
+  const capitalStackQuery = trpc.capitalStack.list.useQuery();
+  const budgetGroupsQuery = trpc.budget.listGroups.useQuery();
+  const budgetLinesQuery = trpc.budget.listLines.useQuery();
+
+  const [tranches, setTranches] = React.useState(FALLBACK_TRANCHES);
+
+  // Sync tranches from DB when query resolves
+  React.useEffect(() => {
+    if (capitalStackQuery.data && capitalStackQuery.data.length > 0) {
+      const fromDb = buildTranchesFromDb(capitalStackQuery.data);
+      if (fromDb && fromDb.length > 0) setTranches(fromDb);
     }
-    return FALLBACK_TRANCHES;
-  });
+  }, [capitalStackQuery.data]);
   const [expandedId, setExpandedId] = React.useState(4);
 
   // Tranche modal state
@@ -971,7 +973,14 @@ export function CapitalStackTab() {
 
       {/* ── Right: Sources & Uses + Equity Participants ── */}
       <div style={{ width: 280, flexShrink: 0 }}>
-        <SourcesUsesPanel tranches={tranches} total={total} />
+        <SourcesUsesPanel
+          tranches={tranches}
+          total={total}
+          budgetGroups={(budgetGroupsQuery.data ?? []).map((g) => ({
+            ...g,
+            lines: (budgetLinesQuery.data ?? []).filter((l) => l.groupId === g.id),
+          }))}
+        />
         <EquityParticipantsPanel tranches={tranches} total={total} />
       </div>
 

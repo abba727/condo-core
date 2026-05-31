@@ -1,47 +1,26 @@
 /**
  * DbBridgeProviders
  *
- * Ensures database data is loaded into localStorage AND the mutable dataStore
- * BEFORE the legacy CondoCore store providers initialize. This prevents stale
- * seed data from being shown on first render.
+ * Loads data for modules that still use the mutable dataStore singleton:
+ * - Plan tasks (PlanTab)
+ * - Contracts, Insurances, Permits (ComplianceTab)
+ * - Draws (DrawsTab)
  *
- * Strategy:
- * 1. Fetch all DB data via tRPC queries
- * 2. While loading, show a minimal loading indicator
- * 3. Once loaded:
- *    a. Write budget/expenses/vendors to localStorage (legacy stores read these)
- *    b. Write plan tasks, contracts, insurances, permits to dataStore singleton
- *       (CondoCore.jsx reads these on mount via getDataStore())
- * 4. Then render children (CondoCore) — all legacy stores will read fresh DB data
+ * Budget, Expenses, Vendors, and Capital Stack are now fully DB-backed via
+ * direct tRPC queries in their respective components — no localStorage bridge needed.
  *
- * On subsequent renders, mutations go through the legacy stores (localStorage)
- * AND are mirrored to the DB via the DbSync watcher components.
+ * Shows a loading spinner until all dataStore data is ready, then renders children.
  */
 import React, { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { useBudgetDb } from "@/hooks/useBudgetDb";
-import { useExpensesDb } from "@/hooks/useExpensesDb";
-import { useVendorsDb } from "@/hooks/useVendorsDb";
 import { setDataStore } from "@/data/dataStore";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRecord = Record<string, any>;
-const DRIGGS_712_PLAN_TASKS_FALLBACK: AnyRecord[] = [];
-const DRIGGS_712_CONTRACTS_FALLBACK: AnyRecord[] = [];
-const DRIGGS_712_INSURANCES_FALLBACK: AnyRecord[] = [];
-const DRIGGS_712_PERMITS_FALLBACK: AnyRecord[] = [];
-
-// Storage keys used by the legacy stores
-const BUDGET_GROUPS_STORAGE_KEY = "cc_budget_groups_v3";
-const EXP_STORAGE_KEY = "cc_expenses_v3";
-const STORAGE_KEY_VENDORS = "cc_vendors_v2";
-const STORAGE_KEY_PROJECT_IDS = "cc_project_vendor_ids_v2";
+const EMPTY: AnyRecord[] = [];
 
 function DbSyncGate({ children }: { children: React.ReactNode }) {
-  const budget = useBudgetDb();
-  const expenses = useExpensesDb();
-  const vendors = useVendorsDb();
-
-  // Fetch plan tasks, contracts, insurances, permits from DB
+  // Fetch plan tasks, contracts, insurances, permits, draws from DB
   const planTasksQuery = trpc.planTasks.list.useQuery(undefined, {
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -58,14 +37,6 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   });
-  const capitalStackQuery = trpc.capitalStack.list.useQuery(undefined, {
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-  });
-  const participantsQuery = trpc.capitalStack.listParticipants.useQuery(undefined, {
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-  });
   const drawsQuery = trpc.capitalStack.listDraws.useQuery(undefined, {
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -75,73 +46,15 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
   const syncedRef = React.useRef(false);
 
   const isLoading =
-    budget.isLoading ||
-    expenses.isLoading ||
-    vendors.isLoading ||
     planTasksQuery.isLoading ||
     contractsQuery.isLoading ||
     insurancesQuery.isLoading ||
     permitsQuery.isLoading ||
-    capitalStackQuery.isLoading ||
-    participantsQuery.isLoading ||
     drawsQuery.isLoading;
 
   useEffect(() => {
     if (isLoading) return;
-    if (syncedRef.current) return; // Only run once — never overwrite user changes
-
-    // ── Budget groups → localStorage ──────────────────────────────────────────
-    if (budget.groups.length > 0) {
-      const groups = budget.groups.map((g, gi) => {
-        const groupCsi = String(gi + 1).padStart(2, "0");
-        return {
-          id: g.id,
-          label: g.label,
-          csi: groupCsi,
-          csiGroupId: g.id,
-          collapsed: g.collapsed ?? false,
-          order: g.order ?? gi,
-          isContingencyGroup: g.isContingencyGroup ?? false,
-          useCategory: (g as { useCategory?: string }).useCategory ?? null,
-          lines: (g.lines ?? []).map((l, li) => ({
-            id: l.id,
-            name: l.name,
-            budget: l.budget ?? 0,
-            committed: l.committed ?? 0,
-            spent: 0,
-            notes: l.notes ?? "",
-            isContingency: l.isContingency ?? false,
-            contingencyPct: l.contingencyPct ?? 0,
-            status: l.status ?? "open",
-            order: l.order ?? li,
-            csi: l.isContingency
-              ? `${groupCsi}.C${String(li + 1).padStart(2, "0")}`
-              : `${groupCsi}.${String(li + 1).padStart(2, "0")}`,
-          })),
-        };
-      });
-      try {
-        localStorage.setItem(BUDGET_GROUPS_STORAGE_KEY, JSON.stringify(groups));
-      } catch (_) {}
-    }
-
-    // ── Expenses → localStorage ────────────────────────────────────────────────
-    if (expenses.expenses.length > 0) {
-      try {
-        localStorage.setItem(EXP_STORAGE_KEY, JSON.stringify(expenses.expenses));
-      } catch (_) {}
-    }
-
-    // ── Vendors → localStorage ─────────────────────────────────────────────────
-    if (vendors.vendors.length > 0) {
-      try {
-        localStorage.setItem(STORAGE_KEY_VENDORS, JSON.stringify(vendors.vendors));
-        localStorage.setItem(
-          STORAGE_KEY_PROJECT_IDS,
-          JSON.stringify(Array.from(vendors.projectVendorIds))
-        );
-      } catch (_) {}
-    }
+    if (syncedRef.current) return; // Only run once
 
     // ── Plan tasks → dataStore ─────────────────────────────────────────────────
     const dbTasks = planTasksQuery.data ?? [];
@@ -165,7 +78,7 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
           groupId: t.groupId ?? undefined,
           group: t.phase ?? undefined,
         }))
-      : DRIGGS_712_PLAN_TASKS_FALLBACK; // fallback (DB should always have data)
+      : EMPTY;
 
     // ── Contracts → dataStore ──────────────────────────────────────────────────
     const dbContracts = contractsQuery.data ?? [];
@@ -179,7 +92,7 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
           Notes: c.notes ?? "",
           _dbId: c.id,
         }))
-      : DRIGGS_712_CONTRACTS_FALLBACK;
+      : EMPTY;
 
     // ── Insurances → dataStore ─────────────────────────────────────────────────
     const dbInsurances = insurancesQuery.data ?? [];
@@ -198,7 +111,7 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
           Notes: ins.notes ?? "",
           _dbId: ins.id,
         }))
-      : DRIGGS_712_INSURANCES_FALLBACK;
+      : EMPTY;
 
     // ── Permits → dataStore ────────────────────────────────────────────────────
     const dbPermits = permitsQuery.data ?? [];
@@ -216,33 +129,9 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
           Notes: p.notes ?? "",
           _dbId: p.id,
         }))
-      : DRIGGS_712_PERMITS_FALLBACK;
-    // ── Capital stack → dataStore ─────────────────────────────────────────────────
-    const dbCapitalStack = capitalStackQuery.data ?? [];
-    const dbParticipants = participantsQuery.data ?? [];
-    const capitalStackForStore = dbCapitalStack.map((item) => ({
-      id: item.id,
-      tier: item.tier,
-      label: item.label,
-      lender: item.lender ?? "",
-      amount: parseFloat(String(item.amount ?? "0")),
-      interestRate: item.interestRate ?? null,
-      maturityDate: item.maturityDate ?? "",
-      ltc: item.ltc ?? null,
-      ltv: item.ltv ?? null,
-      status: item.status ?? "proposed",
-      sortOrder: item.sortOrder ?? 0,
-      notes: item.notes ?? "",
-      participants: dbParticipants
-        .filter((p) => p.trancheId === item.id)
-        .map((p) => ({
-          id: p.id,
-          name: p.name,
-          commitment: parseFloat(String(p.commitment ?? "0")),
-          role: p.role ?? "",
-          sortOrder: p.sortOrder ?? 0,
-        })),
-    }));   // ── Draws → dataStore ──────────────────────────────────────────────────────
+      : EMPTY;
+
+    // ── Draws → dataStore ──────────────────────────────────────────────────────
     const dbDraws = drawsQuery.data ?? [];
     const drawsForStore = dbDraws.map((d) => ({
       id: d.id,
@@ -259,13 +148,12 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
       notes: d.notes ?? "",
     }));
 
-    // Write all to the mutable dataStore — CondoCore reads this on mount
+    // Write to the mutable dataStore — legacy modules (Plan, Compliance, Draws) read this on mount
     setDataStore({
       planTasks: planTasksForStore,
       contracts: contractsForStore,
       insurances: insurancesForStore,
       permits: permitsForStore,
-      capitalStack: capitalStackForStore,
       draws: drawsForStore,
       dbLoaded: true,
     });
@@ -273,7 +161,7 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
     syncedRef.current = true;
     setReady(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading]); // Only re-run when loading state changes, NOT when data changes
+  }, [isLoading]);
 
   if (!ready) {
     return (

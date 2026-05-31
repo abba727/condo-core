@@ -1,6 +1,6 @@
 import { eq, asc, and } from "drizzle-orm";
 import { z } from "zod";
-import { vendors, vendorBids } from "../../drizzle/schema";
+import { vendors, vendorBids, vendorCois, vendorAuditLog } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 
@@ -36,6 +36,7 @@ export const vendorsRouter = router({
         category: z.string().optional(),
         status: z.enum(["active", "inactive", "pending"]).optional(),
         notes: z.string().optional(),
+        ein: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -55,8 +56,16 @@ export const vendorsRouter = router({
         category: input.category ?? null,
         status: input.status ?? "active",
         notes: input.notes ?? null,
+        ein: input.ein ?? null,
       });
-      return { id: Number(result[0].insertId) };
+      const id = Number(result[0].insertId);
+      // Audit log
+      await db.insert(vendorAuditLog).values({
+        vendorId: id,
+        action: "vendor_added",
+        detail: JSON.stringify({ name: input.companyName, trade: input.trade ?? "" }),
+      });
+      return { id };
     }),
 
   update: publicProcedure
@@ -74,6 +83,12 @@ export const vendorsRouter = router({
         category: z.string().optional(),
         status: z.enum(["active", "inactive", "pending"]).optional(),
         notes: z.string().optional(),
+        ein: z.string().optional(),
+        rating: z.number().optional(),
+        paid: z.number().optional(),
+        contractValue: z.number().optional(),
+        coiExpires: z.string().optional(),
+        coiOk: z.boolean().optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -82,11 +97,20 @@ export const vendorsRouter = router({
       const { id, ...rest } = input;
       const patch: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(rest)) {
-        if (v !== undefined) patch[k] = v;
+        if (v !== undefined) {
+          if (k === "paid" || k === "contractValue") patch[k] = String(v);
+          else patch[k] = v;
+        }
       }
       if (Object.keys(patch).length > 0) {
         await db.update(vendors).set(patch).where(eq(vendors.id, id));
       }
+      // Audit log
+      await db.insert(vendorAuditLog).values({
+        vendorId: id,
+        action: "vendor_edited",
+        detail: JSON.stringify({ changes: Object.keys(patch) }),
+      });
       return { success: true };
     }),
 
@@ -97,6 +121,74 @@ export const vendorsRouter = router({
       if (!db) throw new Error("Database not available");
       await db.delete(vendors).where(eq(vendors.id, input.id));
       return { success: true };
+    }),
+
+  archive: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db.update(vendors).set({ status: "inactive", archived: true, archivedAt: new Date() }).where(eq(vendors.id, input.id));
+      await db.insert(vendorAuditLog).values({
+        vendorId: input.id,
+        action: "vendor_archived",
+        detail: JSON.stringify({ archivedAt: new Date().toISOString() }),
+      });
+      return { success: true };
+    }),
+
+  restore: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db.update(vendors).set({ status: "active", archived: false, archivedAt: null }).where(eq(vendors.id, input.id));
+      await db.insert(vendorAuditLog).values({
+        vendorId: input.id,
+        action: "vendor_restored",
+        detail: JSON.stringify({}),
+      });
+      return { success: true };
+    }),
+
+  updateRating: publicProcedure
+    .input(z.object({ id: z.number(), rating: z.number().min(0).max(5) }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db.update(vendors).set({ rating: input.rating }).where(eq(vendors.id, input.id));
+      await db.insert(vendorAuditLog).values({
+        vendorId: input.id,
+        action: "rating_changed",
+        detail: JSON.stringify({ to: input.rating }),
+      });
+      return { success: true };
+    }),
+
+  addDocumentAudit: publicProcedure
+    .input(z.object({ id: z.number(), fileName: z.string() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db.insert(vendorAuditLog).values({
+        vendorId: input.id,
+        action: "document_uploaded",
+        detail: JSON.stringify({ name: input.fileName }),
+      });
+      return { success: true };
+    }),
+
+  // ─── Audit Log ─────────────────────────────────────────────────────────────
+  listAuditLog: publicProcedure
+    .input(z.object({ vendorId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select()
+        .from(vendorAuditLog)
+        .where(eq(vendorAuditLog.vendorId, input.vendorId))
+        .orderBy(asc(vendorAuditLog.createdAt));
     }),
 
   // ─── Bids ──────────────────────────────────────────────────────────────────
@@ -183,6 +275,97 @@ export const vendorsRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       await db.delete(vendorBids).where(eq(vendorBids.id, input.id));
+      return { success: true };
+    }),
+
+  // ─── COIs ──────────────────────────────────────────────────────────────────
+  listCois: publicProcedure
+    .input(z.object({ vendorId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select()
+        .from(vendorCois)
+        .where(eq(vendorCois.vendorId, input.vendorId))
+        .orderBy(asc(vendorCois.createdAt));
+    }),
+
+  addCoi: publicProcedure
+    .input(
+      z.object({
+        vendorId: z.number(),
+        type: z.string().optional(),
+        carrier: z.string().optional(),
+        policyNumber: z.string().optional(),
+        expires: z.string().optional(),
+        status: z.enum(["active", "expired", "expiring_soon"]).optional(),
+        notes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const result = await db.insert(vendorCois).values({
+        vendorId: input.vendorId,
+        type: input.type ?? null,
+        carrier: input.carrier ?? null,
+        policyNumber: input.policyNumber ?? null,
+        expires: input.expires ?? null,
+        status: input.status ?? "active",
+        notes: input.notes ?? null,
+      });
+      await db.insert(vendorAuditLog).values({
+        vendorId: input.vendorId,
+        action: "coi_added",
+        detail: JSON.stringify({ type: input.type, carrier: input.carrier, expires: input.expires }),
+      });
+      return { id: Number(result[0].insertId) };
+    }),
+
+  updateCoi: publicProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        vendorId: z.number(),
+        type: z.string().optional(),
+        carrier: z.string().optional(),
+        policyNumber: z.string().optional(),
+        expires: z.string().optional(),
+        status: z.enum(["active", "expired", "expiring_soon"]).optional(),
+        notes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const { id, vendorId, ...rest } = input;
+      const patch: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(rest)) {
+        if (v !== undefined) patch[k] = v;
+      }
+      if (Object.keys(patch).length > 0) {
+        await db.update(vendorCois).set(patch).where(eq(vendorCois.id, id));
+      }
+      await db.insert(vendorAuditLog).values({
+        vendorId,
+        action: "coi_updated",
+        detail: JSON.stringify({ id }),
+      });
+      return { success: true };
+    }),
+
+  deleteCoi: publicProcedure
+    .input(z.object({ id: z.number(), vendorId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db.delete(vendorCois).where(eq(vendorCois.id, input.id));
+      await db.insert(vendorAuditLog).values({
+        vendorId: input.vendorId,
+        action: "coi_deleted",
+        detail: JSON.stringify({ id: input.id }),
+      });
       return { success: true };
     }),
 });

@@ -76,6 +76,14 @@ export const vendors = mysqlTable("vendors", {
   category: varchar("category", { length: 128 }),
   status: mysqlEnum("status", ["active", "inactive", "pending"]).default("active").notNull(),
   notes: text("notes"),
+  ein: varchar("ein", { length: 32 }),
+  rating: int("rating").default(0),
+  paid: decimal("paid", { precision: 15, scale: 2 }).default("0"),
+  contractValue: decimal("contractValue", { precision: 15, scale: 2 }).default("0"),
+  coiExpires: varchar("coiExpires", { length: 64 }).default("Not tracked"),
+  coiOk: boolean("coiOk").default(true),
+  archived: boolean("archived").default(false),
+  archivedAt: timestamp("archivedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => [
@@ -109,6 +117,43 @@ export const vendorBids = mysqlTable("vendor_bids", {
 
 export type VendorBid = typeof vendorBids.$inferSelect;
 export type InsertVendorBid = typeof vendorBids.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VENDOR COIS
+// ─────────────────────────────────────────────────────────────────────────────
+export const vendorCois = mysqlTable("vendor_cois", {
+  id: int("id").autoincrement().primaryKey(),
+  vendorId: int("vendorId").notNull(),
+  type: varchar("type", { length: 128 }),
+  carrier: varchar("carrier", { length: 255 }),
+  policyNumber: varchar("policyNumber", { length: 128 }),
+  expires: varchar("expires", { length: 32 }),
+  status: mysqlEnum("status", ["active", "expired", "expiring_soon"]).default("active").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => [
+  index("cois_vendor_idx").on(t.vendorId),
+]);
+
+export type VendorCoi = typeof vendorCois.$inferSelect;
+export type InsertVendorCoi = typeof vendorCois.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VENDOR AUDIT LOG
+// ─────────────────────────────────────────────────────────────────────────────
+export const vendorAuditLog = mysqlTable("vendor_audit_log", {
+  id: int("id").autoincrement().primaryKey(),
+  vendorId: int("vendorId").notNull(),
+  action: varchar("action", { length: 64 }).notNull(),
+  detail: text("detail"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => [
+  index("audit_vendor_idx").on(t.vendorId),
+]);
+
+export type VendorAuditEntry = typeof vendorAuditLog.$inferSelect;
+export type InsertVendorAuditEntry = typeof vendorAuditLog.$inferInsert;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTRACTS

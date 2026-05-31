@@ -6,9 +6,6 @@
 import React from 'react';
 import './condocore.css';
 import { getDataStore } from '../data/dataStore';
-import { BudgetDbSync } from '../components/BudgetDbSync';
-import { VendorDbSync } from '../components/VendorDbSync';
-import { ExpenseDbSync } from '../components/ExpenseDbSync';
 import { PlanTaskDbSync } from '../components/PlanTaskDbSync';
 import { CapitalStackTab } from './CapitalStackTab.jsx';
 import {
@@ -44,24 +41,7 @@ import {
 /* global React */
 const { useState, useEffect, useRef, useMemo, useCallback } = React;
 
-// Bridge component: reads the budget store and syncs changes to the DB
-function BudgetDbSyncBridge() {
-  const store = useBudgetStore();
-  if (!store) return null;
-  return <BudgetDbSync groups={store.groups} />;
-};
-// Bridge component: reads the expense store and syncs changes to the DB
-function ExpenseDbSyncBridge() {
-  const store = useExpenseStore2();
-  if (!store) return null;
-  return <ExpenseDbSync expenses={store.expenses} />;
-};
-// Bridge component: reads the vendor store and syncs changes to the DB
-function VendorDbSyncBridge() {
-  const store = useVendorStore();
-  if (!store) return null;
-  return <VendorDbSync vendors={store.vendors} />;
-};
+
 
 // ============ ICONS (lucide-style, 16px default) ============
 export const Icon = ({ name, size = 16, stroke = 1.6, ...rest }) => {
@@ -4460,11 +4440,8 @@ function CondoCoreApp() {
   return (
     <ExpenseStoreProvider>
     <BudgetStoreProvider seedBudget={DRIGGS_712_BUDGET}>
-    <BudgetDbSyncBridge />
     <ExpenseStoreProvider2 seedExpenses={INITIAL_EXPENSES}>
-    <ExpenseDbSyncBridge />
     <VendorStoreProvider>
-    <VendorDbSyncBridge />
     <div className="condocore-root app-shell">
       <Rail active={route} onNav={handleNav} project={PROJECTS[0]} onProjectSwitch={() => {}} />
       <main className="main">

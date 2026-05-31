@@ -181,3 +181,37 @@
 - [x] Add edit & delete buttons to each participant row (edit opens pre-filled AddParticipantModal, delete removes from list)
 - [x] Remove grey background on expanded participant section (only hover highlight on individual rows)
 - [x] Use comma-separated dollar amounts throughout CapitalStackTab (no compact abbreviation for amounts in participant table and Sources & Uses)
+
+# Revert Comma Formatting on Display Labels
+- [ ] Revert comma-separated amounts on display labels in CapitalStackTab (keep compact $4.2M format for labels)
+- [ ] Keep comma formatting only for input fields in modals (commitment inputs)
+
+# Full DB Migration — Remove localStorage
+- [ ] Audit all localStorage keys used across the app
+- [ ] Migrate capital stack tranches to DB (add/edit/delete via tRPC)
+- [ ] Migrate draws to DB (add/edit/delete via tRPC)
+- [ ] Migrate stacking plan units to DB (add/edit/delete via tRPC)
+- [ ] Migrate budget groups/lines to direct tRPC reads (no localStorage bridge)
+- [ ] Migrate expenses to direct tRPC reads (no localStorage bridge)
+- [ ] Migrate vendors to direct tRPC reads (no localStorage bridge)
+- [ ] Migrate plan tasks to direct tRPC reads (no localStorage bridge)
+- [ ] Remove DbBridgeProviders localStorage bridge entirely
+- [ ] Remove all BudgetStoreProvider/VendorStoreProvider/ExpenseStoreProvider localStorage sync
+- [ ] All components read directly from tRPC useQuery hooks
+
+# Revert Comma Formatting on Display Labels + Full DB Migration
+- [x] Revert fmtDollar on display labels in CapitalStackTab (use compact $36.0M format, not comma-separated)
+- [x] Keep comma formatting only for modal input fields
+- [x] Replace BudgetStoreProvider localStorage logic with useDbBudget() hook (direct DB)
+- [x] Replace ExpenseStoreProvider2 localStorage logic with useExpensesDb() hook (direct DB)
+- [x] Replace VendorStoreProvider localStorage logic with useVendorsDb() hook (direct DB)
+- [x] Add missing vendor DB columns (rating, paid, contractValue, ein, coiExpires, coiOk, archived, archivedAt)
+- [x] Create vendor_cois and vendor_audit_log tables in DB schema
+- [x] Update vendors router with COI, audit log, rating, archive procedures
+- [x] Update useVendorsDb with all missing methods wired to DB mutations
+- [x] Replace CapitalStackTab getDataStore() with direct tRPC queries for tranches
+- [x] Fix buildTranchesFromDb to coerce amount to Number (was NaN from MySQL decimal string)
+- [x] Fix computeUsesFromBudget to use budgetAmount field from budget router
+- [x] Remove localStorage writes from DbBridgeProviders (budget/expenses/vendors/capital stack)
+- [x] Remove legacy DB sync bridges from CondoCore.jsx render tree
+- [x] All 30 vitest tests pass

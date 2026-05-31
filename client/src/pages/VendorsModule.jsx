@@ -11,6 +11,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { CSI_GROUPS, useBudgetStore } from './FinancialsModule.jsx';
+import { useVendorsDb } from '../hooks/useVendorsDb';
 import {
   DRIGGS_712_CONTRACTS,
   DRIGGS_712_EXPENSES,
@@ -281,8 +282,7 @@ function buildVendorTransactions(vendorName) {
 // Vendor Store (React Context for shared mutable state)
 // ============================================================
 const VendorStoreCtx = React.createContext(null);
-const STORAGE_KEY_VENDORS = 'cc_vendors_v2';
-const STORAGE_KEY_PROJECT_IDS = 'cc_project_vendor_ids_v2';
+// Storage keys removed — data is now fully DB-backed via useVendorsDb
 // Fields that are meaningful to show in the audit log when changed
 const AUDITABLE_FIELDS = [
   'name', 'trade', 'role', 'status', 'contact', 'email', 'phone',
@@ -297,231 +297,26 @@ const FIELD_LABELS = {
   coiExpires: 'COI expiry', coiOk: 'COI status',
   division: 'Division', defaultDivision: 'Default division',
 };
-function loadVendors() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_VENDORS);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch (_) {}
-  return SEED_VENDORS;
-}
-function loadProjectIds() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_PROJECT_IDS);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return new Set(parsed);
-    }
-  } catch (_) {}
-  return new Set(SEED_VENDORS.map((v) => v.id));
-}
 export function VendorStoreProvider({ children }) {
-  const [vendors, setVendors] = React.useState(() => loadVendors());
-  const [projectVendorIds, setProjectVendorIds] = React.useState(() => loadProjectIds());
-  // Persist vendors to localStorage whenever they change
-  React.useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY_VENDORS, JSON.stringify(vendors)); } catch (_) {}
-  }, [vendors]);
-  // Persist projectVendorIds to localStorage whenever they change
-  React.useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY_PROJECT_IDS, JSON.stringify([...projectVendorIds])); } catch (_) {}
-  }, [projectVendorIds]);
-
-  const addVendor = React.useCallback((data) => {
-    const newV = {
-      id: `v-new-${Date.now()}`,
-      name: data.name || 'New Vendor',
-      role: data.role || 'Project contact',
-      trade: data.trade || 'Consulting',
-      status: 'Active',
-      rating: 0,
-      contracts: 0,
-      paid: 0,
-      contractValue: 0,
-      contact: data.contact || '—',
-      email: data.email || '',
-      phone: data.phone || '',
-      address: data.address || '',
-      ein: data.ein || '',
-      notes: data.notes || '',
-      coiExpires: 'Not tracked',
-      coiOk: true,
-      init: vendorInitials(data.name || 'NV'),
-      color: vendors.length % 7,
-      rawSources: [],
-      projectIds: data.assignToProject ? ['driggs-712'] : [],
-      bids: [],
-      cois: [],
-      auditLog: [makeAuditEntry('vendor_added', { name: data.name || 'New Vendor', trade: data.trade || 'Consulting' })],
-    };
-    setVendors((prev) => [newV, ...prev]);
-    if (data.assignToProject) {
-      setProjectVendorIds((prev) => new Set([...prev, newV.id]));
-    }
-    return newV;
-  }, [vendors.length]);
-
-  const updateVendor = React.useCallback((id, patch) => {
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== id) return v;
-      // Build a before/after diff for auditable fields only
-      const changes = Object.keys(patch)
-        .filter((k) => AUDITABLE_FIELDS.includes(k) && String(v[k] ?? '') !== String(patch[k] ?? ''))
-        .map((k) => ({
-          field: k,
-          label: FIELD_LABELS[k] || k,
-          from: v[k] ?? '',
-          to: patch[k] ?? '',
-        }));
-      const entry = makeAuditEntry('vendor_edited', { changes });
-      return { ...v, ...patch, auditLog: [...(v.auditLog || []), entry] };
-    }));
-  }, []);
-
-  const updateRating = React.useCallback((vendorId, rating) => {
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== vendorId) return v;
-      const entry = makeAuditEntry('rating_changed', { from: v.rating || 0, to: rating });
-      return { ...v, rating, auditLog: [...(v.auditLog || []), entry] };
-    }));
-  }, []);
-
-  const addVendorTransaction = React.useCallback((vendorId, txn) => {
-    // Add to vendor's local transaction list
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== vendorId) return v;
-      const entry = makeAuditEntry('transaction_added', { amount: txn.amount, memo: txn.memo, type: txn.type });
-      return { ...v, vendorTxns: [...(v.vendorTxns || []), { id: `vtxn-${Date.now()}`, ...txn }], auditLog: [...(v.auditLog || []), entry] };
-    }));
-    // Also push to shared expense store if available
-    const expStore = typeof window !== 'undefined' && window.useExpenseStore ? window.useExpenseStore() : null;
-    if (expStore) {
-      expStore.addExpense({
-        id: `e-vtxn-${Date.now()}`,
-        date: txn.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        desc: txn.memo || 'Vendor payment',
-        vendor: txn.vendorName || '',
-        division: txn.division || 'Uncategorized',
-        amount: txn.amount || 0,
-        status: txn.status || 'Paid',
-        invoice: txn.invoice || `VTX-${Date.now()}`,
-        method: txn.method || 'Wire',
-        balance: 0,
-      });
-    }
-  }, []);
-
-  const toggleProjectAssignment = React.useCallback((vendorId) => {
-    setProjectVendorIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(vendorId)) next.delete(vendorId);
-      else next.add(vendorId);
-      return next;
-    });
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== vendorId) return v;
-      const assigned = v.projectIds.includes('driggs-712');
-      return {
-        ...v,
-        projectIds: assigned
-          ? v.projectIds.filter((p) => p !== 'driggs-712')
-          : [...v.projectIds, 'driggs-712'],
-      };
-    }));
-  }, []);
-
-  const addBid = React.useCallback((vendorId, bid) => {
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== vendorId) return v;
-      const entry = makeAuditEntry('bid_added', { scope: bid.scope, amount: bid.amount, status: bid.status });
-      return { ...v, bids: [...v.bids, { id: `bid-${Date.now()}`, ...bid }], auditLog: [...(v.auditLog || []), entry] };
-    }));
-  }, []);
-  const updateBid = React.useCallback((vendorId, bidId, patch) => {
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== vendorId) return v;
-      const existing = v.bids.find((b) => b.id === bidId);
-      const entry = makeAuditEntry('bid_updated', { scope: existing?.scope || bidId, status: patch.status || existing?.status });
-      return { ...v, bids: v.bids.map((b) => b.id === bidId ? { ...b, ...patch } : b), auditLog: [...(v.auditLog || []), entry] };
-    }));
-  }, []);
-  const deleteBid = React.useCallback((vendorId, bidId) => {
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== vendorId) return v;
-      const existing = v.bids.find((b) => b.id === bidId);
-      const entry = makeAuditEntry('bid_deleted', { scope: existing?.scope || bidId });
-      return { ...v, bids: v.bids.filter((b) => b.id !== bidId), auditLog: [...(v.auditLog || []), entry] };
-    }));
-  }, []);
-  const addCoi = React.useCallback((vendorId, coi) => {
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== vendorId) return v;
-      const entry = makeAuditEntry('coi_added', { type: coi.type, carrier: coi.carrier, expires: coi.expires });
-      return { ...v, cois: [...v.cois, { id: `coi-${Date.now()}`, ...coi }], auditLog: [...(v.auditLog || []), entry] };
-    }));
-  }, []);
-  const updateCoi = React.useCallback((vendorId, coiId, patch) => {
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== vendorId) return v;
-      const existing = v.cois.find((c) => c.id === coiId);
-      const entry = makeAuditEntry('coi_updated', { type: existing?.type || coiId, status: patch.status || existing?.status });
-      return { ...v, cois: v.cois.map((c) => c.id === coiId ? { ...c, ...patch } : c), auditLog: [...(v.auditLog || []), entry] };
-    }));
-  }, []);
-  const deleteCoi = React.useCallback((vendorId, coiId) => {
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== vendorId) return v;
-      const existing = v.cois.find((c) => c.id === coiId);
-      const entry = makeAuditEntry('coi_deleted', { type: existing?.type || coiId });
-      return { ...v, cois: v.cois.filter((c) => c.id !== coiId), auditLog: [...(v.auditLog || []), entry] };
-    }));
-  }, []);
-
-  // Soft-delete: marks vendor as archived, preserving all linked data
-  const archiveVendor = React.useCallback((vendorId) => {
-    const archivedAt = new Date().toISOString();
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== vendorId) return v;
-      const entry = makeAuditEntry('vendor_archived', { archivedAt });
-      return { ...v, archived: true, archivedAt, auditLog: [...(v.auditLog || []), entry] };
-    }));
-  }, []);
-   // Restore a previously archived vendor
-  const restoreVendor = React.useCallback((vendorId) => {
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== vendorId) return v;
-      const entry = makeAuditEntry('vendor_restored', {});
-      return { ...v, archived: false, archivedAt: null, auditLog: [...(v.auditLog || []), entry] };
-    }));
-  }, []);
-  // Log a document upload event to the audit trail
-  const addDocumentAudit = React.useCallback((vendorId, fileName) => {
-    setVendors((prev) => prev.map((v) => {
-      if (v.id !== vendorId) return v;
-      const entry = makeAuditEntry('document_uploaded', { name: fileName });
-      return { ...v, auditLog: [...(v.auditLog || []), entry] };
-    }));
-  }, []);
+  const db = useVendorsDb();
   return (
     <VendorStoreCtx.Provider value={{
-      vendors,
-      projectVendorIds,
-      addVendor,
-      updateVendor,
-      updateRating,
-      addVendorTransaction,
-      toggleProjectAssignment,
-      addBid,
-      updateBid,
-      deleteBid,
-      addCoi,
-      updateCoi,
-      deleteCoi,
-      archiveVendor,
-      restoreVendor,
-      addDocumentAudit,
+      vendors: db.vendors,
+      projectVendorIds: db.projectVendorIds,
+      addVendor: db.addVendor,
+      updateVendor: db.updateVendor,
+      updateRating: db.updateRating,
+      addVendorTransaction: db.addVendorTransaction,
+      toggleProjectAssignment: db.toggleProjectAssignment,
+      addBid: db.addBid,
+      updateBid: db.updateBid,
+      deleteBid: db.deleteBid,
+      addCoi: db.addCoi,
+      updateCoi: db.updateCoi,
+      deleteCoi: db.deleteCoi,
+      archiveVendor: db.archiveVendor,
+      restoreVendor: db.restoreVendor,
+      addDocumentAudit: db.addDocumentAudit,
     }}>
       {children}
     </VendorStoreCtx.Provider>
