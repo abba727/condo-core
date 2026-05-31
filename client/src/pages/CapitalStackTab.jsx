@@ -142,7 +142,8 @@ function TrancheModal({ open, onClose, onSave, onDelete, existing }) {
 
   React.useEffect(() => {
     if (open) {
-      setConfirmDelete(false);
+      // If opened via the trash icon, jump straight to delete confirmation
+      setConfirmDelete(!!(existing && existing._deleteIntent));
       if (existing) {
         setForm({
           tier: existing.tier,
@@ -366,11 +367,11 @@ function ParticipantRow({ p, cfg, tranche, total, onEdit }) {
       <div style={{ textAlign: "right", fontWeight: 500, color: "var(--text)" }}>
         {pctTotal.toFixed(1)}%
       </div>
-      {/* Edit button — visible on hover */}
-      <div style={{ display: "flex", justifyContent: "center", gap: 2 }}>
+      {/* Edit button — muted at rest, full opacity on hover */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 2, opacity: hovered ? 1 : 0.35, transition: "opacity 0.15s" }}>
         <button
           className="btn btn-ghost btn-sm"
-          style={{ padding: "2px 5px", opacity: hovered ? 1 : 0, transition: "opacity 0.12s" }}
+          style={{ padding: "2px 5px" }}
           title="Edit participant"
           onClick={(e) => { e.stopPropagation(); onEdit(p); }}
         >
@@ -448,15 +449,25 @@ function TrancheRow({ tranche, total, expanded, onToggle, onAddParticipant, onEd
           </div>
         </div>
 
-        {/* Edit button — visible on row hover */}
-        <button
-          className="btn btn-ghost btn-sm"
-          style={{ padding: "4px 6px", opacity: rowHovered ? 1 : 0, transition: "opacity 0.12s", flexShrink: 0 }}
-          title="Edit tranche"
-          onClick={(e) => { e.stopPropagation(); onEditTranche(tranche); }}
-        >
-          <Icon name="edit-2" size={13} />
-        </button>
+        {/* Edit + Delete buttons — always visible, slightly muted at rest */}
+        <div style={{ display: "flex", gap: 4, flexShrink: 0, opacity: rowHovered ? 1 : 0.35, transition: "opacity 0.15s" }}>
+          <button
+            className="btn btn-ghost btn-sm"
+            style={{ padding: "4px 6px" }}
+            title="Edit tranche"
+            onClick={(e) => { e.stopPropagation(); onEditTranche(tranche); }}
+          >
+            <Icon name="edit-2" size={13} />
+          </button>
+          <button
+            className="btn btn-ghost btn-sm"
+            style={{ padding: "4px 6px", color: "var(--signal-neg)" }}
+            title="Delete tranche"
+            onClick={(e) => { e.stopPropagation(); onEditTranche({ ...tranche, _deleteIntent: true }); }}
+          >
+            <Icon name="trash-2" size={13} />
+          </button>
+        </div>
       </div>
 
       {/* Expanded participants sub-table — no grey background, just transparent */}
