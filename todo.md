@@ -172,3 +172,6 @@
 - [x] Add useCategory to useBudgetDb groups mapping (was missing from rawGroups.map)
 - [x] Fix DbBridgeProviders render gate: change `if (isLoading && !ready)` to `if (!ready)` so children only render after localStorage is written
 - [x] Bump budget groups storage key to v3 to force fresh DB load with useCategory
+
+# Budget Group Use Category Label
+- [x] Show use category in small uppercase text beneath each group name in the budget table

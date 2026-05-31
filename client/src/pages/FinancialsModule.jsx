@@ -59,6 +59,14 @@ const Icon = ({ name, size = 16, stroke = 1.6, ...rest }) => {
   );
 };
 
+const USE_CATEGORY_OPTIONS = [
+  { value: 'land_acquisition', label: 'Land acquisition' },
+  { value: 'hard_costs',       label: 'Hard costs' },
+  { value: 'soft_costs',       label: 'Soft costs' },
+  { value: 'financing_carry',  label: 'Financing & carry' },
+  { value: 'contingency',      label: 'Contingency' },
+];
+
 const fmtUSD = (n, opts = {}) => {
   const { compact = false, decimals = 0, sign = false } = opts;
   const prefix = sign && n > 0 ? '+' : n < 0 ? '\u2212' : '';
@@ -755,7 +763,16 @@ export function BudgetTab() {
                         <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>{group.csi}</span>
                       </div>
                     </td>
-                    <td style={{ fontWeight: 700, fontSize: 13 }}>{group.label}</td>
+                    <td style={{ fontWeight: 700, fontSize: 13 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <span>{group.label}</span>
+                        {group.useCategory && (
+                          <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--text-faint)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                            {USE_CATEGORY_OPTIONS.find(o => o.value === group.useCategory)?.label ?? group.useCategory}
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="num mono" style={{ fontWeight: 700, fontSize: 13 }}>{fmtUSD(groupBudget + contingencyTotal, { compact: true })}</td>
                     <td className="num mono" style={{ fontWeight: 700, fontSize: 13 }}>{fmtUSD(groupCommitted, { compact: true })}</td>
                     <td className="num mono" style={{ fontWeight: 700, fontSize: 13 }}>{fmtUSD(groupSpent, { compact: true })}</td>
@@ -942,14 +959,6 @@ export function BudgetTab() {
 }
 
 // ─── Group Modal ─────────────────────────────────────────────────────────────
-const USE_CATEGORY_OPTIONS = [
-  { value: 'land_acquisition', label: 'Land acquisition' },
-  { value: 'hard_costs',       label: 'Hard costs' },
-  { value: 'soft_costs',       label: 'Soft costs' },
-  { value: 'financing_carry',  label: 'Financing & carry' },
-  { value: 'contingency',      label: 'Contingency' },
-];
-
 function GroupModal({ open, group, onClose, onSave, onDelete }) {
   const [form, setForm] = React.useState({});
   const [confirmDelete, setConfirmDelete] = React.useState(false);
