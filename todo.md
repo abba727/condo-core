@@ -6,8 +6,8 @@
 - [x] Seed the app with a project named **712 Driggs** and align the project selector, sidebar counts, dashboard references, and plan route to that project. Financial and vendor pages now also use workbook budget, ledger, contract, insurance, permit, team, and directory records where those sheets are present.
 - [x] Replace the Project Plan page’s prior mock task list with tracker-derived tasks while preserving the existing visual design system.
 - [x] Make Project Plan controls functional, including view switching, status filtering, owner filtering, search, and timeline/list/Kanban behavior where supported by the available tracker fields.
-- [ ] Run a production build and verify the Project Plan route in the browser.
-- [ ] Save a checkpoint and deliver the updated web app version to the user.
+- [x] Run a production build and verify the Project Plan route in the browser.
+- [x] Save a checkpoint and deliver the updated web app version to the user.
 
 # Project Plan Functional Planner Upgrade
 
@@ -91,3 +91,10 @@
 # Bug Fix: Contingency Group Total
 
 - [x] Fix contingency group row total not reflecting contingency line items — changed base from groupBudget (which is $0 for a pure contingency group) to totalBudget, matching the line-level calculation
+
+# Expense Modal Improvements
+
+- [x] Add required field validation (Date, Amount, Vendor, Division/Category)
+- [x] Replace flat Division/Category dropdown with grouped CSI budget picker
+- [x] Group headers are non-selectable, line items are selectable with CSI prefix
+- [x] Search/filter within the grouped CSI picker

@@ -1372,7 +1372,7 @@ export function ExpensesTab({ seedExpenses }) {
           open={!!expModal}
           expense={expModal === 'new' ? null : expModal}
           vendorOptions={vendorOptions}
-          divisionOptions={allDivisions}
+          budgetGroups={budgetStore?.groups || []}
           onClose={() => setExpModal(null)}
           onSave={(exp) => {
             if (exp.id) store?.updateExpense(exp.id, exp);
@@ -1386,12 +1386,182 @@ export function ExpensesTab({ seedExpenses }) {
   );
 }
 
+// ─── Grouped Budget Select ───────────────────────────────────────────────────
+// Renders budget groups as non-selectable headers and line items as selectable
+// options with their CSI number prefix. Supports search filtering.
+function GroupedBudgetSelect({ value, onChange, budgetGroups, placeholder = 'Select line item…', style, error }) {
+  const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState('');
+  const ref = React.useRef(null);
+  const inputRef = React.useRef(null);
+  const dropdownRef = React.useRef(null);
+
+  // Build flat list of all selectable line items with their CSI labels
+  const allItems = React.useMemo(() => {
+    const items = [];
+    (budgetGroups || []).forEach((g) => {
+      (g.lines || []).forEach((l) => {
+        const csiLabel = l.csi ? `${l.csi} — ${l.name}` : l.name;
+        items.push({ groupId: g.id, groupLabel: g.label, groupCsi: g.csi, value: csiLabel, label: csiLabel, lineName: l.name, csi: l.csi });
+      });
+    });
+    return items;
+  }, [budgetGroups]);
+
+  const selected = allItems.find((i) => i.value === value);
+
+  // Filtered groups for dropdown — only show groups that have matching lines
+  const filteredGroups = React.useMemo(() => {
+    if (!query.trim()) return budgetGroups || [];
+    const q = query.toLowerCase();
+    return (budgetGroups || []).map((g) => ({
+      ...g,
+      lines: (g.lines || []).filter((l) => {
+        const csiLabel = l.csi ? `${l.csi} — ${l.name}` : l.name;
+        return csiLabel.toLowerCase().includes(q) || (l.csi || '').toLowerCase().includes(q) || (l.name || '').toLowerCase().includes(q) || (g.label || '').toLowerCase().includes(q);
+      }),
+    })).filter((g) => g.lines.length > 0);
+  }, [budgetGroups, query]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      const inAnchor = ref.current && ref.current.contains(e.target);
+      const inDropdown = dropdownRef.current && dropdownRef.current.contains(e.target);
+      if (!inAnchor && !inDropdown) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  React.useEffect(() => {
+    if (open && inputRef.current) inputRef.current.focus();
+  }, [open]);
+
+  const handleSelect = (val) => { onChange(val); setOpen(false); setQuery(''); };
+
+  return (
+    <div ref={ref} style={{ position: 'relative', ...style }}>
+      <button
+        type="button"
+        className="select"
+        style={{
+          width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          borderColor: error ? 'var(--signal-neg)' : undefined,
+        }}
+        onClick={() => { setOpen((v) => !v); setQuery(''); }}
+      >
+        <span style={{ color: selected ? 'var(--text)' : 'var(--text-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13 }}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <Icon name="chevronDown" size={11} style={{ flexShrink: 0, marginLeft: 6, color: 'var(--text-muted)' }} />
+      </button>
+      {open && ReactDOM.createPortal(
+        <GroupedBudgetDropdown
+          anchor={ref.current}
+          query={query}
+          onQuery={setQuery}
+          filteredGroups={filteredGroups}
+          onSelect={handleSelect}
+          selectedValue={value}
+          inputRef={inputRef}
+          dropdownRef={dropdownRef}
+        />,
+        document.body
+      )}
+    </div>
+  );
+}
+
+function GroupedBudgetDropdown({ anchor, query, onQuery, filteredGroups, onSelect, selectedValue, inputRef, dropdownRef }) {
+  const [rect, setRect] = React.useState(null);
+  React.useEffect(() => {
+    if (!anchor) return;
+    const update = () => setRect(anchor.getBoundingClientRect());
+    update();
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => { window.removeEventListener('scroll', update, true); window.removeEventListener('resize', update); };
+  }, [anchor]);
+  if (!rect) return null;
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const dropUp = spaceBelow < 300 && rect.top > 300;
+  const top = dropUp ? undefined : rect.bottom + 4;
+  const bottom = dropUp ? window.innerHeight - rect.top + 4 : undefined;
+  const left = rect.left;
+  const width = Math.max(rect.width, 320);
+
+  return (
+    <div ref={dropdownRef} style={{
+      position: 'fixed', top, bottom, left, width,
+      background: 'var(--bg-elev)', border: '1px solid var(--border)',
+      borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+      zIndex: 10000, overflow: 'hidden',
+    }}>
+      <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)' }}>
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => onQuery(e.target.value)}
+          placeholder="Search CSI or line item…"
+          style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: 'var(--text)' }}
+        />
+      </div>
+      <div style={{ maxHeight: 280, overflowY: 'auto' }}>
+        {filteredGroups.length === 0 ? (
+          <div style={{ padding: '10px 12px', fontSize: 12, color: 'var(--text-faint)' }}>No results</div>
+        ) : filteredGroups.map((g) => (
+          <React.Fragment key={g.id}>
+            {/* Group header — not selectable */}
+            <div style={{
+              padding: '6px 12px 4px',
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.08em',
+              color: 'var(--text-faint)', textTransform: 'uppercase',
+              background: 'var(--bg-sunk)',
+              borderTop: '1px solid var(--border)',
+              userSelect: 'none',
+            }}>
+              {g.csi && <span style={{ fontFamily: 'monospace', marginRight: 6, color: 'var(--text-muted)' }}>{g.csi}</span>}
+              {g.label}
+            </div>
+            {/* Line items — selectable */}
+            {(g.lines || []).map((l) => {
+              const csiLabel = l.csi ? `${l.csi} — ${l.name}` : l.name;
+              const isSelected = selectedValue === csiLabel;
+              return (
+                <button
+                  key={l.id}
+                  type="button"
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left',
+                    padding: '7px 12px 7px 20px', fontSize: 13,
+                    background: isSelected ? 'var(--cc-accent, #1a4a3a)' : 'none',
+                    border: 'none', cursor: 'pointer',
+                    color: isSelected ? '#fff' : 'var(--text)',
+                  }}
+                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                  onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'none'; }}
+                  onClick={() => onSelect(csiLabel)}
+                >
+                  {l.csi && <span style={{ fontFamily: 'monospace', fontSize: 11, marginRight: 8, color: isSelected ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)', minWidth: 48, display: 'inline-block' }}>{l.csi}</span>}
+                  {l.name}
+                </button>
+              );
+            })}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Expense Modal ───────────────────────────────────────────────────────────
-function ExpenseModal({ open, expense, vendorOptions, divisionOptions, onClose, onSave, onDelete }) {
+function ExpenseModal({ open, expense, vendorOptions, budgetGroups, onClose, onSave, onDelete }) {
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
   const [form, setForm] = React.useState({});
   const [confirmDelete, setConfirmDelete] = React.useState(false);
-  const [amountError, setAmountError] = React.useState('');
+  const [errors, setErrors] = React.useState({});
   React.useEffect(() => {
     if (open) {
       setForm(expense || {
@@ -1399,27 +1569,31 @@ function ExpenseModal({ open, expense, vendorOptions, divisionOptions, onClose, 
         status: 'Pending', method: 'ACH', invoice: '', reference: '', notes: '',
       });
       setConfirmDelete(false);
-      setAmountError('');
+      setErrors({});
     }
   }, [open, expense]);
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
   const num = (k) => (v) => {
     const parsed = parseFloat(v) || 0;
-    if (k === 'amount' && parsed < 0) {
-      setAmountError('Amount cannot be negative.');
-    } else {
-      setAmountError('');
-    }
     setForm((f) => ({ ...f, [k]: parsed }));
+    if (k === 'amount') setErrors((e) => ({ ...e, amount: parsed <= 0 ? 'Amount must be greater than 0.' : '' }));
   };
   const isEdit = !!form.id;
 
-  const divOptions = [
-    ...divisionOptions.map((d) => ({ value: d, label: d })),
-    { value: 'Uncategorized', label: 'Uncategorized' },
-  ];
+  const validate = () => {
+    const errs = {};
+    if (!form.date || !form.date.trim()) errs.date = 'Date is required.';
+    if (!form.amount || form.amount <= 0) errs.amount = 'Amount must be greater than 0.';
+    if (!form.vendor || !form.vendor.trim()) errs.vendor = 'Vendor is required.';
+    if (!form.division || !form.division.trim()) errs.division = 'Division / Category is required.';
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const methodOptions = METHOD_OPTS.map((m) => ({ value: m, label: m }));
   const statusOptions = STATUS_OPTS.map((s) => ({ value: s, label: s }));
+
+  const RequiredMark = () => <span style={{ color: 'var(--signal-neg)', marginLeft: 2 }}>*</span>;
 
   return (
     <Modal
@@ -1427,7 +1601,7 @@ function ExpenseModal({ open, expense, vendorOptions, divisionOptions, onClose, 
       onClose={onClose}
       title={isEdit ? 'Edit expense' : 'Add expense'}
       subtitle="Record a payment or ledger entry"
-      width={600}
+      width={620}
       footer={
         <>
           {isEdit && !confirmDelete && (
@@ -1444,46 +1618,53 @@ function ExpenseModal({ open, expense, vendorOptions, divisionOptions, onClose, 
           )}
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" onClick={() => {
-            if ((form.amount || 0) < 0) { setAmountError('Amount cannot be negative.'); return; }
+            if (!validate()) return;
             onSave(form);
           }}>{isEdit ? 'Save changes' : 'Add expense'}</button>
         </>
       }
     >
       <div className="form-grid">
-        <Field label="Date"><Input value={form.date} onChange={set('date')} placeholder="May 20, 2026" /></Field>
-        <Field label="Amount">
-          <Input value={form.amount} onChange={num('amount')} type="number" prefix="$" min={0} />
-          {amountError && <div style={{ color: 'var(--signal-neg)', fontSize: 11, marginTop: 3 }}>{amountError}</div>}
+        <Field label={<>DATE <RequiredMark /></>}>
+          <Input value={form.date} onChange={(v) => { set('date')(v); setErrors((e) => ({ ...e, date: v.trim() ? '' : 'Date is required.' })); }} placeholder="May 20, 2026" />
+          {errors.date && <div style={{ color: 'var(--signal-neg)', fontSize: 11, marginTop: 3 }}>{errors.date}</div>}
         </Field>
-        <Field label="Vendor" span={2}>
+        <Field label={<>AMOUNT <RequiredMark /></>}>
+          <Input value={form.amount} onChange={num('amount')} type="number" prefix="$" min={0} />
+          {errors.amount && <div style={{ color: 'var(--signal-neg)', fontSize: 11, marginTop: 3 }}>{errors.amount}</div>}
+        </Field>
+        <Field label={<>VENDOR <RequiredMark /></>} span={2}>
           <SearchableSelect
             value={form.vendor}
-            onChange={set('vendor')}
-            options={[{ value: '', label: '— No vendor —' }, ...vendorOptions]}
+            onChange={(v) => { set('vendor')(v); setErrors((e) => ({ ...e, vendor: v ? '' : 'Vendor is required.' })); }}
+            options={[{ value: '', label: '— Select vendor —' }, ...vendorOptions]}
             placeholder="Select vendor…"
+            style={errors.vendor ? { borderColor: 'var(--signal-neg)' } : {}}
           />
+          {errors.vendor && <div style={{ color: 'var(--signal-neg)', fontSize: 11, marginTop: 3 }}>{errors.vendor}</div>}
         </Field>
-        <Field label="Description" span={2}><Input value={form.desc} onChange={set('desc')} placeholder="Invoice description or memo" /></Field>
-        <Field label="Division / Category">
-          <SearchableSelect
+        <Field label="DESCRIPTION" span={2}><Input value={form.desc} onChange={set('desc')} placeholder="Invoice description or memo" /></Field>
+        <Field label={<>DIVISION / CATEGORY <RequiredMark /></>} span={2}>
+          <GroupedBudgetSelect
             value={form.division}
-            onChange={set('division')}
-            options={[{ value: '', label: '— Select —' }, ...divOptions]}
-            placeholder="Select division…"
+            onChange={(v) => { set('division')(v); setErrors((e) => ({ ...e, division: v ? '' : 'Division / Category is required.' })); }}
+            budgetGroups={budgetGroups}
+            placeholder="Select CSI line item…"
+            error={!!errors.division}
           />
+          {errors.division && <div style={{ color: 'var(--signal-neg)', fontSize: 11, marginTop: 3 }}>{errors.division}</div>}
         </Field>
-        <Field label="Status">
+        <Field label="STATUS">
           <SearchableSelect value={form.status} onChange={set('status')} options={statusOptions} placeholder="Status…" />
         </Field>
-        <Field label="Payment method">
+        <Field label="PAYMENT METHOD">
           <SearchableSelect value={form.method} onChange={set('method')} options={methodOptions} placeholder="Method…" />
         </Field>
-        <Field label="Check / ACH / Wire reference">
+        <Field label="CHECK / ACH / WIRE REFERENCE">
           <Input value={form.reference} onChange={set('reference')} placeholder="Check #1042 or ACH ref…" />
         </Field>
-        <Field label="Invoice #"><Input value={form.invoice} onChange={set('invoice')} placeholder="INV-0001" /></Field>
-        <Field label="Notes" span={2}><Textarea value={form.notes} onChange={set('notes')} placeholder="Additional notes…" rows={2} /></Field>
+        <Field label="INVOICE #"><Input value={form.invoice} onChange={set('invoice')} placeholder="INV-0001" /></Field>
+        <Field label="NOTES" span={2}><Textarea value={form.notes} onChange={set('notes')} placeholder="Additional notes…" rows={2} /></Field>
       </div>
     </Modal>
   );
