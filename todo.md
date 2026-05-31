@@ -175,3 +175,9 @@
 
 # Budget Group Use Category Label
 - [x] Show use category in small uppercase text beneath each group name in the budget table
+
+# Capital Stack Edit/Delete + UX Fixes
+- [x] Add edit & delete buttons to each tranche row (edit opens pre-filled AddTrancheModal, delete removes from list)
+- [x] Add edit & delete buttons to each participant row (edit opens pre-filled AddParticipantModal, delete removes from list)
+- [x] Remove grey background on expanded participant section (only hover highlight on individual rows)
+- [x] Use comma-separated dollar amounts throughout CapitalStackTab (no compact abbreviation for amounts in participant table and Sources & Uses)

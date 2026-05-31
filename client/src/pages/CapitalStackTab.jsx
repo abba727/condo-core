@@ -1,5 +1,6 @@
 import React from 'react';
 import { getDataStore } from '@/data/dataStore';
+import { trpc } from '@/lib/trpc';
 /* global Icon, fmtUSD, Modal, Field, Input, Select, Textarea */
 
 /**
@@ -10,17 +11,23 @@ import { getDataStore } from '@/data/dataStore';
 
 // ── Tier config ────────────────────────────────────────────────────────────────
 const TIER_CONFIG = {
-  senior_debt:  { label: "Debt",   color: "#2563eb", bg: "#dbeafe" },  // blue
-  mezzanine:    { label: "Debt",   color: "#7c3aed", bg: "#ede9fe" },  // violet
-  gp_equity:    { label: "Equity", color: "#d97706", bg: "#fef3c7" },  // amber
-  lp_equity:    { label: "Equity", color: "#16a34a", bg: "#dcfce7" },  // green
-  equity:       { label: "Equity", color: "#16a34a", bg: "#dcfce7" },  // green
-  junior_debt:  { label: "Debt",   color: "#0891b2", bg: "#cffafe" },  // cyan
+  senior_debt:  { label: "Debt",   color: "#2563eb", bg: "#dbeafe" },
+  mezzanine:    { label: "Debt",   color: "#7c3aed", bg: "#ede9fe" },
+  gp_equity:    { label: "Equity", color: "#d97706", bg: "#fef3c7" },
+  lp_equity:    { label: "Equity", color: "#16a34a", bg: "#dcfce7" },
+  equity:       { label: "Equity", color: "#16a34a", bg: "#dcfce7" },
+  junior_debt:  { label: "Debt",   color: "#0891b2", bg: "#cffafe" },
   other:        { label: "Other",  color: "#6b7280", bg: "#f3f4f6" },
 };
 
 function getTierConfig(tier) {
   return TIER_CONFIG[tier] || TIER_CONFIG.other;
+}
+
+// ── Dollar formatter with comma separators ─────────────────────────────────────
+function fmtDollar(n) {
+  if (!n && n !== 0) return "$0";
+  return "$" + Math.abs(Math.round(n)).toLocaleString("en-US");
 }
 
 // ── Fallback data ──────────────────────────────────────────────────────────────
@@ -100,7 +107,7 @@ function StackedBar({ tranches, total }) {
         return (
           <div
             key={t.id}
-            title={`${t.label}: ${fmtUSD(t.amount, { compact: true })} (${pct.toFixed(1)}%)`}
+            title={`${t.label}: ${fmtDollar(t.amount)} (${pct.toFixed(1)}%)`}
             style={{
               width: `${pct}%`,
               background: cfg.color,
@@ -114,7 +121,7 @@ function StackedBar({ tranches, total }) {
   );
 }
 
-// ── Add Tranche Modal ──────────────────────────────────────────────────────────
+// ── Funding type options ───────────────────────────────────────────────────────
 const FUNDING_TYPE_OPTS = [
   { value: "senior_debt", label: "Construction Loan (Debt)" },
   { value: "mezzanine",   label: "Mezzanine (Debt)" },
@@ -124,27 +131,43 @@ const FUNDING_TYPE_OPTS = [
   { value: "other",       label: "Other" },
 ];
 
-function AddTrancheModal({ open, onClose, onAdd }) {
+// ── Add / Edit Tranche Modal ───────────────────────────────────────────────────
+function TrancheModal({ open, onClose, onSave, onDelete, existing }) {
+  const isEdit = !!existing;
   const [form, setForm] = React.useState({ tier: "senior_debt", lender: "", amount: 0, notes: "" });
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+
   React.useEffect(() => {
-    if (open) setForm({ tier: "senior_debt", lender: "", amount: 0, notes: "" });
-  }, [open]);
+    if (open) {
+      setConfirmDelete(false);
+      if (existing) {
+        setForm({
+          tier: existing.tier,
+          lender: existing.lender || "",
+          amount: existing.amount || 0,
+          notes: existing.notes || "",
+        });
+      } else {
+        setForm({ tier: "senior_debt", lender: "", amount: 0, notes: "" });
+      }
+    }
+  }, [open, existing]);
 
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const handleAdd = () => {
+  const handleSave = () => {
     if (!form.amount || Number(form.amount) <= 0) return;
-    const cfg = getTierConfig(form.tier);
     const typeLabel = FUNDING_TYPE_OPTS.find((o) => o.value === form.tier)?.label || form.tier;
-    onAdd({
-      id: `tranche-${Date.now()}`,
+    onSave({
+      ...(existing || {}),
+      id: existing ? existing.id : `tranche-${Date.now()}`,
       tier: form.tier,
       label: typeLabel.replace(/ \(.*\)/, ""),
       lender: form.lender,
       amount: Number(form.amount),
       notes: form.notes,
-      status: "funded",
-      participants: [],
+      status: existing?.status || "funded",
+      participants: existing?.participants || [],
     });
     onClose();
   };
@@ -153,14 +176,29 @@ function AddTrancheModal({ open, onClose, onAdd }) {
     <Modal
       open={open}
       onClose={onClose}
-      title="Add capital tranche"
-      subtitle="Add a new layer to the capital stack"
+      title={isEdit ? "Edit tranche" : "Add capital tranche"}
+      subtitle={isEdit ? `Editing ${existing?.label}` : "Add a new layer to the capital stack"}
       width={520}
       footer={
-        <>
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleAdd}>Add tranche</button>
-        </>
+        <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+          {isEdit ? (
+            confirmDelete ? (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontSize: 12, color: "var(--signal-neg)" }}>Delete this tranche?</span>
+                <button className="btn btn-danger btn-sm" onClick={() => { onDelete(existing.id); onClose(); }}>Yes, delete</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setConfirmDelete(false)}>Cancel</button>
+              </div>
+            ) : (
+              <button className="btn btn-ghost btn-sm" style={{ color: "var(--signal-neg)" }} onClick={() => setConfirmDelete(true)}>
+                Delete tranche
+              </button>
+            )
+          ) : <span />}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleSave}>{isEdit ? "Save changes" : "Add tranche"}</button>
+          </div>
+        </div>
       }
     >
       <div className="form-grid" style={{ gridTemplateColumns: "1fr" }}>
@@ -178,35 +216,38 @@ function AddTrancheModal({ open, onClose, onAdd }) {
             <Input value={form.notes} onChange={set("notes")} placeholder="6.45% SOFR+225, 8% pref..." />
           </Field>
         </div>
-        <Field label="Notes">
-          <Textarea
-            value={form.extraNotes}
-            onChange={set("extraNotes")}
-            placeholder="Covenants, draw conditions, intercreditor..."
-            rows={3}
-          />
-        </Field>
       </div>
     </Modal>
   );
 }
 
-// ── Add Participant Modal ──────────────────────────────────────────────────────
-function AddParticipantModal({ open, onClose, onAdd, tranche, totalCapital }) {
+// ── Add / Edit Participant Modal ───────────────────────────────────────────────
+function ParticipantModal({ open, onClose, onSave, onDelete, tranche, totalCapital, existing }) {
+  const isEdit = !!existing;
   const [form, setForm] = React.useState({ name: "", commitment: 0, role: "" });
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+
   React.useEffect(() => {
-    if (open) setForm({ name: "", commitment: 0, role: "" });
-  }, [open]);
+    if (open) {
+      setConfirmDelete(false);
+      if (existing) {
+        setForm({ name: existing.name || "", commitment: existing.commitment || 0, role: existing.role || "" });
+      } else {
+        setForm({ name: "", commitment: 0, role: "" });
+      }
+    }
+  }, [open, existing]);
 
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
   const commitment = Number(form.commitment) || 0;
   const pctOfTranche = tranche && tranche.amount > 0 ? (commitment / tranche.amount) * 100 : 0;
   const pctOfTotal = totalCapital > 0 ? (commitment / totalCapital) * 100 : 0;
 
-  const handleAdd = () => {
+  const handleSave = () => {
     if (!form.name.trim()) return;
-    onAdd({
-      id: `p-${Date.now()}`,
+    onSave({
+      ...(existing || {}),
+      id: existing ? existing.id : `p-${Date.now()}`,
       name: form.name.trim(),
       commitment,
       role: form.role,
@@ -218,14 +259,29 @@ function AddParticipantModal({ open, onClose, onAdd, tranche, totalCapital }) {
     <Modal
       open={open}
       onClose={onClose}
-      title="Add participant"
-      subtitle={tranche ? `${tranche.label} · ${fmtUSD(tranche.amount, { compact: true })} tranche` : ""}
+      title={isEdit ? "Edit participant" : "Add participant"}
+      subtitle={tranche ? `${tranche.label} · ${fmtDollar(tranche.amount)} tranche` : ""}
       width={480}
       footer={
-        <>
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleAdd}>Add participant</button>
-        </>
+        <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+          {isEdit ? (
+            confirmDelete ? (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontSize: 12, color: "var(--signal-neg)" }}>Remove this participant?</span>
+                <button className="btn btn-danger btn-sm" onClick={() => { onDelete(existing.id); onClose(); }}>Yes, remove</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setConfirmDelete(false)}>Cancel</button>
+              </div>
+            ) : (
+              <button className="btn btn-ghost btn-sm" style={{ color: "var(--signal-neg)" }} onClick={() => setConfirmDelete(true)}>
+                Remove participant
+              </button>
+            )
+          ) : <span />}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleSave}>{isEdit ? "Save changes" : "Add participant"}</button>
+          </div>
+        </div>
       }
     >
       <div className="form-grid" style={{ gridTemplateColumns: "1fr" }}>
@@ -267,24 +323,82 @@ function AddParticipantModal({ open, onClose, onAdd, tranche, totalCapital }) {
   );
 }
 
+// ── Participant row (hover-only highlight) ─────────────────────────────────────
+function ParticipantRow({ p, cfg, tranche, total, onEdit }) {
+  const [hovered, setHovered] = React.useState(false);
+  const pctTranche = tranche.amount > 0 ? (p.commitment / tranche.amount) * 100 : 0;
+  const pctTotal = total > 0 ? (p.commitment / total) * 100 : 0;
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 160px 120px 100px 56px",
+        padding: "9px 20px 9px 56px",
+        alignItems: "center",
+        borderTop: "1px solid var(--border)",
+        fontSize: 13,
+        background: hovered ? "var(--bg-hover)" : "transparent",
+        transition: "background 0.12s",
+      }}
+    >
+      {/* Avatar + name */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <Avatar name={p.name} color={cfg.color} size={28} />
+        <span style={{ fontWeight: 500, color: "var(--text)" }}>{p.name}</span>
+        {p.role && (
+          <span style={{ fontSize: 10, color: "var(--text-faint)", background: "var(--bg-sunk)", borderRadius: 4, padding: "1px 6px" }}>
+            {p.role}
+          </span>
+        )}
+      </div>
+      <div style={{ textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 600, color: "var(--text)" }}>
+        {fmtDollar(p.commitment)}
+      </div>
+      <div style={{ textAlign: "right", fontWeight: 500, color: "var(--text)" }}>
+        {pctTranche.toFixed(1)}%
+      </div>
+      <div style={{ textAlign: "right", fontWeight: 500, color: "var(--text)" }}>
+        {pctTotal.toFixed(1)}%
+      </div>
+      {/* Edit button — visible on hover */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 2 }}>
+        <button
+          className="btn btn-ghost btn-sm"
+          style={{ padding: "2px 5px", opacity: hovered ? 1 : 0, transition: "opacity 0.12s" }}
+          title="Edit participant"
+          onClick={(e) => { e.stopPropagation(); onEdit(p); }}
+        >
+          <Icon name="edit-2" size={12} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Tranche row ────────────────────────────────────────────────────────────────
-function TrancheRow({ tranche, total, expanded, onToggle, onAddParticipant }) {
+function TrancheRow({ tranche, total, expanded, onToggle, onAddParticipant, onEditTranche, onEditParticipant }) {
   const cfg = getTierConfig(tranche.tier);
   const pct = total > 0 ? (tranche.amount / total) * 100 : 0;
   const hasParticipants = tranche.participants && tranche.participants.length > 0;
   const isExpandable = hasParticipants || tranche.tier === "lp_equity" || tranche.tier === "gp_equity" || tranche.tier === "equity";
+  const [rowHovered, setRowHovered] = React.useState(false);
 
   return (
     <>
       {/* Main tranche row */}
       <div
+        onMouseEnter={() => setRowHovered(true)}
+        onMouseLeave={() => setRowHovered(false)}
         style={{
           display: "flex", alignItems: "center", gap: 12,
           padding: "14px 20px",
           borderBottom: "1px solid var(--border)",
           cursor: isExpandable ? "pointer" : "default",
-          background: expanded ? "var(--bg-hover)" : "transparent",
-          transition: "background 0.15s",
+          background: rowHovered ? "var(--bg-hover)" : "transparent",
+          transition: "background 0.12s",
         }}
         onClick={isExpandable ? onToggle : undefined}
       >
@@ -324,26 +438,37 @@ function TrancheRow({ tranche, total, expanded, onToggle, onAddParticipant }) {
         {/* Amount + pct */}
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 15, fontFamily: "var(--font-mono, monospace)" }}>
-            {fmtUSD(tranche.amount, { compact: true })}
+            {fmtDollar(tranche.amount)}
           </div>
           <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 1 }}>
             {pct.toFixed(1)}%
           </div>
         </div>
+
+        {/* Edit button — visible on row hover */}
+        <button
+          className="btn btn-ghost btn-sm"
+          style={{ padding: "4px 6px", opacity: rowHovered ? 1 : 0, transition: "opacity 0.12s", flexShrink: 0 }}
+          title="Edit tranche"
+          onClick={(e) => { e.stopPropagation(); onEditTranche(tranche); }}
+        >
+          <Icon name="edit-2" size={13} />
+        </button>
       </div>
 
-      {/* Expanded participants sub-table */}
+      {/* Expanded participants sub-table — no grey background, just transparent */}
       {expanded && (
-        <div style={{ background: "var(--bg-sunk)", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ borderBottom: "1px solid var(--border)" }}>
           {tranche.participants && tranche.participants.length > 0 && (
             <>
               {/* Header row */}
               <div style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 140px 120px 100px 32px",
+                gridTemplateColumns: "1fr 160px 120px 100px 56px",
                 padding: "8px 20px 6px 56px",
                 fontSize: 10, fontWeight: 600, letterSpacing: "0.06em",
                 color: "var(--text-faint)", textTransform: "uppercase",
+                background: "var(--bg-sunk)",
               }}>
                 <span>Participant</span>
                 <span style={{ textAlign: "right" }}>Commitment</span>
@@ -353,52 +478,21 @@ function TrancheRow({ tranche, total, expanded, onToggle, onAddParticipant }) {
               </div>
 
               {/* Participant rows */}
-              {tranche.participants.map((p) => {
-                const pctTranche = tranche.amount > 0 ? (p.commitment / tranche.amount) * 100 : 0;
-                const pctTotal = total > 0 ? (p.commitment / total) * 100 : 0;
-                return (
-                  <div
-                    key={p.id}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 140px 120px 100px 32px",
-                      padding: "9px 20px 9px 56px",
-                      alignItems: "center",
-                      borderTop: "1px solid var(--border)",
-                      fontSize: 13,
-                    }}
-                  >
-                    {/* Avatar + name */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <Avatar name={p.name} color={cfg.color} size={28} />
-                      <span style={{ fontWeight: 500, color: "var(--text)" }}>{p.name}</span>
-                    </div>
-                    <div style={{ textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 600, color: "var(--text)" }}>
-                      {fmtUSD(p.commitment, { compact: true })}
-                    </div>
-                    <div style={{ textAlign: "right", fontWeight: 500, color: "var(--text)" }}>
-                      {pctTranche.toFixed(1)}%
-                    </div>
-                    <div style={{ textAlign: "right", fontWeight: 500, color: "var(--text)" }}>
-                      {pctTotal.toFixed(1)}%
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "center" }}>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: "2px 4px", opacity: 0.5 }}
-                        title="Edit participant"
-                      >
-                        <Icon name="edit-2" size={12} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              {tranche.participants.map((p) => (
+                <ParticipantRow
+                  key={p.id}
+                  p={p}
+                  cfg={cfg}
+                  tranche={tranche}
+                  total={total}
+                  onEdit={(participant) => onEditParticipant(tranche, participant)}
+                />
+              ))}
 
               {/* Totals row */}
               <div style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 140px 120px 100px 32px",
+                gridTemplateColumns: "1fr 160px 120px 100px 56px",
                 padding: "9px 20px 9px 56px",
                 borderTop: "1px solid var(--border-strong)",
                 fontSize: 12,
@@ -407,7 +501,7 @@ function TrancheRow({ tranche, total, expanded, onToggle, onAddParticipant }) {
               }}>
                 <span>Fully allocated</span>
                 <span style={{ textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 600, color: "var(--text)", fontStyle: "normal" }}>
-                  {fmtUSD(tranche.participants.reduce((s, p) => s + p.commitment, 0), { compact: true })}
+                  {fmtDollar(tranche.participants.reduce((s, p) => s + p.commitment, 0))}
                 </span>
                 <span style={{ textAlign: "right", fontWeight: 600, color: "var(--text)", fontStyle: "normal" }}>100%</span>
                 <span style={{ textAlign: "right", fontWeight: 600, color: "var(--text)", fontStyle: "normal" }}>
@@ -433,6 +527,7 @@ function TrancheRow({ tranche, total, expanded, onToggle, onAddParticipant }) {
     </>
   );
 }
+
 // Category key → display label mapping
 const USE_CATEGORY_LABELS = {
   land_acquisition: "Land acquisition",
@@ -450,7 +545,6 @@ function computeUsesFromBudget() {
     if (!raw) return null;
     const groups = JSON.parse(raw);
     if (!Array.isArray(groups) || groups.length === 0) return null;
-    // Check if any group has useCategory
     const hasCategories = groups.some((g) => g.useCategory);
     if (!hasCategories) return null;
     const totals = {};
@@ -466,11 +560,10 @@ function computeUsesFromBudget() {
   }
 }
 
-// ── Sources & Uses panel ───────────────────────────────────────────────────────────────────────────────────────
+// ── Sources & Uses panel ───────────────────────────────────────────────────────
 function SourcesUsesPanel({ tranches, total }) {
   const sourcesTotal = tranches.reduce((s, t) => s + t.amount, 0);
 
-  // Compute uses from live budget data, fall back to hardcoded
   const liveTotals = computeUsesFromBudget();
   const usesData = liveTotals
     ? USE_CATEGORY_ORDER.map((cat) => ({
@@ -496,7 +589,7 @@ function SourcesUsesPanel({ tranches, total }) {
         }}>
           <span>Sources</span>
           <span style={{ fontFamily: "var(--font-mono, monospace)", color: "var(--text)" }}>
-            {fmtUSD(sourcesTotal, { compact: true })}
+            {fmtDollar(sourcesTotal)}
           </span>
         </div>
         {tranches.map((t) => {
@@ -513,7 +606,7 @@ function SourcesUsesPanel({ tranches, total }) {
                 <span>{t.label}</span>
               </div>
               <span style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 500 }}>
-                {fmtUSD(t.amount, { compact: true })}
+                {fmtDollar(t.amount)}
               </span>
             </div>
           );
@@ -530,7 +623,7 @@ function SourcesUsesPanel({ tranches, total }) {
         }}>
           <span>Uses</span>
           <span style={{ fontFamily: "var(--font-mono, monospace)", color: "var(--text)" }}>
-            {fmtUSD(usesTotal, { compact: true })}
+            {fmtDollar(usesTotal)}
           </span>
         </div>
         {usesData.map((u, i) => (
@@ -542,7 +635,7 @@ function SourcesUsesPanel({ tranches, total }) {
           }}>
             <span style={{ color: "var(--text)" }}>{u.label}</span>
             <span style={{ fontFamily: "var(--font-mono, monospace)", fontWeight: 500 }}>
-              {fmtUSD(u.amount, { compact: true })}
+              {fmtDollar(u.amount)}
             </span>
           </div>
         ))}
@@ -557,14 +650,12 @@ function EquityParticipantsPanel({ tranches, total }) {
     t.tier === "gp_equity" || t.tier === "lp_equity" || t.tier === "equity"
   );
 
-  // Collect all participants across equity tranches
   const allParticipants = [];
   for (const t of equityTranches) {
     const cfg = getTierConfig(t.tier);
     for (const p of (t.participants || [])) {
       allParticipants.push({ ...p, trancheLabel: t.label, color: cfg.color });
     }
-    // If no participants but equity tranche, show the tranche itself
     if (!t.participants || t.participants.length === 0) {
       allParticipants.push({
         id: `t-${t.id}`, name: t.lender || t.label,
@@ -620,7 +711,6 @@ function buildTranchesFromDb(dbItems) {
     return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
   });
   return sorted.map((item) => {
-    // Normalize generic "equity" tier to gp_equity or lp_equity based on label
     let tier = item.tier;
     if (tier === "equity") {
       const lbl = (item.label || "").toLowerCase();
@@ -638,7 +728,7 @@ function buildTranchesFromDb(dbItems) {
       amount: item.amount ?? 0,
       notes: item.notes ?? "",
       status: item.status ?? "proposed",
-      participants: [],
+      participants: item.participants ?? [],
     };
   });
 }
@@ -653,13 +743,14 @@ export function CapitalStackTab() {
     }
     return FALLBACK_TRANCHES;
   });
-  const [expandedId, setExpandedId] = React.useState(4); // LP equity expanded by default
-  const [showAddTranche, setShowAddTranche] = React.useState(false);
-  const [addParticipantFor, setAddParticipantFor] = React.useState(null); // tranche id
+  const [expandedId, setExpandedId] = React.useState(4);
+
+  // Tranche modal state
+  const [trancheModal, setTrancheModal] = React.useState({ open: false, existing: null });
+  // Participant modal state
+  const [participantModal, setParticipantModal] = React.useState({ open: false, tranche: null, existing: null });
 
   const total = tranches.reduce((s, t) => s + t.amount, 0);
-
-  // Debt vs equity split
   const debtTotal = tranches
     .filter((t) => t.tier === "senior_debt" || t.tier === "mezzanine" || t.tier === "junior_debt")
     .reduce((s, t) => s + t.amount, 0);
@@ -667,21 +758,133 @@ export function CapitalStackTab() {
   const debtPct = total > 0 ? Math.round((debtTotal / total) * 100) : 0;
   const equityPct = 100 - debtPct;
 
-  const handleAddTranche = (tranche) => {
-    setTranches((prev) => [...prev, tranche]);
+  // tRPC mutations for DB persistence
+  const addTrancheMut = trpc.capitalStack.add.useMutation();
+  const updateTrancheMut = trpc.capitalStack.update.useMutation();
+  const deleteTrancheMut = trpc.capitalStack.delete.useMutation();
+  const addParticipantMut = trpc.capitalStack.addParticipant.useMutation();
+  const updateParticipantMut = trpc.capitalStack.updateParticipant.useMutation();
+  const deleteParticipantMut = trpc.capitalStack.deleteParticipant.useMutation();
+
+  // Tranche handlers
+  const handleSaveTranche = async (tranche) => {
+    // Optimistic update
+    setTranches((prev) => {
+      const idx = prev.findIndex((t) => t.id === tranche.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = tranche;
+        return next;
+      }
+      return [...prev, tranche];
+    });
+    // Persist to DB
+    try {
+      const isNew = !tranche.id || typeof tranche.id === 'string';
+      // Map gp_equity/lp_equity back to "equity" for DB enum
+      const dbTier = (tranche.tier === 'gp_equity' || tranche.tier === 'lp_equity') ? 'equity' : tranche.tier;
+      if (isNew) {
+        const { id } = await addTrancheMut.mutateAsync({
+          tier: dbTier,
+          label: tranche.label,
+          lender: tranche.lender,
+          amount: tranche.amount,
+          notes: tranche.notes,
+          status: tranche.status,
+          sortOrder: tranche.sortOrder ?? 0,
+        });
+        // Update local state with real DB id
+        setTranches((prev) => prev.map((t) => t.id === tranche.id ? { ...t, id } : t));
+      } else {
+        await updateTrancheMut.mutateAsync({
+          id: tranche.id,
+          tier: dbTier,
+          label: tranche.label,
+          lender: tranche.lender,
+          amount: tranche.amount,
+          notes: tranche.notes,
+          status: tranche.status,
+        });
+      }
+    } catch (e) {
+      console.error('Failed to save tranche', e);
+    }
   };
 
-  const handleAddParticipant = (trancheId, participant) => {
+  const handleDeleteTranche = async (id) => {
+    setTranches((prev) => prev.filter((t) => t.id !== id));
+    if (expandedId === id) setExpandedId(null);
+    try {
+      if (typeof id === 'number') await deleteTrancheMut.mutateAsync({ id });
+    } catch (e) {
+      console.error('Failed to delete tranche', e);
+    }
+  };
+
+  // Participant handlers
+  const handleSaveParticipant = async (trancheId, participant) => {
+    const isNew = !participant.id || typeof participant.id === 'string';
+    // Optimistic update
+    setTranches((prev) =>
+      prev.map((t) => {
+        if (t.id !== trancheId) return t;
+        const idx = t.participants.findIndex((p) => p.id === participant.id);
+        if (idx >= 0) {
+          const next = [...t.participants];
+          next[idx] = participant;
+          return { ...t, participants: next };
+        }
+        return { ...t, participants: [...t.participants, participant] };
+      })
+    );
+    // Persist to DB
+    try {
+      if (isNew) {
+        const { id } = await addParticipantMut.mutateAsync({
+          trancheId,
+          name: participant.name,
+          commitment: participant.commitment,
+          role: participant.role,
+          sortOrder: participant.sortOrder ?? 0,
+        });
+        // Update local state with real DB id
+        setTranches((prev) =>
+          prev.map((t) =>
+            t.id !== trancheId ? t : {
+              ...t,
+              participants: t.participants.map((p) =>
+                p.id === participant.id ? { ...p, id } : p
+              ),
+            }
+          )
+        );
+      } else {
+        await updateParticipantMut.mutateAsync({
+          id: participant.id,
+          name: participant.name,
+          commitment: participant.commitment,
+          role: participant.role,
+        });
+      }
+    } catch (e) {
+      console.error('Failed to save participant', e);
+    }
+  };
+
+  const handleDeleteParticipant = async (trancheId, participantId) => {
     setTranches((prev) =>
       prev.map((t) =>
-        t.id === trancheId
-          ? { ...t, participants: [...(t.participants || []), participant] }
-          : t
+        t.id !== trancheId
+          ? t
+          : { ...t, participants: t.participants.filter((p) => p.id !== participantId) }
       )
     );
+    try {
+      if (typeof participantId === 'number') await deleteParticipantMut.mutateAsync({ id: participantId });
+    } catch (e) {
+      console.error('Failed to delete participant', e);
+    }
   };
-
-  const activeParticipantTranche = tranches.find((t) => t.id === addParticipantFor);
 
   return (
     <div style={{ display: "flex", gap: 20, marginTop: 16, alignItems: "flex-start" }}>
@@ -697,7 +900,7 @@ export function CapitalStackTab() {
             <div className="card-actions">
               <button
                 className="btn btn-primary btn-sm"
-                onClick={() => setShowAddTranche(true)}
+                onClick={() => setTrancheModal({ open: true, existing: null })}
               >
                 <Icon name="plus" size={12} /> Add tranche
               </button>
@@ -706,14 +909,13 @@ export function CapitalStackTab() {
 
           {/* Total + stacked bar */}
           <div style={{ padding: "20px 20px 16px" }}>
-            {/* Total capitalization */}
             <div style={{ marginBottom: 16 }}>
               <div style={{
                 fontSize: 36, fontWeight: 800,
                 fontFamily: "var(--font-mono, monospace)",
                 letterSpacing: "-0.02em", lineHeight: 1,
               }}>
-                {fmtUSD(total, { compact: true })}
+                {fmtDollar(total)}
               </div>
               <div style={{ fontSize: 12, color: "var(--text-faint)", marginTop: 4 }}>
                 Total capitalization
@@ -729,7 +931,7 @@ export function CapitalStackTab() {
                 <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Debt</span>
                 {" "}
                 <span style={{ fontFamily: "var(--font-mono, monospace)", color: "var(--text)", fontWeight: 600 }}>
-                  {fmtUSD(debtTotal, { compact: true })}
+                  {fmtDollar(debtTotal)}
                 </span>
                 {" · "}
                 <span style={{ color: "var(--text-muted)" }}>{debtPct}%</span>
@@ -738,7 +940,7 @@ export function CapitalStackTab() {
                 <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Equity</span>
                 {" "}
                 <span style={{ fontFamily: "var(--font-mono, monospace)", color: "var(--text)", fontWeight: 600 }}>
-                  {fmtUSD(equityTotal, { compact: true })}
+                  {fmtDollar(equityTotal)}
                 </span>
                 {" · "}
                 <span style={{ color: "var(--text-muted)" }}>{equityPct}%</span>
@@ -758,7 +960,9 @@ export function CapitalStackTab() {
                 total={total}
                 expanded={expandedId === t.id}
                 onToggle={() => setExpandedId(expandedId === t.id ? null : t.id)}
-                onAddParticipant={() => setAddParticipantFor(t.id)}
+                onAddParticipant={() => setParticipantModal({ open: true, tranche: t, existing: null })}
+                onEditTranche={(tranche) => setTrancheModal({ open: true, existing: tranche })}
+                onEditParticipant={(tranche, participant) => setParticipantModal({ open: true, tranche, existing: participant })}
               />
             ))}
           </div>
@@ -771,18 +975,30 @@ export function CapitalStackTab() {
         <EquityParticipantsPanel tranches={tranches} total={total} />
       </div>
 
-      {/* Modals */}
-      <AddTrancheModal
-        open={showAddTranche}
-        onClose={() => setShowAddTranche(false)}
-        onAdd={handleAddTranche}
+      {/* Tranche Modal */}
+      <TrancheModal
+        open={trancheModal.open}
+        onClose={() => setTrancheModal({ open: false, existing: null })}
+        onSave={handleSaveTranche}
+        onDelete={handleDeleteTranche}
+        existing={trancheModal.existing}
       />
-      <AddParticipantModal
-        open={!!addParticipantFor}
-        onClose={() => setAddParticipantFor(null)}
-        onAdd={(p) => { handleAddParticipant(addParticipantFor, p); setAddParticipantFor(null); }}
-        tranche={activeParticipantTranche}
+
+      {/* Participant Modal */}
+      <ParticipantModal
+        open={participantModal.open}
+        onClose={() => setParticipantModal({ open: false, tranche: null, existing: null })}
+        onSave={(p) => {
+          if (participantModal.tranche) handleSaveParticipant(participantModal.tranche.id, p);
+          setParticipantModal({ open: false, tranche: null, existing: null });
+        }}
+        onDelete={(pid) => {
+          if (participantModal.tranche) handleDeleteParticipant(participantModal.tranche.id, pid);
+          setParticipantModal({ open: false, tranche: null, existing: null });
+        }}
+        tranche={participantModal.tranche}
         totalCapital={total}
+        existing={participantModal.existing}
       />
     </div>
   );

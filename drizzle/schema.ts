@@ -391,6 +391,27 @@ export type CapitalStackItem = typeof capitalStackItems.$inferSelect;
 export type InsertCapitalStackItem = typeof capitalStackItems.$inferInsert;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CAPITAL STACK PARTICIPANTS
+// ─────────────────────────────────────────────────────────────────────────────
+export const capitalStackParticipants = mysqlTable("capital_stack_participants", {
+  id: int("id").autoincrement().primaryKey(),
+  trancheId: int("trancheId").notNull(),
+  projectId: varchar("projectId", { length: 64 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  commitment: decimal("commitment", { precision: 15, scale: 2 }).default("0").notNull(),
+  role: varchar("role", { length: 255 }),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => [
+  index("csp_tranche_idx").on(t.trancheId),
+  index("csp_project_idx").on(t.projectId),
+]);
+
+export type CapitalStackParticipant = typeof capitalStackParticipants.$inferSelect;
+export type InsertCapitalStackParticipant = typeof capitalStackParticipants.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DRAWS
 // ─────────────────────────────────────────────────────────────────────────────
 export const draws = mysqlTable("draws", {

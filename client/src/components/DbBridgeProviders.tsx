@@ -62,6 +62,10 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   });
+  const participantsQuery = trpc.capitalStack.listParticipants.useQuery(undefined, {
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
   const drawsQuery = trpc.capitalStack.listDraws.useQuery(undefined, {
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -79,6 +83,7 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
     insurancesQuery.isLoading ||
     permitsQuery.isLoading ||
     capitalStackQuery.isLoading ||
+    participantsQuery.isLoading ||
     drawsQuery.isLoading;
 
   useEffect(() => {
@@ -212,9 +217,9 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
           _dbId: p.id,
         }))
       : DRIGGS_712_PERMITS_FALLBACK;
-
-    // ── Capital stack → dataStore ─────────────────────────────────────────────
+    // ── Capital stack → dataStore ─────────────────────────────────────────────────
     const dbCapitalStack = capitalStackQuery.data ?? [];
+    const dbParticipants = participantsQuery.data ?? [];
     const capitalStackForStore = dbCapitalStack.map((item) => ({
       id: item.id,
       tier: item.tier,
@@ -228,9 +233,16 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
       status: item.status ?? "proposed",
       sortOrder: item.sortOrder ?? 0,
       notes: item.notes ?? "",
-    }));
-
-    // ── Draws → dataStore ──────────────────────────────────────────────────────
+      participants: dbParticipants
+        .filter((p) => p.trancheId === item.id)
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          commitment: parseFloat(String(p.commitment ?? "0")),
+          role: p.role ?? "",
+          sortOrder: p.sortOrder ?? 0,
+        })),
+    }));   // ── Draws → dataStore ──────────────────────────────────────────────────────
     const dbDraws = drawsQuery.data ?? [];
     const drawsForStore = dbDraws.map((d) => ({
       id: d.id,

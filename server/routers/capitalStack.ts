@@ -1,6 +1,6 @@
 import { eq, asc } from "drizzle-orm";
 import { z } from "zod";
-import { capitalStackItems, draws, drawLineItems, stackingPlanUnits } from "../../drizzle/schema";
+import { capitalStackItems, capitalStackParticipants, draws, drawLineItems, stackingPlanUnits } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 
@@ -96,6 +96,79 @@ export const capitalStackRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       await db.delete(capitalStackItems).where(eq(capitalStackItems.id, input.id));
+      return { success: true };
+    }),
+
+  // ─── PARTICIPANTS ────────────────────────────────────────────────────────────
+  listParticipants: publicProcedure
+    .input(z.object({ projectId: z.string().optional() }).optional())
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const pid = input?.projectId ?? PROJECT_ID;
+      return db
+        .select()
+        .from(capitalStackParticipants)
+        .where(eq(capitalStackParticipants.projectId, pid))
+        .orderBy(asc(capitalStackParticipants.sortOrder));
+    }),
+
+  addParticipant: publicProcedure
+    .input(
+      z.object({
+        trancheId: z.number(),
+        projectId: z.string().optional(),
+        name: z.string(),
+        commitment: z.number(),
+        role: z.string().optional(),
+        sortOrder: z.number().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const pid = input.projectId ?? PROJECT_ID;
+      const [result] = await db.insert(capitalStackParticipants).values({
+        trancheId: input.trancheId,
+        projectId: pid,
+        name: input.name,
+        commitment: input.commitment.toString(),
+        role: input.role ?? null,
+        sortOrder: input.sortOrder ?? 0,
+      });
+      return { id: (result as any).insertId };
+    }),
+
+  updateParticipant: publicProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        commitment: z.number().optional(),
+        role: z.string().optional(),
+        sortOrder: z.number().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const { id, ...rest } = input;
+      const patch: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(rest)) {
+        if (v !== undefined) patch[k] = k === "commitment" ? String(v) : v;
+      }
+      if (Object.keys(patch).length > 0) {
+        await db.update(capitalStackParticipants).set(patch).where(eq(capitalStackParticipants.id, id));
+      }
+      return { success: true };
+    }),
+
+  deleteParticipant: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db.delete(capitalStackParticipants).where(eq(capitalStackParticipants.id, input.id));
       return { success: true };
     }),
 
