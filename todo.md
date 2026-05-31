@@ -105,3 +105,13 @@
 - [x] Fix spent column: expenses tagged to a group label show only on the group row, not duplicated across each line
 - [x] Fix spent column: expenses tagged to a CSI line label show on that specific line only
 - [x] Grand total spent correctly sums group-level spent once (not per-line)
+
+# Bug Fix: Budget Changes Not Persisted to Database
+
+- [ ] Fix DbBridgeProviders to not overwrite localStorage after initial load (remove budget.groups from useEffect deps after ready)
+- [ ] Wire budget group rename mutations to DB (updateGroup)
+- [ ] Wire budget group reorder mutations to DB (reorderGroups)
+- [ ] Wire budget line rename/edit mutations to DB (updateLine)
+- [ ] Wire budget line reorder mutations to DB (reorderLines)
+- [ ] Wire expense add/edit/delete mutations to DB
+- [ ] Wire vendor add/edit/delete mutations to DB

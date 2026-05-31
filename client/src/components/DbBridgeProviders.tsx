@@ -34,9 +34,12 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
 
   const isLoading = budget.isLoading || expenses.isLoading || vendors.isLoading;
 
+  // Use a ref to track if we've already done the initial sync
+  const syncedRef = React.useRef(false);
+
   useEffect(() => {
     if (isLoading) return;
-    if (ready) return;
+    if (syncedRef.current) return; // Only run once — never overwrite user changes
 
     // Transform and write budget groups to localStorage
     if (budget.groups.length > 0) {
@@ -90,8 +93,10 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
       } catch (_) {}
     }
 
+    syncedRef.current = true;
     setReady(true);
-  }, [isLoading, budget.groups, expenses.expenses, vendors.vendors, vendors.projectVendorIds, ready]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]); // Only re-run when loading state changes, NOT when data changes
 
   if (isLoading && !ready) {
     return (

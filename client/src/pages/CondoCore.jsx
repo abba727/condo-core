@@ -5,6 +5,7 @@
  */
 import React from 'react';
 import './condocore.css';
+import { BudgetDbSync } from '../components/BudgetDbSync';
 import {
   VendorStoreProvider,
   VendorsPage as VendorsPageImpl,
@@ -16,7 +17,9 @@ import {
   ExpenseStoreProvider2,
   ExpensesTab as ExpensesTabNew,
   SearchableSelect,
+  useBudgetStore,
 } from './FinancialsModule.jsx';
+
 import {
   DRIGGS_712_PROJECT,
   DRIGGS_712_PLAN_TASKS,
@@ -31,9 +34,15 @@ import {
   DRIGGS_712_FINANCIAL_SUMMARY,
   DRIGGS_712_SEED,
 } from '../data/driggs712.js';
-
 /* global React */
 const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+// Bridge component: reads the budget store and syncs changes to the DB
+function BudgetDbSyncBridge() {
+  const store = useBudgetStore();
+  if (!store) return null;
+  return <BudgetDbSync groups={store.groups} />;
+};
 
 // ============ ICONS (lucide-style, 16px default) ============
 const Icon = ({ name, size = 16, stroke = 1.6, ...rest }) => {
@@ -4390,6 +4399,7 @@ function CondoCoreApp() {
   return (
     <ExpenseStoreProvider>
     <BudgetStoreProvider seedBudget={DRIGGS_712_BUDGET}>
+    <BudgetDbSyncBridge />
     <ExpenseStoreProvider2 seedExpenses={INITIAL_EXPENSES}>
     <VendorStoreProvider>
     <div className="condocore-root app-shell">
