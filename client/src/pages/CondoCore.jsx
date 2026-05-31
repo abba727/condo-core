@@ -10,6 +10,7 @@ import { BudgetDbSync } from '../components/BudgetDbSync';
 import { VendorDbSync } from '../components/VendorDbSync';
 import { ExpenseDbSync } from '../components/ExpenseDbSync';
 import { PlanTaskDbSync } from '../components/PlanTaskDbSync';
+import { CapitalStackTab } from './CapitalStackTab.jsx';
 import {
   VendorStoreProvider,
   VendorsPage as VendorsPageImpl,
@@ -63,7 +64,7 @@ function VendorDbSyncBridge() {
 };
 
 // ============ ICONS (lucide-style, 16px default) ============
-const Icon = ({ name, size = 16, stroke = 1.6, ...rest }) => {
+export const Icon = ({ name, size = 16, stroke = 1.6, ...rest }) => {
   const paths = ICONS[name];
   if (!paths) return null;
   return (
@@ -312,7 +313,7 @@ const NAV = [
   { id: "vendors", label: "Vendors", icon: "users", badge: String(new Set([...DRIGGS_712_CONTRACTS.map((row) => row.Vendor), ...DRIGGS_712_TEAM.map((row) => row.Company || row.Contact), ...DRIGGS_712_LOOKUP.map((row) => row["Company Name"] || row["Company | Name"]), ...DRIGGS_712_INSURANCES.map((row) => row.Company), ...DRIGGS_712_PERMITS.map((row) => row.Contractor)].filter(Boolean)).size) },
 ];
 
-const fmtUSD = (n, opts = {}) => {
+export const fmtUSD = (n, opts = {}) => {
   const { compact = false, decimals = 0, sign = false } = opts;
   const prefix = sign && n > 0 ? "+" : n < 0 ? "−" : "";
   const abs = Math.abs(n);
@@ -521,7 +522,7 @@ Object.assign(window, { Rail, TopBar, PageHead });
 
 const { useEffect: useModalEffect } = React;
 
-function Modal({ open, onClose, title, subtitle, children, footer, width = 560 }) {
+export function Modal({ open, onClose, title, subtitle, children, footer, width = 560 }) {
   useModalEffect(() => {
     if (!open) return;
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
@@ -551,7 +552,7 @@ function Modal({ open, onClose, title, subtitle, children, footer, width = 560 }
   );
 }
 
-function Field({ label, hint, children, span = 1 }) {
+export function Field({ label, hint, children, span = 1 }) {
   return (
     <div className="form-field" style={{ gridColumn: `span ${span}` }}>
       <label className="form-label">{label}</label>
@@ -561,7 +562,7 @@ function Field({ label, hint, children, span = 1 }) {
   );
 }
 
-function Input({ value, onChange, placeholder, type = "text", prefix, suffix }) {
+export function Input({ value, onChange, placeholder, type = "text", prefix, suffix }) {
   return (
     <div className="form-input-wrap">
       {prefix && <span className="form-input-prefix">{prefix}</span>}
@@ -578,7 +579,7 @@ function Input({ value, onChange, placeholder, type = "text", prefix, suffix }) 
   );
 }
 
-function Select({ value, onChange, options }) {
+export function Select({ value, onChange, options }) {
   return (
     <select className="form-input" value={value ?? ""} onChange={(e) => onChange?.(e.target.value)}>
       {options.map((o) => (
@@ -588,7 +589,7 @@ function Select({ value, onChange, options }) {
   );
 }
 
-function Textarea({ value, onChange, placeholder, rows = 3 }) {
+export function Textarea({ value, onChange, placeholder, rows = 3 }) {
   return (
     <textarea
       className="form-input"
@@ -3499,7 +3500,7 @@ function FinancialsPage() {
       </div>
       {tab === 'budget' && <BudgetTabNew />}
       {tab === 'expenses' && <ExpensesTabNew />}
-      {tab === 'capital' && <CapitalTab />}
+      {tab === 'capital' && <CapitalStackTab />}
       {tab === 'draws' && <DrawsTab />}
     </>
   );

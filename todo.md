@@ -145,3 +145,14 @@
 - [x] Fix VendorDbSync: add tempIdToDbIdRef map to track local temp ID → DB numeric ID after add mutation returns, so edits/deletes of newly added vendors work correctly
 - [x] Fix VendorDbSync: use resolveDbId() helper that checks both numeric IDs and the temp→DB map
 - [x] All 28 vitest tests still pass after ID reconciliation fixes
+
+# Capital Stack Tab Redesign
+
+- [x] Redesign CapitalTab to match screenshot: stacked bar, tranche rows with expand/collapse, Sources & Uses right panel, Equity Participants panel
+- [x] Stacked bar: color-coded segments (blue=construction loan, blue=mezzanine, orange=GP equity, green=LP equity) with debt/equity summary
+- [x] Tranche rows: colored dot, name, type badge, lender/notes, amount, pct of total, expand arrow for LP equity participants
+- [x] LP Equity expand: participant table with avatar initials, commitment, % of tranche, % of total, edit icon, Add participant button
+- [x] Right panel Sources & Uses: sources list with colored dots and amounts, uses list with line items
+- [x] Right panel Equity Participants: avatar initials, name, tranche label, % of total
+- [x] Add tranche button in header
+- [x] Wire to DB data (capital_stack_items table) with hardcoded fallback
