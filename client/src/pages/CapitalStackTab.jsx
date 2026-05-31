@@ -10,12 +10,12 @@ import { getDataStore } from '@/data/dataStore';
 
 // ── Tier config ────────────────────────────────────────────────────────────────
 const TIER_CONFIG = {
-  senior_debt:  { label: "Debt",   color: "#2563eb", bg: "#dbeafe" },
-  mezzanine:    { label: "Debt",   color: "#1d4ed8", bg: "#bfdbfe" },
-  gp_equity:    { label: "Equity", color: "#d97706", bg: "#fef3c7" },
-  lp_equity:    { label: "Equity", color: "#16a34a", bg: "#dcfce7" },
-  equity:       { label: "Equity", color: "#16a34a", bg: "#dcfce7" },
-  junior_debt:  { label: "Debt",   color: "#3b82f6", bg: "#dbeafe" },
+  senior_debt:  { label: "Debt",   color: "#2563eb", bg: "#dbeafe" },  // blue
+  mezzanine:    { label: "Debt",   color: "#7c3aed", bg: "#ede9fe" },  // violet
+  gp_equity:    { label: "Equity", color: "#d97706", bg: "#fef3c7" },  // amber
+  lp_equity:    { label: "Equity", color: "#16a34a", bg: "#dcfce7" },  // green
+  equity:       { label: "Equity", color: "#16a34a", bg: "#dcfce7" },  // green
+  junior_debt:  { label: "Debt",   color: "#0891b2", bg: "#cffafe" },  // cyan
   other:        { label: "Other",  color: "#6b7280", bg: "#f3f4f6" },
 };
 
@@ -272,7 +272,7 @@ function TrancheRow({ tranche, total, expanded, onToggle, onAddParticipant }) {
   const cfg = getTierConfig(tranche.tier);
   const pct = total > 0 ? (tranche.amount / total) * 100 : 0;
   const hasParticipants = tranche.participants && tranche.participants.length > 0;
-  const isExpandable = hasParticipants || tranche.tier === "lp_equity" || tranche.tier === "gp_equity";
+  const isExpandable = hasParticipants || tranche.tier === "lp_equity" || tranche.tier === "gp_equity" || tranche.tier === "equity";
 
   return (
     <>
@@ -371,15 +371,15 @@ function TrancheRow({ tranche, total, expanded, onToggle, onAddParticipant }) {
                     {/* Avatar + name */}
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <Avatar name={p.name} color={cfg.color} size={28} />
-                      <span style={{ fontWeight: 500 }}>{p.name}</span>
+                      <span style={{ fontWeight: 500, color: "var(--text)" }}>{p.name}</span>
                     </div>
-                    <div style={{ textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 500 }}>
+                    <div style={{ textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 600, color: "var(--text)" }}>
                       {fmtUSD(p.commitment, { compact: true })}
                     </div>
-                    <div style={{ textAlign: "right", color: "var(--text-muted)" }}>
+                    <div style={{ textAlign: "right", fontWeight: 500, color: "var(--text)" }}>
                       {pctTranche.toFixed(1)}%
                     </div>
-                    <div style={{ textAlign: "right", color: "var(--text-muted)" }}>
+                    <div style={{ textAlign: "right", fontWeight: 500, color: "var(--text)" }}>
                       {pctTotal.toFixed(1)}%
                     </div>
                     <div style={{ display: "flex", justifyContent: "center" }}>
@@ -578,16 +578,28 @@ function buildTranchesFromDb(dbItems) {
     if (ai !== bi) return ai - bi;
     return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
   });
-  return sorted.map((item) => ({
-    id: item.id,
-    tier: item.tier,
-    label: item.label,
-    lender: item.lender ?? "",
-    amount: item.amount ?? 0,
-    notes: item.notes ?? "",
-    status: item.status ?? "proposed",
-    participants: [],
-  }));
+  return sorted.map((item) => {
+    // Normalize generic "equity" tier to gp_equity or lp_equity based on label
+    let tier = item.tier;
+    if (tier === "equity") {
+      const lbl = (item.label || "").toLowerCase();
+      if (lbl.includes("gp") || lbl.includes("general partner") || lbl.includes("sponsor")) {
+        tier = "gp_equity";
+      } else {
+        tier = "lp_equity";
+      }
+    }
+    return {
+      id: item.id,
+      tier,
+      label: item.label,
+      lender: item.lender ?? "",
+      amount: item.amount ?? 0,
+      notes: item.notes ?? "",
+      status: item.status ?? "proposed",
+      participants: [],
+    };
+  });
 }
 
 // ── Main CapitalStackTab ───────────────────────────────────────────────────────
