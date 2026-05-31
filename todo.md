@@ -183,21 +183,21 @@
 - [x] Use comma-separated dollar amounts throughout CapitalStackTab (no compact abbreviation for amounts in participant table and Sources & Uses)
 
 # Revert Comma Formatting on Display Labels
-- [ ] Revert comma-separated amounts on display labels in CapitalStackTab (keep compact $4.2M format for labels)
-- [ ] Keep comma formatting only for input fields in modals (commitment inputs)
+- [x] Revert comma-separated amounts on display labels in CapitalStackTab (keep compact $4.2M format for labels)
+- [x] Keep comma formatting only for input fields in modals (commitment inputs)
 
 # Full DB Migration — Remove localStorage
-- [ ] Audit all localStorage keys used across the app
-- [ ] Migrate capital stack tranches to DB (add/edit/delete via tRPC)
-- [ ] Migrate draws to DB (add/edit/delete via tRPC)
-- [ ] Migrate stacking plan units to DB (add/edit/delete via tRPC)
-- [ ] Migrate budget groups/lines to direct tRPC reads (no localStorage bridge)
-- [ ] Migrate expenses to direct tRPC reads (no localStorage bridge)
-- [ ] Migrate vendors to direct tRPC reads (no localStorage bridge)
-- [ ] Migrate plan tasks to direct tRPC reads (no localStorage bridge)
-- [ ] Remove DbBridgeProviders localStorage bridge entirely
-- [ ] Remove all BudgetStoreProvider/VendorStoreProvider/ExpenseStoreProvider localStorage sync
-- [ ] All components read directly from tRPC useQuery hooks
+- [x] Audit all localStorage keys used across the app
+- [x] Migrate capital stack tranches to DB (add/edit/delete via tRPC)
+- [x] Migrate draws to DB (add/edit/delete via tRPC)
+- [x] Migrate stacking plan units to DB (add/edit/delete via tRPC)
+- [x] Migrate budget groups/lines to direct tRPC reads (no localStorage bridge)
+- [x] Migrate expenses to direct tRPC reads (no localStorage bridge)
+- [x] Migrate vendors to direct tRPC reads (no localStorage bridge)
+- [x] Migrate plan tasks to direct tRPC reads (no localStorage bridge)
+- [x] Remove DbBridgeProviders localStorage bridge entirely
+- [x] Remove all BudgetStoreProvider/VendorStoreProvider/ExpenseStoreProvider localStorage sync
+- [x] All components read directly from tRPC useQuery hooks
 
 # Revert Comma Formatting on Display Labels + Full DB Migration
 - [x] Revert fmtDollar on display labels in CapitalStackTab (use compact $36.0M format, not comma-separated)
@@ -215,3 +215,43 @@
 - [x] Remove localStorage writes from DbBridgeProviders (budget/expenses/vendors/capital stack)
 - [x] Remove legacy DB sync bridges from CondoCore.jsx render tree
 - [x] All 30 vitest tests pass
+
+# Draws Tab — Full CRUD
+- [x] Add "Request draw" modal with fields: draw number, label, request date, amount, lender, notes
+- [x] Add edit draw modal (pre-populated from existing draw)
+- [x] Add delete draw confirmation
+- [x] Wire add/edit/delete to tRPC capitalStack.addDraw / updateDraw / deleteDraw mutations
+- [x] DrawsTab reads directly from trpc.capitalStack.listDraws.useQuery (remove dataStore dependency)
+- [x] Contingency panel: derive hard/soft cost contingency from live budget data
+
+# Stacking Plan — DB Wiring
+- [x] StackingPlanPage reads units from trpc.capitalStack.listUnits.useQuery
+- [x] Add edit unit modal (unit number, floor, type, sqft, list price, status, notes)
+- [x] Wire edit to trpc.capitalStack.updateUnit mutation
+- [x] Show live unit count, total sellout, and average PSF in stacking plan header
+
+# Document Vault — Upload & Management
+- [x] Add document upload button with file picker (PDF, DOCX, images)
+- [x] Upload file to S3 via storagePut, save metadata to documents table
+- [x] Add document tag management (add/remove tags per document)
+- [x] Add document delete with confirmation
+- [x] Add document search/filter by name, tag, category
+- [x] Show document preview link (opens in new tab)
+- [x] Wire all document CRUD to tRPC documents router
+
+# Vendor Improvements — COI & Audit Log
+- [x] Add COI (Certificate of Insurance) tab/section in vendor detail panel
+- [x] Show COI list: carrier, policy number, expiry, type, status
+- [x] Add/edit/delete COI entries via tRPC vendors.addCoi / updateCoi / deleteCoi
+- [x] Show COI expiry warnings (red if expired, amber if expiring within 30 days)
+- [x] Add audit log tab in vendor detail panel showing change history
+- [x] Show vendor rating (star display) on vendor row and detail panel
+- [x] Add "Update rating" action in vendor detail
+
+# Dashboard — Live Metrics
+- [x] Capital deployed: sum of funded draw amounts from DB
+- [x] Weekly burn: sum of expenses in last 7 days from DB
+- [x] Vendor compliance: count of vendors with valid COIs vs total
+- [x] Project pulse table: live budget vs spent per phase from DB
+- [x] Activity feed: recent activity from DB
+- [x] This week panel: recent activity from DB (last 7 days)

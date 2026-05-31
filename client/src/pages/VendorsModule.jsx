@@ -10,6 +10,7 @@
  */
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { trpc } from '@/lib/trpc';
 import { CSI_GROUPS, useBudgetStore } from './FinancialsModule.jsx';
 import { useVendorsDb } from '../hooks/useVendorsDb';
 import {
@@ -1802,19 +1803,38 @@ function CoiModal({ open, coi, onClose, onSave, onDelete }) {
 }
 
 function VendorCoisTab({ vendor, store }) {
+  const utils = trpc.useUtils();
   const [coiModal, setCoiModal] = React.useState({ open: false, coi: null });
   // Per-COI document state
   const [coiDocs, setCoiDocs] = React.useState({});
   const coiFileRef = React.useRef(null);
   const [activeCoiForUpload, setActiveCoiForUpload] = React.useState(null);
+
+  // Load COIs from DB
+  const coisQuery = trpc.vendors.listCois.useQuery({ vendorId: Number(vendor.id) });
+  const dbCois = (coisQuery.data || []).map((c) => ({
+    id: c.id,
+    type: c.type || 'General Liability',
+    carrier: c.carrier || '',
+    policyNum: c.policyNumber || '—',
+    expires: c.expires || '',
+    status: c.status === 'active' ? 'Active' : c.status === 'expired' ? 'Expired' : c.status === 'expiring_soon' ? 'Expiring soon' : 'Active',
+    amount: '',
+    notes: c.notes || '',
+  }));
+
   // COI tracking toggle (per-vendor, stored locally)
   const [trackingEnabled, setTrackingEnabled] = React.useState(
-    vendor.cois.length > 0 || vendor.coiExpires !== 'Not tracked'
+    vendor.coiExpires !== 'Not tracked'
   );
+  React.useEffect(() => {
+    if (dbCois.length > 0) setTrackingEnabled(true);
+  }, [dbCois.length]);
 
   const statusCls = (s) => {
     if (s === 'Active') return 'pos';
     if (s === 'Expired') return 'neg';
+    if (s === 'Expiring soon') return 'warn';
     if (s === 'Pending') return 'info';
     return 'neutral';
   };
@@ -1839,7 +1859,7 @@ function VendorCoisTab({ vendor, store }) {
     e.target.value = '';
   };
 
-  const expiredCount = vendor.cois.filter((c) => effectiveCoiStatus(c) === 'Expired').length;
+  const expiredCount = dbCois.filter((c) => effectiveCoiStatus(c) === 'Expired').length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1879,7 +1899,9 @@ function VendorCoisTab({ vendor, store }) {
             </button>
           </div>
           <div className="card-body-flush">
-            {vendor.cois.length === 0 ? (
+            {coisQuery.isLoading ? (
+              <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>Loading COIs…</div>
+            ) : dbCois.length === 0 ? (
               <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>
                 No COIs on record. Click "Add COI" to track a certificate.
               </div>
@@ -1898,7 +1920,7 @@ function VendorCoisTab({ vendor, store }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {vendor.cois.map((c) => {
+                  {dbCois.map((c) => {
                     const effStatus = effectiveCoiStatus(c);
                     return (
                       <React.Fragment key={c.id}>
@@ -1978,10 +2000,22 @@ function VendorCoisTab({ vendor, store }) {
             coi={coiModal.coi}
             onClose={() => setCoiModal({ open: false, coi: null })}
             onSave={(form) => {
-              if (coiModal.coi?.id) store?.updateCoi(vendor.id, coiModal.coi.id, form);
-              else store?.addCoi(vendor.id, form);
+              const mapped = {
+                type: form.type,
+                carrier: form.carrier,
+                policyNumber: form.policyNum,
+                expires: form.expires,
+                status: form.status === 'Active' ? 'active' : form.status === 'Expired' ? 'expired' : form.status === 'Expiring soon' ? 'expiring_soon' : 'active',
+                notes: form.notes,
+              };
+              if (coiModal.coi?.id) store?.updateCoi(vendor.id, coiModal.coi.id, mapped);
+              else store?.addCoi(vendor.id, mapped);
+              setTimeout(() => utils.vendors.listCois.invalidate({ vendorId: Number(vendor.id) }), 300);
             }}
-            onDelete={(id) => store?.deleteCoi(vendor.id, id)}
+            onDelete={(id) => {
+              store?.deleteCoi(vendor.id, id);
+              setTimeout(() => utils.vendors.listCois.invalidate({ vendorId: Number(vendor.id) }), 300);
+            }}
           />
         </div>
       )}
@@ -2124,7 +2158,23 @@ function fmtAuditTime(iso) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 function VendorActivityTab({ vendor }) {
-  const log = [...(vendor.auditLog || [])].reverse(); // newest first
+  const auditQuery = trpc.vendors.listAuditLog.useQuery({ vendorId: Number(vendor.id) });
+  const dbLog = (auditQuery.data || []).map((entry) => ({
+    id: entry.id,
+    action: entry.action,
+    detail: (() => { try { return entry.detail ? JSON.parse(entry.detail) : {}; } catch { return {}; } })(),
+    performedBy: { name: 'System' },
+    timestamp: entry.createdAt instanceof Date ? entry.createdAt.toISOString() : String(entry.createdAt),
+  }));
+  const log = [...dbLog].reverse(); // newest first
+  if (auditQuery.isLoading) {
+    return (
+      <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-faint)' }}>
+        <Icon name="clock" size={28} style={{ marginBottom: 12, opacity: 0.4 }} />
+        <div style={{ fontSize: 14 }}>Loading activity…</div>
+      </div>
+    );
+  }
   if (log.length === 0) {
     return (
       <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-faint)' }}>

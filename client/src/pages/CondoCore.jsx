@@ -5,9 +5,13 @@
  */
 import React from 'react';
 import './condocore.css';
+import { trpc } from '@/lib/trpc';
 import { getDataStore } from '../data/dataStore';
 import { PlanTaskDbSync } from '../components/PlanTaskDbSync';
 import { CapitalStackTab } from './CapitalStackTab.jsx';
+import { DrawsTabDb } from './DrawsTabDb.jsx';
+import { StackingPlanDb } from './StackingPlanDb.jsx';
+import { DocumentVaultDb } from './DocumentVaultDb.jsx';
 import {
   VendorStoreProvider,
   VendorsPage as VendorsPageImpl,
@@ -278,6 +282,19 @@ const ICONS = {
     </>
   ),
   sort: <path d="M3 6h18M7 12h10M11 18h2" />,
+  'edit-2': (
+    <>
+      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+      <path d="m15 5 4 4" />
+    </>
+  ),
+  'trash-2': (
+    <>
+      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </>
+  ),
 };
 
 // ============ DATA ============
@@ -1158,14 +1175,27 @@ Object.assign(window, {
 
 function DashboardPage() {
   const project = PROJECTS[0];
+  const metricsQuery = trpc.dashboard.metrics.useQuery({});
+  const m = metricsQuery.data;
+  const activityQuery = trpc.dashboard.recentActivity.useQuery({ limit: 8 });
+
+  // Fall back to static data while loading
   const portfolio = {
     active: PROJECTS.length,
-    budget: project.budget,
-    spent: project.spent,
-    remaining: project.budget - project.spent,
-    vendors: new Set([...DRIGGS_712_CONTRACTS.map((row) => row.Vendor), ...DRIGGS_712_TEAM.map((row) => row.Company || row.Contact), ...DRIGGS_712_LOOKUP.map((row) => row["Company Name"] || row["Company | Name"]), ...DRIGGS_712_INSURANCES.map((row) => row.Company), ...DRIGGS_712_PERMITS.map((row) => row.Contractor)].filter(Boolean)).size,
-    burnRate: DRIGGS_712_EXPENSES.reduce((sum, row) => sum + (Number(row.Debit) || 0), 0),
-    coiAlerts: DRIGGS_712_INSURANCES.filter((row) => row.Status && row.Status !== "Active").length,
+    budget: m?.totalBudget ?? project.budget,
+    spent: m?.totalSpent ?? project.spent,
+    remaining: (m?.totalBudget ?? project.budget) - (m?.totalSpent ?? project.spent),
+    committed: m?.totalCommitted ?? 0,
+    vendors: m?.vendorCount ?? 0,
+    burnRate: m?.totalSpent ?? project.spent,
+    coiAlerts: m?.coiAlerts ?? 0,
+    drawsTotal: m?.drawsTotal ?? 0,
+    drawsFunded: m?.drawsFunded ?? 0,
+    unitCount: m?.unitCount ?? 0,
+    unitsSold: m?.unitsSold ?? 0,
+    unitsReserved: m?.unitsReserved ?? 0,
+    openTaskCount: m?.openTaskCount ?? 0,
+    completedTaskCount: m?.completedTaskCount ?? 0,
   };
 
   const burnSpark = [18, 21, 19, 24, 27, 31, 29, 34, 38, 35, 42, 41];
@@ -1200,9 +1230,9 @@ function DashboardPage() {
           <div className="metric-value">{portfolio.active}</div>
           <div className="metric-foot">
             <span className="metric-delta up">
-              <Icon name="check" size={11} /> seeded
+              <Icon name="check" size={11} /> {portfolio.unitCount > 0 ? `${portfolio.unitCount} units` : 'live'}
             </span>
-            <span>from tracker workbook</span>
+            <span>{portfolio.unitsSold > 0 ? `${portfolio.unitsSold} sold · ${portfolio.unitsReserved} reserved` : 'from tracker workbook'}</span>
           </div>
         </div>
 
@@ -1211,39 +1241,39 @@ function DashboardPage() {
             <Icon name="dollar" size={11} /> Capital deployed
           </div>
           <div className="metric-value-mono">
-            ${(portfolio.spent / 1e6).toFixed(1)}M
+            {metricsQuery.isLoading ? <span className="faint" style={{ fontSize: 14 }}>Loading…</span> : `$${(portfolio.spent / 1e6).toFixed(1)}M`}
           </div>
           <div className="bar" style={{ marginTop: 8 }}>
             <div
               className="bar-fill accent"
-              style={{ width: `${(portfolio.spent / portfolio.budget) * 100}%` }}
+              style={{ width: portfolio.budget > 0 ? `${Math.min((portfolio.spent / portfolio.budget) * 100, 100)}%` : '0%' }}
             />
           </div>
           <div className="metric-foot">
             <span className="muted">
-              of {fmtUSD(portfolio.budget, { compact: true })} approved
+              of {fmtUSD(portfolio.budget, { compact: true })} budget
             </span>
             <span style={{ marginLeft: "auto" }} className="tabular">
-              {fmtPct((portfolio.spent / portfolio.budget) * 100)}
+              {portfolio.budget > 0 ? fmtPct((portfolio.spent / portfolio.budget) * 100) : '0%'}
             </span>
           </div>
         </div>
 
         <div className="metric">
           <div className="metric-label">
-            <Icon name="trend" size={11} /> Weekly burn
+            <Icon name="trend" size={11} /> Total draws
           </div>
           <div className="row" style={{ alignItems: "flex-end", gap: 12, marginTop: 4 }}>
             <div className="metric-value-mono" style={{ marginTop: 0 }}>
-              {fmtUSD(portfolio.burnRate, { compact: true })}
+              {metricsQuery.isLoading ? <span className="faint" style={{ fontSize: 14 }}>Loading…</span> : fmtUSD(portfolio.drawsTotal, { compact: true })}
             </div>
             <Sparkline data={burnSpark} color="var(--accent)" w={70} h={28} />
           </div>
           <div className="metric-foot">
             <span className="metric-delta up">
-              <Icon name="arrowUp" size={11} /> 25 entries
+              <Icon name="check" size={11} /> {fmtUSD(portfolio.drawsFunded, { compact: true })} funded
             </span>
-            <span>from workbook ledger</span>
+            <span>from DB</span>
           </div>
         </div>
 
@@ -1255,12 +1285,12 @@ function DashboardPage() {
             <div className="metric-value-mono" style={{ marginTop: 0 }}>
               {portfolio.vendors - portfolio.coiAlerts}<span className="faint" style={{ fontSize: 14 }}>/{portfolio.vendors}</span>
             </div>
-            <span className="pill pos no-dot" style={{ marginLeft: "auto" }}>
+            <span className={`pill ${portfolio.coiAlerts > 0 ? 'neg' : 'pos'} no-dot`} style={{ marginLeft: "auto" }}>
               {portfolio.coiAlerts ? `${portfolio.coiAlerts} COI alerts` : "All COIs current"}
             </span>
           </div>
           <div className="metric-foot">
-            <span>Insurance workbook · {DRIGGS_712_INSURANCES.length} records</span>
+            <span>{portfolio.openTaskCount} open tasks · {portfolio.completedTaskCount} done</span>
           </div>
         </div>
       </div>
@@ -1294,66 +1324,69 @@ function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {PROJECTS.map((p) => (
-                  <tr key={p.id}>
-                    <td>
-                      <div className="row" style={{ gap: 10 }}>
-                        <div
-                          style={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: 7,
-                            background: "var(--accent-soft)",
-                            color: "var(--accent-soft-text)",
-                            display: "grid",
-                            placeItems: "center",
-                            fontSize: 11,
-                            fontWeight: 600,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {p.initials}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 500 }}>{p.full}</div>
-                          <div className="faint" style={{ fontSize: 11 }}>
-                            {p.address}
+                {(() => {
+                  const liveProgress = portfolio.budget > 0 ? Math.min(Math.round((portfolio.spent / portfolio.budget) * 100), 100) : 0;
+                  return PROJECTS.map((p) => (
+                    <tr key={p.id}>
+                      <td>
+                        <div className="row" style={{ gap: 10 }}>
+                          <div
+                            style={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: 7,
+                              background: "var(--accent-soft)",
+                              color: "var(--accent-soft-text)",
+                              display: "grid",
+                              placeItems: "center",
+                              fontSize: 11,
+                              fontWeight: 600,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {p.initials}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 500 }}>{p.full}</div>
+                            <div className="faint" style={{ fontSize: 11 }}>
+                              {p.address}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`pill ${p.phaseClass} no-dot`}>{p.phase}</span>
-                    </td>
-                    <td className="num mono">
-                      {fmtUSD(p.budget, { compact: true })}
-                    </td>
-                    <td className="num mono">
-                      {fmtUSD(p.spent, { compact: true })}
-                    </td>
-                    <td style={{ width: 180 }}>
-                      <div className="row" style={{ gap: 8 }}>
-                        <div className="bar" style={{ flex: 1 }}>
-                          <div
-                            className={`bar-fill ${
-                              p.progress > 75 ? "warn" : "accent"
-                            }`}
-                            style={{ width: `${p.progress}%` }}
-                          />
+                      </td>
+                      <td>
+                        <span className={`pill ${p.phaseClass} no-dot`}>{p.phase}</span>
+                      </td>
+                      <td className="num mono">
+                        {fmtUSD(portfolio.budget || p.budget, { compact: true })}
+                      </td>
+                      <td className="num mono">
+                        {fmtUSD(portfolio.spent || p.spent, { compact: true })}
+                      </td>
+                      <td style={{ width: 180 }}>
+                        <div className="row" style={{ gap: 8 }}>
+                          <div className="bar" style={{ flex: 1 }}>
+                            <div
+                              className={`bar-fill ${
+                                liveProgress > 75 ? "warn" : "accent"
+                              }`}
+                              style={{ width: `${liveProgress}%` }}
+                            />
+                          </div>
+                          <span
+                            className="tabular"
+                            style={{ fontSize: 12, color: "var(--text-muted)", minWidth: 30 }}
+                          >
+                            {liveProgress}%
+                          </span>
                         </div>
-                        <span
-                          className="tabular"
-                          style={{ fontSize: 12, color: "var(--text-muted)", minWidth: 30 }}
-                        >
-                          {p.progress}%
-                        </span>
-                      </div>
-                    </td>
-                    <td className="num" style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                      {p.targetCompletion}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="num" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                        {p.targetCompletion}
+                      </td>
+                    </tr>
+                  ));
+                })()}
               </tbody>
             </table>
           </div>
@@ -1368,43 +1401,12 @@ function DashboardPage() {
               </div>
             </div>
             <div className="card-body" style={{ padding: 0 }}>
-              {[
-                {
-                  time: "Today",
-                  icon: "alert",
-                  cls: "neg",
-                  title: "Steel pricing memo flagged",
-                  sub: "Phase II structural · +8.2% over forecast",
-                },
-                {
-                  time: "Today",
-                  icon: "doc",
-                  cls: "info",
-                  title: "Expense NF-1048 awaiting approval",
-                  sub: "Apex Building Group · $284,500",
-                },
-                {
-                  time: "Yesterday",
-                  icon: "check",
-                  cls: "pos",
-                  title: "Executed GC contract uploaded",
-                  sub: "Wonder Works Construction · v3.2",
-                },
-                {
-                  time: "Mon",
-                  icon: "calendar",
-                  cls: "warn",
-                  title: "DOB Approvals shifted +14d",
-                  sub: "712 Driggs · Schedule refreshed",
-                },
-                {
-                  time: "Mon",
-                  icon: "users",
-                  cls: "info",
-                  title: "Buro Happold added 2 consultants",
-                  sub: "MEP coordination phase",
-                },
-              ].map((it, i) => (
+              {activityQuery.isLoading ? (
+                <div className="muted" style={{ fontSize: 12, textAlign: 'center', padding: '16px 0' }}>Loading…</div>
+              ) : (activityQuery.data || []).length === 0 ? (
+                <div className="muted" style={{ fontSize: 12, textAlign: 'center', padding: '16px 0' }}>No recent activity</div>
+              ) : null}
+              {(activityQuery.data || []).map((it, i) => (
                 <div
                   key={i}
                   className="row"
@@ -1450,16 +1452,18 @@ function DashboardPage() {
           <div className="card">
             <div className="card-head">
               <div className="card-title">Sales velocity</div>
-              <span className="pill pos no-dot">On pace</span>
+              <span className={`pill ${portfolio.unitCount > 0 && (portfolio.unitsSold + portfolio.unitsReserved) / portfolio.unitCount > 0.5 ? 'pos' : 'warn'} no-dot`}>
+                {portfolio.unitCount > 0 ? `${Math.round(((portfolio.unitsSold + portfolio.unitsReserved) / portfolio.unitCount) * 100)}% pre-sold` : 'No units'}
+              </span>
             </div>
             <div className="card-body">
               <div className="row" style={{ alignItems: "flex-end", gap: 16 }}>
                 <div>
                   <div className="metric-value-mono" style={{ marginTop: 0 }}>
-                    80<span className="faint" style={{ fontSize: 14 }}>%</span>
+                    {portfolio.unitCount > 0 ? Math.round(((portfolio.unitsSold + portfolio.unitsReserved) / portfolio.unitCount) * 100) : 0}<span className="faint" style={{ fontSize: 14 }}>%</span>
                   </div>
                   <div className="faint" style={{ fontSize: 11, marginTop: 2 }}>
-                    Pre-sale of inventory
+                    Pre-sale of {portfolio.unitCount} units
                   </div>
                 </div>
                 <Sparkline data={occupancySpark} color="var(--signal-pos)" w={140} h={42} />
@@ -1467,9 +1471,9 @@ function DashboardPage() {
               <div className="div" />
               <div className="stack" style={{ gap: 8 }}>
                 {[
-                  ["Reservations", "62 units", "pos"],
-                  ["Contracts out", "9 units", "info"],
-                  ["Closed", "0 units", "neutral"],
+                  ["Reserved", `${portfolio.unitsReserved} units`, "pos"],
+                  ["Contracted", `${m?.unitsContracted ?? 0} units`, "info"],
+                  ["Closed", `${portfolio.unitsSold} units`, "neutral"],
                 ].map(([k, v, cls]) => (
                   <div className="row-between" key={k}>
                     <span className="muted" style={{ fontSize: 12 }}>
@@ -3484,7 +3488,7 @@ function FinancialsPage() {
       {tab === 'budget' && <BudgetTabNew />}
       {tab === 'expenses' && <ExpensesTabNew />}
       {tab === 'capital' && <CapitalStackTab />}
-      {tab === 'draws' && <DrawsTab />}
+      {tab === 'draws' && <DrawsTabDb />}
     </>
   );
 }
@@ -4370,10 +4374,10 @@ const PAGES = {
   dashboard: { Component: DashboardPage, crumbs: ["Workspace", "Dashboard"], asset: "blueprint" },
   details: { Component: ProjectDetailsPage, crumbs: ["Workspace", "712 Driggs", "Project details"], asset: "blueprint" },
   plan: { Component: ProjectPlanPage, crumbs: ["Workspace", "712 Driggs", "Project plan"], asset: "blueprint" },
-  stacking: { Component: StackingPlanPage, crumbs: ["Workspace", "712 Driggs", "Stacking plan"], asset: "blueprint" },
+  stacking: { Component: StackingPlanDb, crumbs: ["Workspace", "712 Driggs", "Stacking plan"], asset: "blueprint" },
   financials: { Component: FinancialsPage, crumbs: ["Workspace", "712 Driggs", "Financials"], asset: "finance" },
   vendors: { Component: VendorsPage, crumbs: ["Workspace", "712 Driggs", "Vendors"], asset: "finance" },
-  vault: { Component: DocumentVaultPage, crumbs: ["Workspace", "712 Driggs", "Document vault"], asset: "vault" },
+  vault: { Component: DocumentVaultDb, crumbs: ["Workspace", "712 Driggs", "Document vault"], asset: "vault" },
 };
 
 const PAGE_ASSETS = {

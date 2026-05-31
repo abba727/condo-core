@@ -10,6 +10,7 @@ import { planTasksRouter } from "./routers/planTasks";
 import { complianceRouter } from "./routers/compliance";
 import { capitalStackRouter } from "./routers/capitalStack";
 import { documentsRouter } from "./routers/documents";
+import { dashboardRouter } from "./routers/dashboard";
 
 export const appRouter = router({
   system: systemRouter,
@@ -32,6 +33,7 @@ export const appRouter = router({
   compliance: complianceRouter,
   capitalStack: capitalStackRouter,
   documents: documentsRouter,
+  dashboard: dashboardRouter,
 });
 
 export type AppRouter = typeof appRouter;

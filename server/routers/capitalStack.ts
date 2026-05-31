@@ -281,6 +281,10 @@ export const capitalStackRouter = router({
     .input(
       z.object({
         id: z.number(),
+        unitNumber: z.string().optional(),
+        floor: z.number().optional(),
+        unitType: z.string().optional(),
+        sqft: z.number().optional(),
         status: z.enum(["available", "reserved", "contracted", "closed", "not_for_sale"]).optional(),
         listPrice: z.number().optional(),
         salePrice: z.number().optional(),

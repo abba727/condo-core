@@ -1,0 +1,25 @@
+{
+  "query": "SELECT COUNT(*) as draws_count FROM draws; SELECT COUNT(*) as docs_count FROM documents; SELECT COUNT(*) as vendors_count FROM vendors;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute SELECT COUNT(*) as draws_count FROM draws; SELECT COUNT(*) as docs_count FROM documents; SELECT COUNT(*) as vendors_count FROM vendors;",
+  "rows": [
+    {
+      "draws_count": "16"
+    },
+    {
+      "draws_count": "docs_count"
+    },
+    {
+      "draws_count": "0"
+    },
+    {
+      "draws_count": "vendors_count"
+    },
+    {
+      "draws_count": "43"
+    }
+  ],
+  "messages": [],
+  "stdout": "draws_count\n16\ndocs_count\n0\nvendors_count\n43\n",
+  "stderr": "",
+  "execution_time_ms": 284
+}
