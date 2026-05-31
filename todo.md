@@ -113,15 +113,15 @@
 - [x] Wire budget group reorder mutations to DB (reorderGroups)
 - [x] Wire budget line rename/edit mutations to DB (updateLine)
 - [x] Wire budget line reorder mutations to DB (reorderLines)
-- [ ] Wire expense add/edit/delete mutations to DB
-- [ ] Wire vendor add/edit/delete mutations to DB
+- [x] Wire expense add/edit/delete mutations to DB
+- [x] Wire vendor add/edit/delete mutations to DB
 
 # Full Persistence Fix: Vendors & Expenses
-- [ ] Fix DbBridgeProviders: stop vendors/expenses overwrite after initial load
-- [ ] Add VendorDbSync watcher (archive, restore, edit, add, delete → DB)
-- [ ] Add ExpenseDbSync watcher (add, edit, delete → DB)
-- [ ] Test: archive a vendor, reload, confirm still archived
-- [ ] Test: add/edit/delete expense, reload, confirm changes persist
+- [x] Fix DbBridgeProviders: stop vendors/expenses overwrite after initial load
+- [x] Add VendorDbSync watcher (archive, restore, edit, add, delete → DB)
+- [x] Add ExpenseDbSync watcher (add, edit, delete → DB)
+- [x] Test: archive a vendor, reload, confirm still archived
+- [x] Test: add/edit/delete expense, reload, confirm changes persist
 
 # Full Persistence: Plan Tasks, Capital Stack, Draws, Compliance
 
@@ -137,3 +137,11 @@
 - [x] Seed draw requests (8 draws: Draw 05-12 with amounts and statuses)
 - [x] Write and pass 16 new vitest integration tests for plan tasks, contracts, insurances, permits, capital stack, draws
 - [x] All 28 tests pass (3 test files)
+
+# ID Reconciliation Bug Fixes for DB Sync
+
+- [x] Fix ExpenseDbSync: pass local expense ID to server on add (client-supplied ID) so local state ID === DB ID, eliminating stale temp ID bug for edit/delete after add
+- [x] Update expenses router to accept optional client-supplied ID on add
+- [x] Fix VendorDbSync: add tempIdToDbIdRef map to track local temp ID → DB numeric ID after add mutation returns, so edits/deletes of newly added vendors work correctly
+- [x] Fix VendorDbSync: use resolveDbId() helper that checks both numeric IDs and the temp→DB map
+- [x] All 28 vitest tests still pass after ID reconciliation fixes

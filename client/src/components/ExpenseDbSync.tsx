@@ -4,6 +4,10 @@
  * Sits inside the ExpenseStoreProvider2 tree and watches for changes to the
  * expenses state. When changes are detected, it fires the appropriate
  * tRPC mutations to keep the database in sync.
+ *
+ * Key design: when adding a new expense, we pass the local expense ID to the
+ * server so that local state ID === DB ID. This avoids the reconciliation
+ * problem where subsequent edits/deletes would use a stale temp ID.
  */
 import { useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
@@ -80,7 +84,6 @@ export function ExpenseDbSync({ expenses }: ExpenseDbSyncProps) {
     // ── Detect deleted expenses ────────────────────────────────────────────
     for (const e of prev) {
       if (!currIds.has(e.id) && dbExpenseIdsRef.current.has(e.id)) {
-        // Only delete DB records (IDs starting with "exp-" are DB IDs from seed)
         deleteExpenseMut.mutate({ id: e.id });
         dbExpenseIdsRef.current.delete(e.id);
       }
@@ -89,7 +92,10 @@ export function ExpenseDbSync({ expenses }: ExpenseDbSyncProps) {
     // ── Detect added expenses ──────────────────────────────────────────────
     for (const e of expenses) {
       if (!prevIds.has(e.id) && !dbExpenseIdsRef.current.has(e.id)) {
+        // Pass the local ID to the server so local state ID === DB ID.
+        // This avoids the reconciliation problem where edits/deletes use a stale temp ID.
         addExpenseMut.mutate({
+          id: e.id,
           projectId: "712-driggs",
           vendorId: e.vendorId ?? null,
           vendorName: e.vendor,

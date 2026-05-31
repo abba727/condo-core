@@ -23,6 +23,7 @@ export const expensesRouter = router({
   add: publicProcedure
     .input(
       z.object({
+        id: z.string().optional(), // Client can supply a stable ID to avoid reconciliation issues
         projectId: z.string().optional(),
         vendorId: z.number().nullable().optional(),
         vendorName: z.string().optional(),
@@ -41,7 +42,8 @@ export const expensesRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const pid = input.projectId ?? PROJECT_ID;
-      const id = `exp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      // Use client-supplied ID if provided (ensures local state ID === DB ID)
+      const id = input.id ?? `exp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
       await db.insert(expenses).values({
         id,

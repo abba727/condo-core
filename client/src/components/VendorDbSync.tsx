@@ -10,6 +10,11 @@
  *  - vendor.archived = false → DB status = "active"
  *  - vendor.status "Active"  → DB status = "active"
  *  - vendor.status "Inactive"→ DB status = "inactive"
+ *
+ * ID reconciliation for newly added vendors:
+ *  - New vendors have a temp string ID (e.g. "v-new-abc123")
+ *  - After addVendorMut succeeds, we map tempId → dbId in tempIdToDbIdRef
+ *  - Subsequent updates/deletes use the DB numeric ID via this map
  */
 import { useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
@@ -52,7 +57,17 @@ function toDbStatus(vendor: Vendor): "active" | "inactive" | "pending" {
 }
 
 export function VendorDbSync({ vendors }: VendorDbSyncProps) {
-  const addVendorMut = trpc.vendors.add.useMutation();
+  // tempIdToDbIdRef maps local temp string IDs → numeric DB IDs for newly added vendors
+  const tempIdToDbIdRef = useRef<Map<string, number>>(new Map());
+
+  const addVendorMut = trpc.vendors.add.useMutation({
+    onSuccess: (data, variables, context) => {
+      // context is the tempId we stored in onMutate
+      if (context && typeof context === "string" && data?.id) {
+        tempIdToDbIdRef.current.set(context, data.id);
+      }
+    },
+  });
   const updateVendorMut = trpc.vendors.update.useMutation();
   const deleteVendorMut = trpc.vendors.delete.useMutation();
   const addBidMut = trpc.vendors.addBid.useMutation();
@@ -63,6 +78,18 @@ export function VendorDbSync({ vendors }: VendorDbSyncProps) {
   const dbVendorIdsRef = useRef<Set<string>>(new Set());
   const dbBidIdsRef = useRef<Set<string>>(new Set());
   const initializedRef = useRef(false);
+
+  /** Resolve a vendor's local string ID to a numeric DB ID.
+   *  - If the ID is a numeric string (seeded vendors), parse it directly.
+   *  - If the ID is a temp string, look it up in tempIdToDbIdRef.
+   *  - Returns null if no DB ID is known yet (vendor not yet persisted).
+   */
+  function resolveDbId(localId: string): number | null {
+    const numId = Number(localId);
+    if (!isNaN(numId) && numId > 0) return numId;
+    const mapped = tempIdToDbIdRef.current.get(localId);
+    return mapped ?? null;
+  }
 
   useEffect(() => {
     if (!vendors || vendors.length === 0) return;
@@ -93,10 +120,9 @@ export function VendorDbSync({ vendors }: VendorDbSyncProps) {
     // ── Detect deleted vendors ─────────────────────────────────────────────
     for (const v of prev) {
       if (!currIds.has(v.id) && dbVendorIdsRef.current.has(v.id)) {
-        // Only delete if the ID is a numeric DB ID (not a temp "v-new-..." ID)
-        const numId = Number(v.id);
-        if (!isNaN(numId) && numId > 0) {
-          deleteVendorMut.mutate({ id: numId });
+        const dbId = resolveDbId(v.id);
+        if (dbId !== null) {
+          deleteVendorMut.mutate({ id: dbId });
         }
         dbVendorIdsRef.current.delete(v.id);
       }
@@ -105,17 +131,27 @@ export function VendorDbSync({ vendors }: VendorDbSyncProps) {
     // ── Detect added vendors ───────────────────────────────────────────────
     for (const v of vendors) {
       if (!prevIds.has(v.id) && !dbVendorIdsRef.current.has(v.id)) {
-        addVendorMut.mutate({
-          projectId: "712-driggs",
-          companyName: v.name,
-          contactName: v.contact,
-          email: v.email,
-          phone: v.phone,
-          trade: v.trade,
-          category: v.role,
-          notes: v.notes,
-          status: toDbStatus(v),
-        });
+        // Pass the temp ID as mutation context so onSuccess can map it to the DB ID
+        addVendorMut.mutate(
+          {
+            projectId: "712-driggs",
+            companyName: v.name,
+            contactName: v.contact,
+            email: v.email,
+            phone: v.phone,
+            trade: v.trade,
+            category: v.role,
+            notes: v.notes,
+            status: toDbStatus(v),
+          },
+          {
+            onSuccess: (data) => {
+              if (data?.id) {
+                tempIdToDbIdRef.current.set(v.id, data.id);
+              }
+            },
+          }
+        );
         dbVendorIdsRef.current.add(v.id);
       }
     }
@@ -126,8 +162,8 @@ export function VendorDbSync({ vendors }: VendorDbSyncProps) {
       if (!prevV) continue;
       if (!dbVendorIdsRef.current.has(v.id)) continue;
 
-      const numId = Number(v.id);
-      if (isNaN(numId) || numId <= 0) continue; // Skip temp IDs
+      const dbId = resolveDbId(v.id);
+      if (dbId === null) continue; // DB ID not known yet (add still in flight)
 
       // Check if any field changed
       const prevStatus = toDbStatus(prevV);
@@ -145,7 +181,7 @@ export function VendorDbSync({ vendors }: VendorDbSyncProps) {
 
       if (changed) {
         updateVendorMut.mutate({
-          id: numId,
+          id: dbId,
           companyName: v.name,
           contactName: v.contact,
           email: v.email,
@@ -180,7 +216,7 @@ export function VendorDbSync({ vendors }: VendorDbSyncProps) {
         if (!prevBidIds.has(b.id) && !dbBidIdsRef.current.has(b.id)) {
           addBidMut.mutate({
             projectId: "712-driggs",
-            vendorId: numId,
+            vendorId: dbId,
             division: b.division,
             scope: b.scope,
             bidAmount: b.amount,
