@@ -6,6 +6,10 @@ import { budgetRouter } from "./routers/budget";
 import { expensesRouter } from "./routers/expenses";
 import { vendorsRouter } from "./routers/vendors";
 import { projectsRouter } from "./routers/projects";
+import { planTasksRouter } from "./routers/planTasks";
+import { complianceRouter } from "./routers/compliance";
+import { capitalStackRouter } from "./routers/capitalStack";
+import { documentsRouter } from "./routers/documents";
 
 export const appRouter = router({
   system: systemRouter,
@@ -24,6 +28,10 @@ export const appRouter = router({
   expenses: expensesRouter,
   vendors: vendorsRouter,
   projects: projectsRouter,
+  planTasks: planTasksRouter,
+  compliance: complianceRouter,
+  capitalStack: capitalStackRouter,
+  documents: documentsRouter,
 });
 
 export type AppRouter = typeof appRouter;

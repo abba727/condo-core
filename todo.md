@@ -108,10 +108,32 @@
 
 # Bug Fix: Budget Changes Not Persisted to Database
 
-- [ ] Fix DbBridgeProviders to not overwrite localStorage after initial load (remove budget.groups from useEffect deps after ready)
-- [ ] Wire budget group rename mutations to DB (updateGroup)
-- [ ] Wire budget group reorder mutations to DB (reorderGroups)
-- [ ] Wire budget line rename/edit mutations to DB (updateLine)
-- [ ] Wire budget line reorder mutations to DB (reorderLines)
+- [x] Fix DbBridgeProviders to not overwrite localStorage after initial load (remove budget.groups from useEffect deps after ready)
+- [x] Wire budget group rename mutations to DB (updateGroup)
+- [x] Wire budget group reorder mutations to DB (reorderGroups)
+- [x] Wire budget line rename/edit mutations to DB (updateLine)
+- [x] Wire budget line reorder mutations to DB (reorderLines)
 - [ ] Wire expense add/edit/delete mutations to DB
 - [ ] Wire vendor add/edit/delete mutations to DB
+
+# Full Persistence Fix: Vendors & Expenses
+- [ ] Fix DbBridgeProviders: stop vendors/expenses overwrite after initial load
+- [ ] Add VendorDbSync watcher (archive, restore, edit, add, delete → DB)
+- [ ] Add ExpenseDbSync watcher (add, edit, delete → DB)
+- [ ] Test: archive a vendor, reload, confirm still archived
+- [ ] Test: add/edit/delete expense, reload, confirm changes persist
+
+# Full Persistence: Plan Tasks, Capital Stack, Draws, Compliance
+
+- [x] Fix DbBridgeProviders: stop vendors/expenses overwrite after initial load (syncedRef guard)
+- [x] Add VendorDbSync watcher (archive, restore, edit, add, delete → DB)
+- [x] Add ExpenseDbSync watcher (add, edit, delete → DB)
+- [x] Add PlanTaskDbSync watcher (add, edit, delete, status/pct changes → DB)
+- [x] Fix pctComplete router validation to accept 0-1 float range (was incorrectly max(100))
+- [x] Wire capital stack display to DB data via dataStore (CapitalTab reads from getDataStore())
+- [x] Wire draws display to DB data via dataStore (DrawsTab reads from getDataStore())
+- [x] Add capital stack and draws queries to DbBridgeProviders (loads on startup)
+- [x] Seed capital stack items (4 items: senior debt, mezzanine, GP equity, LP equity)
+- [x] Seed draw requests (8 draws: Draw 05-12 with amounts and statuses)
+- [x] Write and pass 16 new vitest integration tests for plan tasks, contracts, insurances, permits, capital stack, draws
+- [x] All 28 tests pass (3 test files)

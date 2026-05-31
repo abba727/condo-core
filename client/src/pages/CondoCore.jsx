@@ -5,11 +5,16 @@
  */
 import React from 'react';
 import './condocore.css';
+import { getDataStore } from '../data/dataStore';
 import { BudgetDbSync } from '../components/BudgetDbSync';
+import { VendorDbSync } from '../components/VendorDbSync';
+import { ExpenseDbSync } from '../components/ExpenseDbSync';
+import { PlanTaskDbSync } from '../components/PlanTaskDbSync';
 import {
   VendorStoreProvider,
   VendorsPage as VendorsPageImpl,
   VendorDetailPage as VendorDetailPageImpl,
+  useVendorStore,
 } from './VendorsModule.jsx';
 import {
   BudgetStoreProvider,
@@ -18,6 +23,7 @@ import {
   ExpensesTab as ExpensesTabNew,
   SearchableSelect,
   useBudgetStore,
+  useExpenseStore2,
 } from './FinancialsModule.jsx';
 
 import {
@@ -42,6 +48,18 @@ function BudgetDbSyncBridge() {
   const store = useBudgetStore();
   if (!store) return null;
   return <BudgetDbSync groups={store.groups} />;
+};
+// Bridge component: reads the expense store and syncs changes to the DB
+function ExpenseDbSyncBridge() {
+  const store = useExpenseStore2();
+  if (!store) return null;
+  return <ExpenseDbSync expenses={store.expenses} />;
+};
+// Bridge component: reads the vendor store and syncs changes to the DB
+function VendorDbSyncBridge() {
+  const store = useVendorStore();
+  if (!store) return null;
+  return <VendorDbSync vendors={store.vendors} />;
 };
 
 // ============ ICONS (lucide-style, 16px default) ============
@@ -1934,7 +1952,8 @@ function UnitsTab() {
 window.ProjectDetailsPage = ProjectDetailsPage;
 /* global React, Icon, PageHead */
 
-const TASKS = DRIGGS_712_PLAN_TASKS;
+const _ds = getDataStore();
+const TASKS = _ds.planTasks.length > 0 ? _ds.planTasks : DRIGGS_712_PLAN_TASKS;
 const PLAN_MONTHS = DRIGGS_712_PLAN_MONTHS;
 
 const PLAN_STATUS_META = {
@@ -2167,8 +2186,16 @@ function ProjectPlanPage() {
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [ownerFilter, setOwnerFilter] = React.useState("all");
   const [phaseFilter, setPhaseFilter] = React.useState("all");
-  const [tasks, setTasks] = React.useState(() => TASKS.map(normalizeTaskForPlanner));
-  const [groups, setGroups] = React.useState(() => buildInitialGroups(TASKS.map(normalizeTaskForPlanner)));
+  const [tasks, setTasks] = React.useState(() => {
+    const _ds = getDataStore();
+    const _tasks = _ds.planTasks.length > 0 ? _ds.planTasks : TASKS;
+    return _tasks.map(normalizeTaskForPlanner);
+  });
+  const [groups, setGroups] = React.useState(() => {
+    const _ds = getDataStore();
+    const _tasks = _ds.planTasks.length > 0 ? _ds.planTasks : TASKS;
+    return buildInitialGroups(_tasks.map(normalizeTaskForPlanner));
+  });
   const [editingTask, setEditingTask] = React.useState(null);
   const [editingGroup, setEditingGroup] = React.useState(null);
   const [draggedTaskId, setDraggedTaskId] = React.useState(null);
@@ -2357,6 +2384,7 @@ function ProjectPlanPage() {
 
   return (
     <>
+      <PlanTaskDbSync tasks={tasks} />
       <PageHead
         eyebrow="Project plan"
         title={`${DRIGGS_712_PROJECT.name} · Tracker schedule`}
@@ -3654,20 +3682,33 @@ function ExpensesTab({ rows, divisions, onAdd, onEdit }) {
   );
 }
 
+const CAPITAL_STACK_FALLBACK = [
+  { id: 1, tier: "senior_debt", label: "Senior construction loan", lender: "Bank OZK · 6.45% SOFR+225", amount: 36000000, sortOrder: 0 },
+  { id: 2, tier: "mezzanine", label: "Mezzanine", lender: "Madison Realty · 11%", amount: 8400000, sortOrder: 1 },
+  { id: 3, tier: "equity", label: "GP equity", lender: "Sterling PD", amount: 4200000, sortOrder: 2 },
+  { id: 4, tier: "equity", label: "LP equity", lender: "3 LPs · pref 8%", amount: 9800000, sortOrder: 3 },
+];
+
+const TIER_CLS = { senior_debt: "accent", junior_debt: "info", mezzanine: "info", equity: "pos", other: "warn" };
+
 function CapitalTab() {
+  const _ds = getDataStore();
+  const stackItems = _ds.capitalStack.length > 0 ? _ds.capitalStack : CAPITAL_STACK_FALLBACK;
+  const totalAmount = stackItems.reduce((s, item) => s + (item.amount || 0), 0);
   return (
     <div className="grid-2" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 16 }}>
       <div className="card">
         <div className="card-head"><div className="card-title">Capital stack</div></div>
         <div className="card-body">
-          <div className="metric-value-mono" style={{ fontSize: 28 }}>$58.4M</div>
+          <div className="metric-value-mono" style={{ fontSize: 28 }}>{fmtUSD(totalAmount, { compact: true })}</div>
           <div className="faint" style={{ fontSize: 11 }}>Total project cost</div>
           <div className="div" />
           <div className="stack" style={{ gap: 14 }}>
-            <StackBar label="Senior construction loan" value={36000000} pct={62} cls="accent" detail="Bank OZK · 6.45% SOFR+225" />
-            <StackBar label="Mezzanine" value={8400000} pct={14} cls="info" detail="Madison Realty · 11%" />
-            <StackBar label="GP equity" value={4200000} pct={7} cls="warn" detail="Sterling PD" />
-            <StackBar label="LP equity" value={9800000} pct={17} cls="pos" detail="3 LPs · pref 8%" />
+            {stackItems.map((item) => {
+              const pct = totalAmount > 0 ? Math.round((item.amount / totalAmount) * 100) : 0;
+              const cls = TIER_CLS[item.tier] || "neutral";
+              return <StackBar key={item.id} label={item.label} value={item.amount} pct={pct} cls={cls} detail={item.lender || item.tier} />;
+            })}
           </div>
         </div>
       </div>
@@ -3702,14 +3743,21 @@ function CapitalTab() {
   );
 }
 
+const DRAWS_FALLBACK = [
+  { id: 12, drawNumber: 12, label: "Draw 12", requestDate: "2024-05-02", requestAmount: 1248000, status: "submitted" },
+  { id: 11, drawNumber: 11, label: "Draw 11", requestDate: "2024-04-04", requestAmount: 1885000, status: "funded" },
+  { id: 10, drawNumber: 10, label: "Draw 10", requestDate: "2024-03-06", requestAmount: 1620000, status: "funded" },
+  { id: 9, drawNumber: 9, label: "Draw 09", requestDate: "2024-02-07", requestAmount: 1340000, status: "funded" },
+  { id: 8, drawNumber: 8, label: "Draw 08", requestDate: "2024-01-10", requestAmount: 980000, status: "funded" },
+];
+
+const DRAW_STATUS_CLS = { funded: "pos", approved: "pos", submitted: "warn", draft: "neutral", rejected: "neg" };
+const DRAW_STATUS_LABEL = { funded: "Funded", approved: "Approved", submitted: "Pending bank review", draft: "Draft", rejected: "Rejected" };
+
 function DrawsTab() {
-  const draws = [
-    { num: "Draw 12", date: "May 02, 2024", amount: 1248000, status: "Pending bank review", cls: "warn" },
-    { num: "Draw 11", date: "Apr 04, 2024", amount: 1885000, status: "Funded", cls: "pos" },
-    { num: "Draw 10", date: "Mar 06, 2024", amount: 1620000, status: "Funded", cls: "pos" },
-    { num: "Draw 09", date: "Feb 07, 2024", amount: 1340000, status: "Funded", cls: "pos" },
-    { num: "Draw 08", date: "Jan 10, 2024", amount: 980000, status: "Funded", cls: "pos" },
-  ];
+  const _ds = getDataStore();
+  const drawItems = _ds.draws.length > 0 ? _ds.draws : DRAWS_FALLBACK;
+  const sortedDraws = [...drawItems].sort((a, b) => b.drawNumber - a.drawNumber);
   return (
     <div className="grid-2" style={{ gridTemplateColumns: "1fr 360px", marginTop: 16 }}>
       <div className="card">
@@ -3728,14 +3776,20 @@ function DrawsTab() {
               </tr>
             </thead>
             <tbody>
-              {draws.map((d) => (
-                <tr key={d.num}>
-                  <td style={{ fontWeight: 500 }}>{d.num}</td>
-                  <td className="muted mono" style={{ fontSize: 12 }}>{d.date}</td>
-                  <td className="num mono">{fmtUSD(d.amount, { compact: true })}</td>
-                  <td><span className={`pill ${d.cls} no-dot`}>{d.status}</span></td>
-                </tr>
-              ))}
+              {sortedDraws.map((d) => {
+                const cls = DRAW_STATUS_CLS[d.status] || "neutral";
+                const statusLabel = DRAW_STATUS_LABEL[d.status] || d.status;
+                const dateStr = d.requestDate ? new Date(d.requestDate).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : "—";
+                const amount = d.requestAmount || d.fundedAmount || 0;
+                return (
+                  <tr key={d.id}>
+                    <td style={{ fontWeight: 500 }}>{d.label || `Draw ${String(d.drawNumber).padStart(2, "0")}`}</td>
+                    <td className="muted mono" style={{ fontSize: 12 }}>{dateStr}</td>
+                    <td className="num mono">{fmtUSD(amount, { compact: true })}</td>
+                    <td><span className={`pill ${cls} no-dot`}>{statusLabel}</span></td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -3943,9 +3997,12 @@ function coalesceVendorRecord(map, name, seed = {}) {
   return existing;
 }
 
+const _dsV = getDataStore();
+const _CONTRACTS = _dsV.contracts.length > 0 ? _dsV.contracts : DRIGGS_712_CONTRACTS;
+const _INSURANCES = _dsV.insurances.length > 0 ? _dsV.insurances : DRIGGS_712_INSURANCES;
+const _PERMITS = _dsV.permits.length > 0 ? _dsV.permits : DRIGGS_712_PERMITS;
 const VENDOR_MAP_712 = new Map();
-
-DRIGGS_712_CONTRACTS.forEach((row) => {
+_CONTRACTS.forEach((row) => {
   coalesceVendorRecord(VENDOR_MAP_712, row.Vendor, {
     role: "Contracted vendor",
     trade: classifyVendorTrade(row.Vendor, "contract"),
@@ -3977,7 +4034,7 @@ DRIGGS_712_LOOKUP.forEach((row) => {
   });
 });
 
-DRIGGS_712_INSURANCES.forEach((row) => {
+_INSURANCES.forEach((row) => {
   const exp = row["General Liability Expiration"] || row["Workers Comp Expiration"];
   const days = row["General Liability Expiration(d)"] ?? row["Workers Comp Expiration (d)"];
   coalesceVendorRecord(VENDOR_MAP_712, row.Company, {
@@ -3989,7 +4046,7 @@ DRIGGS_712_INSURANCES.forEach((row) => {
   });
 });
 
-DRIGGS_712_PERMITS.forEach((row) => {
+_PERMITS.forEach((row) => {
   const days = row["Number of Days Left"];
   coalesceVendorRecord(VENDOR_MAP_712, row.Contractor, {
     role: `${row["Permit Type"] || "Permit"} permit contractor`,
@@ -4401,7 +4458,9 @@ function CondoCoreApp() {
     <BudgetStoreProvider seedBudget={DRIGGS_712_BUDGET}>
     <BudgetDbSyncBridge />
     <ExpenseStoreProvider2 seedExpenses={INITIAL_EXPENSES}>
+    <ExpenseDbSyncBridge />
     <VendorStoreProvider>
+    <VendorDbSyncBridge />
     <div className="condocore-root app-shell">
       <Rail active={route} onNav={handleNav} project={PROJECTS[0]} onProjectSwitch={() => {}} />
       <main className="main">

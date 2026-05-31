@@ -92,7 +92,8 @@ export function useVendorsDb() {
       bids: vendorBids,
       cois: [],
       auditLog: [],
-      archived: false,
+      archived: v.status === "inactive",
+      archivedAt: v.status === "inactive" ? (v.updatedAt instanceof Date ? v.updatedAt.toISOString() : String(v.updatedAt ?? "")) : null,
     };
   });
 

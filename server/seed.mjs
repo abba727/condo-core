@@ -27,6 +27,8 @@ const {
   insurances,
   permits,
   planTasks,
+  capitalStackItems,
+  draws,
 } = await import("../drizzle/schema.ts");
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -295,7 +297,56 @@ for (const row of planTaskRows) {
   }).onDuplicateKeyUpdate({ set: { name: row.name } });
 }
 
-// ─── Done ─────────────────────────────────────────────────────────────────────
+// ─── 8. Capital stack ──────────────────────────────────────────────────────────────
+console.log("  → Inserting capital stack...");
+const CAPITAL_STACK_SEED = [
+  { tier: "senior_debt", label: "Senior construction loan", lender: "Bank OZK", amount: "36000000", interestRate: 6.45, maturityDate: "2026-12-31", status: "funded", sortOrder: 0, notes: "SOFR+225" },
+  { tier: "mezzanine", label: "Mezzanine", lender: "Madison Realty Capital", amount: "8400000", interestRate: 11.0, maturityDate: "2026-12-31", status: "funded", sortOrder: 1, notes: "11% fixed" },
+  { tier: "equity", label: "GP equity", lender: "Sterling PD", amount: "4200000", interestRate: null, maturityDate: null, status: "funded", sortOrder: 2, notes: "General partner" },
+  { tier: "equity", label: "LP equity", lender: "3 LPs", amount: "9800000", interestRate: null, maturityDate: null, status: "funded", sortOrder: 3, notes: "Preferred return 8%" },
+];
+for (const item of CAPITAL_STACK_SEED) {
+  await db.insert(capitalStackItems).values({
+    projectId: PROJECT_ID,
+    tier: item.tier,
+    label: item.label,
+    lender: item.lender,
+    amount: item.amount,
+    interestRate: item.interestRate,
+    maturityDate: item.maturityDate,
+    status: item.status,
+    sortOrder: item.sortOrder,
+    notes: item.notes,
+  }).onDuplicateKeyUpdate({ set: { label: item.label } });
+}
+
+// ─── 9. Draws ────────────────────────────────────────────────────────────────────────
+console.log("  → Inserting draws...");
+const DRAWS_SEED = [
+  { drawNumber: 12, label: "Draw 12", requestDate: "2024-05-02", requestAmount: "1248000", approvedAmount: "0", fundedAmount: "0", status: "submitted", lender: "Bank OZK" },
+  { drawNumber: 11, label: "Draw 11", requestDate: "2024-04-04", requestAmount: "1885000", approvedAmount: "1885000", fundedAmount: "1885000", status: "funded", lender: "Bank OZK" },
+  { drawNumber: 10, label: "Draw 10", requestDate: "2024-03-06", requestAmount: "1620000", approvedAmount: "1620000", fundedAmount: "1620000", status: "funded", lender: "Bank OZK" },
+  { drawNumber: 9, label: "Draw 09", requestDate: "2024-02-07", requestAmount: "1340000", approvedAmount: "1340000", fundedAmount: "1340000", status: "funded", lender: "Bank OZK" },
+  { drawNumber: 8, label: "Draw 08", requestDate: "2024-01-10", requestAmount: "980000", approvedAmount: "980000", fundedAmount: "980000", status: "funded", lender: "Bank OZK" },
+  { drawNumber: 7, label: "Draw 07", requestDate: "2023-12-06", requestAmount: "1120000", approvedAmount: "1120000", fundedAmount: "1120000", status: "funded", lender: "Bank OZK" },
+  { drawNumber: 6, label: "Draw 06", requestDate: "2023-11-08", requestAmount: "890000", approvedAmount: "890000", fundedAmount: "890000", status: "funded", lender: "Bank OZK" },
+  { drawNumber: 5, label: "Draw 05", requestDate: "2023-10-04", requestAmount: "760000", approvedAmount: "760000", fundedAmount: "760000", status: "funded", lender: "Bank OZK" },
+];
+for (const d of DRAWS_SEED) {
+  await db.insert(draws).values({
+    projectId: PROJECT_ID,
+    drawNumber: d.drawNumber,
+    label: d.label,
+    requestDate: d.requestDate,
+    requestAmount: d.requestAmount,
+    approvedAmount: d.approvedAmount,
+    fundedAmount: d.fundedAmount,
+    status: d.status,
+    lender: d.lender,
+  }).onDuplicateKeyUpdate({ set: { label: d.label } });
+}
+
+// ─── Done ────────────────────────────────────────────────────────────────────────────────
 console.log("✅ Seed complete!");
 await connection.end();
 process.exit(0);
