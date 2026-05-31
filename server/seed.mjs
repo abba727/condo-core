@@ -109,6 +109,15 @@ const CATEGORY_TO_TYPE = {
   "Soft Costs": "soft",
 };
 
+// Map category labels to use categories
+const CATEGORY_TO_USE_CATEGORY = {
+  "Land Costs": "land_acquisition",
+  "Soft Costs": "soft_costs",
+  "Contingencies": "contingency",
+  "Overhead & Profit": "soft_costs",
+};
+// All other categories default to hard_costs
+
 // Group budget rows by category
 const grouped = {};
 SEED.budget.forEach((row) => {
@@ -124,14 +133,16 @@ for (const [cat, rows] of Object.entries(grouped)) {
   groupIdMap[cat] = groupId;
   const type = CATEGORY_TO_TYPE[cat] || "hard";
 
+  const useCategory = CATEGORY_TO_USE_CATEGORY[cat] || "hard_costs";
   await db.insert(budgetGroups).values({
     id: groupId,
     projectId: PROJECT_ID,
     label: cat,
     type,
+    useCategory,
     sortOrder: groupOrder,
     collapsed: false,
-  }).onDuplicateKeyUpdate({ set: { label: cat } });
+  }).onDuplicateKeyUpdate({ set: { label: cat, useCategory } });
 
   // Insert lines for this group
   for (let li = 0; li < rows.length; li++) {

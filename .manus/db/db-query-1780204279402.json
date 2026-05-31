@@ -1,0 +1,100 @@
+{
+  "query": "SELECT id, label, useCategory FROM budget_groups LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute SELECT id, label, useCategory FROM budget_groups LIMIT 20;",
+  "rows": [
+    {
+      "id": "grp-seed-1",
+      "label": "General Condition",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-10",
+      "label": "HVAC",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-11",
+      "label": "Electric",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-12",
+      "label": "Miscellaneous Site Work",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-13",
+      "label": "Equipment and Miscellaneous",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-14",
+      "label": "Kitchen, Bathrooms and Fixtures",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-15",
+      "label": "Overhead & Profit",
+      "useCategory": "soft_costs"
+    },
+    {
+      "id": "grp-seed-16",
+      "label": "Contingencies",
+      "useCategory": "contingency"
+    },
+    {
+      "id": "grp-seed-17",
+      "label": "Land Costs",
+      "useCategory": "land_acquisition"
+    },
+    {
+      "id": "grp-seed-18",
+      "label": "Soft Costs",
+      "useCategory": "soft_costs"
+    },
+    {
+      "id": "grp-seed-2",
+      "label": "Foundation Site Work",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-3",
+      "label": "Superstructure",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-4",
+      "label": "Carpentry",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-5",
+      "label": "Windows and Storefront",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-6",
+      "label": "Masonry and Stucco",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-7",
+      "label": "Roof",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-8",
+      "label": "Elevator",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-9",
+      "label": "Plumbing and Sprinkler",
+      "useCategory": "hard_costs"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tlabel\tuseCategory\ngrp-seed-1\tGeneral Condition\thard_costs\ngrp-seed-10\tHVAC\thard_costs\ngrp-seed-11\tElectric\thard_costs\ngrp-seed-12\tMiscellaneous Site Work\thard_costs\ngrp-seed-13\tEquipment and Miscellaneous\thard_costs\ngrp-seed-14\tKitchen, Bathrooms and Fixtures\thard_costs\ngrp-seed-15\tOverhead & Profit\tsoft_costs\ngrp-seed-16\tContingencies\tcontingency\ngrp-seed-17\tLand Costs\tland_acquisition\ngrp-seed-18\tSoft Costs\tsoft_costs\ngrp-seed-2\tFoundation Site Work\thard_costs\ngrp-seed-3\tSuperstructure\thard_costs\ngrp-seed-4\tCarpentry\thard_costs\ngrp-seed-5\tWindows and Storefront\thard_costs\ngrp-seed-6\tMasonry and Stucco\thard_costs\ngrp-seed-7\tRoof\thard_costs\ngrp-seed-8\tElevator\thard_costs\ngrp-seed-9\tPlumbing and Sprinkler\thard_costs\n",
+  "stderr": "",
+  "execution_time_ms": 258
+}

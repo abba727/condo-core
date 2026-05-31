@@ -433,11 +433,52 @@ function TrancheRow({ tranche, total, expanded, onToggle, onAddParticipant }) {
     </>
   );
 }
+// Category key → display label mapping
+const USE_CATEGORY_LABELS = {
+  land_acquisition: "Land acquisition",
+  hard_costs:       "Hard costs",
+  soft_costs:       "Soft costs",
+  financing_carry:  "Financing & carry",
+  contingency:      "Contingency",
+};
+const USE_CATEGORY_ORDER = ["land_acquisition", "hard_costs", "soft_costs", "financing_carry", "contingency"];
 
-// ── Sources & Uses panel ───────────────────────────────────────────────────────
+/** Read budget groups from localStorage and sum line budgets per useCategory */
+function computeUsesFromBudget() {
+  try {
+    const raw = localStorage.getItem("cc_budget_groups_v3");
+    if (!raw) return null;
+    const groups = JSON.parse(raw);
+    if (!Array.isArray(groups) || groups.length === 0) return null;
+    // Check if any group has useCategory
+    const hasCategories = groups.some((g) => g.useCategory);
+    if (!hasCategories) return null;
+    const totals = {};
+    groups.forEach((g) => {
+      const cat = g.useCategory;
+      if (!cat) return;
+      const groupBudget = (g.lines || []).reduce((s, l) => s + (l.budget || 0), 0);
+      totals[cat] = (totals[cat] || 0) + groupBudget;
+    });
+    return totals;
+  } catch (_) {
+    return null;
+  }
+}
+
+// ── Sources & Uses panel ───────────────────────────────────────────────────────────────────────────────────────
 function SourcesUsesPanel({ tranches, total }) {
   const sourcesTotal = tranches.reduce((s, t) => s + t.amount, 0);
-  const usesTotal = SOURCES_USES.uses.reduce((s, u) => s + u.amount, 0);
+
+  // Compute uses from live budget data, fall back to hardcoded
+  const liveTotals = computeUsesFromBudget();
+  const usesData = liveTotals
+    ? USE_CATEGORY_ORDER.map((cat) => ({
+        label: USE_CATEGORY_LABELS[cat],
+        amount: liveTotals[cat] || 0,
+      }))
+    : SOURCES_USES.uses;
+  const usesTotal = usesData.reduce((s, u) => s + u.amount, 0);
 
   return (
     <div className="card" style={{ overflow: "visible" }}>
@@ -492,11 +533,11 @@ function SourcesUsesPanel({ tranches, total }) {
             {fmtUSD(usesTotal, { compact: true })}
           </span>
         </div>
-        {SOURCES_USES.uses.map((u, i) => (
+        {usesData.map((u, i) => (
           <div key={i} style={{
             display: "flex", justifyContent: "space-between", alignItems: "center",
             padding: "9px 16px",
-            borderBottom: i < SOURCES_USES.uses.length - 1 ? "1px solid var(--border)" : "none",
+            borderBottom: i < usesData.length - 1 ? "1px solid var(--border)" : "none",
             fontSize: 13,
           }}>
             <span style={{ color: "var(--text)" }}>{u.label}</span>

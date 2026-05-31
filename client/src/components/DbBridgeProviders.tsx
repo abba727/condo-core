@@ -31,7 +31,7 @@ const DRIGGS_712_INSURANCES_FALLBACK: AnyRecord[] = [];
 const DRIGGS_712_PERMITS_FALLBACK: AnyRecord[] = [];
 
 // Storage keys used by the legacy stores
-const BUDGET_GROUPS_STORAGE_KEY = "cc_budget_groups_v2";
+const BUDGET_GROUPS_STORAGE_KEY = "cc_budget_groups_v3";
 const EXP_STORAGE_KEY = "cc_expenses_v3";
 const STORAGE_KEY_VENDORS = "cc_vendors_v2";
 const STORAGE_KEY_PROJECT_IDS = "cc_project_vendor_ids_v2";
@@ -97,6 +97,7 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
           collapsed: g.collapsed ?? false,
           order: g.order ?? gi,
           isContingencyGroup: g.isContingencyGroup ?? false,
+          useCategory: (g as { useCategory?: string }).useCategory ?? null,
           lines: (g.lines ?? []).map((l, li) => ({
             id: l.id,
             name: l.name,
@@ -262,7 +263,7 @@ function DbSyncGate({ children }: { children: React.ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]); // Only re-run when loading state changes, NOT when data changes
 
-  if (isLoading && !ready) {
+  if (!ready) {
     return (
       <div style={{
         display: "flex",

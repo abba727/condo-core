@@ -156,3 +156,19 @@
 - [x] Right panel Equity Participants: avatar initials, name, tranche label, % of total
 - [x] Add tranche button in header
 - [x] Wire to DB data (capital_stack_items table) with hardcoded fallback
+
+# Budget Group Use Category + Capital Stack Uses Integration
+- [x] Add useCategory column to budget_groups table in drizzle schema
+- [x] Run pnpm db:push to migrate
+- [x] Update budget groups router (add/update) to accept useCategory (required)
+- [x] Update seed data to assign useCategory to all existing groups
+- [x] Add Use Category dropdown to Add Group modal (required field)
+- [x] Add Use Category dropdown to Edit Group modal (required field)
+- [x] Derive Capital Stack Uses totals from live budget group totals by useCategory
+- [x] Update CapitalStackTab to read budget-derived uses instead of hardcoded values
+- [x] Write vitest test for useCategory budget grouping
+
+# Bug Fix: Edit Group Modal Not Pre-populating useCategory
+- [x] Add useCategory to useBudgetDb groups mapping (was missing from rawGroups.map)
+- [x] Fix DbBridgeProviders render gate: change `if (isLoading && !ready)` to `if (!ready)` so children only render after localStorage is written
+- [x] Bump budget groups storage key to v3 to force fresh DB load with useCategory

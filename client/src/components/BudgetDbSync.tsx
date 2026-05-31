@@ -19,6 +19,7 @@ interface BudgetGroup {
   order?: number;
   collapsed?: boolean;
   isContingencyGroup?: boolean;
+  useCategory?: "land_acquisition" | "hard_costs" | "soft_costs" | "financing_carry" | "contingency";
   lines: BudgetLine[];
 }
 
@@ -97,6 +98,7 @@ export function BudgetDbSync({ groups }: BudgetDbSyncProps) {
         addGroupMut.mutate({
           label: g.label,
           type: g.isContingencyGroup ? "contingency" : "hard",
+          useCategory: (g.useCategory as "land_acquisition" | "hard_costs" | "soft_costs" | "financing_carry" | "contingency") ?? "hard_costs",
         }, {
           onSuccess: (data) => {
             // Update the DB ID tracking — the DB assigned a new ID

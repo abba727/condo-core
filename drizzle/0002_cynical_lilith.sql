@@ -1,0 +1,1 @@
+ALTER TABLE `budget_groups` ADD `useCategory` enum('land_acquisition','hard_costs','soft_costs','financing_carry','contingency');

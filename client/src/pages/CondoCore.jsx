@@ -552,12 +552,15 @@ export function Modal({ open, onClose, title, subtitle, children, footer, width 
   );
 }
 
-export function Field({ label, hint, children, span = 1 }) {
+export function Field({ label, hint, children, span = 1, required, error }) {
   return (
     <div className="form-field" style={{ gridColumn: `span ${span}` }}>
-      <label className="form-label">{label}</label>
+      <label className="form-label">
+        {label}{required && <span style={{ color: 'var(--signal-neg)', marginLeft: 2 }}>*</span>}
+      </label>
       {children}
       {hint && <div className="form-hint">{hint}</div>}
+      {error && <div style={{ fontSize: 11, color: 'var(--signal-neg)', marginTop: 3 }}>{error}</div>}
     </div>
   );
 }
@@ -583,7 +586,7 @@ export function Select({ value, onChange, options }) {
   return (
     <select className="form-input" value={value ?? ""} onChange={(e) => onChange?.(e.target.value)}>
       {options.map((o) => (
-        <option key={o.value ?? o} value={o.value ?? o}>{o.label ?? o}</option>
+        <option key={o.value ?? o} value={o.value ?? o} disabled={o.disabled}>{o.label ?? o}</option>
       ))}
     </select>
   );

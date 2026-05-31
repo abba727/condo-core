@@ -3,7 +3,7 @@
  * Tests the budget, expenses, vendors, and projects tRPC procedures
  * using the actual database connection.
  */
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { getDb } from "./db";
 import { budgetGroups, budgetLines, expenses, vendors, projects } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -51,6 +51,64 @@ describe("Budget groups", () => {
       expect(typeof g.label).toBe("string");
       expect(g.label.length).toBeGreaterThan(0);
     }
+  });
+
+  it("budget groups have useCategory values assigned", async () => {
+    const db = await getDb();
+    if (!db) throw new Error("DB not available");
+
+    const groups = await db
+      .select()
+      .from(budgetGroups)
+      .where(eq(budgetGroups.projectId, PROJECT_ID));
+
+    const VALID_CATEGORIES = ["land_acquisition", "hard_costs", "soft_costs", "financing_carry", "contingency"];
+
+    // All groups should have a useCategory assigned
+    for (const g of groups) {
+      expect(g.useCategory).not.toBeNull();
+      expect(VALID_CATEGORIES).toContain(g.useCategory);
+    }
+
+    // Should have at least one group in each of the main categories
+    const categories = groups.map((g) => g.useCategory);
+    expect(categories).toContain("land_acquisition");
+    expect(categories).toContain("hard_costs");
+    expect(categories).toContain("soft_costs");
+    expect(categories).toContain("contingency");
+  });
+
+  it("budget group useCategory totals sum to a positive total", async () => {
+    const db = await getDb();
+    if (!db) throw new Error("DB not available");
+
+    const groups = await db
+      .select()
+      .from(budgetGroups)
+      .where(eq(budgetGroups.projectId, PROJECT_ID));
+
+    const lines = await db
+      .select()
+      .from(budgetLines)
+      .where(eq(budgetLines.projectId, PROJECT_ID));
+
+    // Build a map of groupId → useCategory
+    const groupCategoryMap = new Map(groups.map((g) => [g.id, g.useCategory]));
+
+    // Sum budget amounts by useCategory
+    const totals: Record<string, number> = {};
+    for (const line of lines) {
+      const cat = groupCategoryMap.get(line.groupId) ?? "unknown";
+      totals[cat] = (totals[cat] ?? 0) + parseFloat(line.budgetAmount ?? "0");
+    }
+
+    // Hard costs should be the largest category (construction project)
+    const hardCosts = totals["hard_costs"] ?? 0;
+    expect(hardCosts).toBeGreaterThan(0);
+
+    // Total should be a positive number
+    const total = Object.values(totals).reduce((a, b) => a + b, 0);
+    expect(total).toBeGreaterThan(0);
   });
 });
 

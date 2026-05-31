@@ -195,6 +195,7 @@ export const budgetGroups = mysqlTable("budget_groups", {
   projectId: varchar("projectId", { length: 64 }).notNull(),
   label: varchar("label", { length: 255 }).notNull(),
   type: mysqlEnum("type", ["hard", "soft", "contingency", "other"]).default("hard").notNull(),
+  useCategory: mysqlEnum("useCategory", ["land_acquisition", "hard_costs", "soft_costs", "financing_carry", "contingency"]),
   sortOrder: int("sortOrder").default(0).notNull(),
   collapsed: boolean("collapsed").default(false),
   notes: text("notes"),

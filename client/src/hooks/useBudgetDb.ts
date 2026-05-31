@@ -50,6 +50,7 @@ export function useBudgetDb() {
     collapsed: g.collapsed ?? false,
     order: g.sortOrder ?? 0,
     isContingencyGroup: g.type === "contingency",
+    useCategory: g.useCategory ?? null,
     lines: rawLines
       .filter((l) => l.groupId === g.id)
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
@@ -69,11 +70,12 @@ export function useBudgetDb() {
 
   // ─── Actions ──────────────────────────────────────────────────────────────
   const addGroup = useCallback(
-    (group: { label: string; type?: string }) => {
+    (group: { label: string; type?: string; useCategory?: string }) => {
       addGroupMut.mutate({
         projectId: PROJECT_ID,
         label: group.label,
         type: group.type as "hard" | "soft" | "contingency" | "other" | undefined,
+        useCategory: (group.useCategory as "land_acquisition" | "hard_costs" | "soft_costs" | "financing_carry" | "contingency") ?? "hard_costs",
       });
     },
     [addGroupMut]
@@ -84,6 +86,7 @@ export function useBudgetDb() {
       updateGroupMut.mutate({
         id: groupId,
         label: patch.label as string | undefined,
+        useCategory: patch.useCategory as "land_acquisition" | "hard_costs" | "soft_costs" | "financing_carry" | "contingency" | undefined,
         collapsed: patch.collapsed as boolean | undefined,
         notes: patch.notes as string | undefined,
       });

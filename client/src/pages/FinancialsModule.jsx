@@ -183,7 +183,7 @@ const CATEGORY_TO_CSI = {
 
 // ─── Budget Store ────────────────────────────────────────────────────────────
 const BUDGET_STORAGE_KEY = 'cc_budget_v2';
-const BUDGET_GROUPS_STORAGE_KEY = 'cc_budget_groups_v2';
+const BUDGET_GROUPS_STORAGE_KEY = 'cc_budget_groups_v3';
 
 function loadBudgetFromStorage() {
   try {
@@ -942,14 +942,36 @@ export function BudgetTab() {
 }
 
 // ─── Group Modal ─────────────────────────────────────────────────────────────
+const USE_CATEGORY_OPTIONS = [
+  { value: 'land_acquisition', label: 'Land acquisition' },
+  { value: 'hard_costs',       label: 'Hard costs' },
+  { value: 'soft_costs',       label: 'Soft costs' },
+  { value: 'financing_carry',  label: 'Financing & carry' },
+  { value: 'contingency',      label: 'Contingency' },
+];
+
 function GroupModal({ open, group, onClose, onSave, onDelete }) {
   const [form, setForm] = React.useState({});
   const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [errors, setErrors] = React.useState({});
   React.useEffect(() => {
-    if (open) { setForm(group ? { ...group } : { label: '' }); setConfirmDelete(false); }
+    if (open) {
+      setForm(group ? { ...group } : { label: '', useCategory: '' });
+      setConfirmDelete(false);
+      setErrors({});
+    }
   }, [open, group]);
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
   const isEdit = !!form.id;
+
+  const handleSave = () => {
+    const errs = {};
+    if (!form.label || !form.label.trim()) errs.label = 'Group name is required';
+    if (!form.useCategory) errs.useCategory = 'Use category is required';
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    onSave({ ...form });
+  };
+
   return (
     <Modal
       open={open}
@@ -971,7 +993,7 @@ function GroupModal({ open, group, onClose, onSave, onDelete }) {
           )}
           {!confirmDelete && <button className="btn btn-ghost" onClick={onClose}>Cancel</button>}
           {!confirmDelete && (
-            <button className="btn btn-primary" onClick={() => onSave({ ...form })}>
+            <button className="btn btn-primary" onClick={handleSave}>
               {isEdit ? 'Save changes' : 'Add group'}
             </button>
           )}
@@ -979,8 +1001,15 @@ function GroupModal({ open, group, onClose, onSave, onDelete }) {
       }
     >
       <div className="form-grid">
-        <Field label="Group name" span={2}>
-          <Input value={form.label} onChange={set('label')} placeholder="e.g. Foundation Site Work" autoFocus />
+        <Field label="Group name" span={2} error={errors.label}>
+          <Input value={form.label || ''} onChange={set('label')} placeholder="e.g. Foundation Site Work" autoFocus />
+        </Field>
+        <Field label="Use category" span={2} required error={errors.useCategory}>
+          <Select
+            value={form.useCategory || ''}
+            onChange={set('useCategory')}
+            options={[{ value: '', label: 'Select a use category…', disabled: true }, ...USE_CATEGORY_OPTIONS]}
+          />
         </Field>
       </div>
     </Modal>

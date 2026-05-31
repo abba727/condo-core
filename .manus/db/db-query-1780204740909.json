@@ -1,0 +1,60 @@
+{
+  "query": "SELECT id, label, useCategory FROM budget_groups LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute SELECT id, label, useCategory FROM budget_groups LIMIT 10;",
+  "rows": [
+    {
+      "id": "grp-seed-1",
+      "label": "General Condition",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-10",
+      "label": "HVAC",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-11",
+      "label": "Electric",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-12",
+      "label": "Miscellaneous Site Work",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-13",
+      "label": "Equipment and Miscellaneous",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-14",
+      "label": "Kitchen, Bathrooms and Fixtures",
+      "useCategory": "hard_costs"
+    },
+    {
+      "id": "grp-seed-15",
+      "label": "Overhead & Profit",
+      "useCategory": "soft_costs"
+    },
+    {
+      "id": "grp-seed-16",
+      "label": "Contingencies",
+      "useCategory": "contingency"
+    },
+    {
+      "id": "grp-seed-17",
+      "label": "Land Costs",
+      "useCategory": "land_acquisition"
+    },
+    {
+      "id": "grp-seed-18",
+      "label": "Soft Costs",
+      "useCategory": "soft_costs"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tlabel\tuseCategory\ngrp-seed-1\tGeneral Condition\thard_costs\ngrp-seed-10\tHVAC\thard_costs\ngrp-seed-11\tElectric\thard_costs\ngrp-seed-12\tMiscellaneous Site Work\thard_costs\ngrp-seed-13\tEquipment and Miscellaneous\thard_costs\ngrp-seed-14\tKitchen, Bathrooms and Fixtures\thard_costs\ngrp-seed-15\tOverhead & Profit\tsoft_costs\ngrp-seed-16\tContingencies\tcontingency\ngrp-seed-17\tLand Costs\tland_acquisition\ngrp-seed-18\tSoft Costs\tsoft_costs\n",
+  "stderr": "",
+  "execution_time_ms": 266
+}

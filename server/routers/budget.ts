@@ -27,6 +27,7 @@ export const budgetRouter = router({
         projectId: z.string().optional(),
         label: z.string().min(1),
         type: z.enum(["hard", "soft", "contingency", "other"]).optional(),
+        useCategory: z.enum(["land_acquisition", "hard_costs", "soft_costs", "financing_carry", "contingency"]),
       })
     )
     .mutation(async ({ input }) => {
@@ -48,6 +49,7 @@ export const budgetRouter = router({
         projectId: pid,
         label: input.label,
         type: input.type ?? "hard",
+        useCategory: input.useCategory,
         sortOrder: nextOrder,
         collapsed: false,
       });
@@ -60,6 +62,7 @@ export const budgetRouter = router({
         id: z.string(),
         label: z.string().optional(),
         type: z.enum(["hard", "soft", "contingency", "other"]).optional(),
+        useCategory: z.enum(["land_acquisition", "hard_costs", "soft_costs", "financing_carry", "contingency"]).optional(),
         collapsed: z.boolean().optional(),
         notes: z.string().optional(),
       })
@@ -71,6 +74,7 @@ export const budgetRouter = router({
       const patch: Record<string, unknown> = {};
       if (rest.label !== undefined) patch.label = rest.label;
       if (rest.type !== undefined) patch.type = rest.type;
+      if (rest.useCategory !== undefined) patch.useCategory = rest.useCategory;
       if (rest.collapsed !== undefined) patch.collapsed = rest.collapsed;
       if (rest.notes !== undefined) patch.notes = rest.notes;
       if (Object.keys(patch).length > 0) {
