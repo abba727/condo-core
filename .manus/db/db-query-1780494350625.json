@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, companyName, status, archived FROM vendors WHERE companyName LIKE '|%' OR status = 'inactive' ORDER BY id LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute SELECT id, companyName, status, archived FROM vendors WHERE companyName LIKE '|%' OR status = 'inactive' ORDER BY id LIMIT 20;",
+  "rows": [
+    {
+      "id": "25",
+      "companyName": "| Mohammad Aftab",
+      "status": "inactive",
+      "archived": "0"
+    },
+    {
+      "id": "33",
+      "companyName": "|",
+      "status": "inactive",
+      "archived": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcompanyName\tstatus\tarchived\n25\t| Mohammad Aftab\tinactive\t0\n33\t|\tinactive\t0\n",
+  "stderr": "",
+  "execution_time_ms": 259
+}

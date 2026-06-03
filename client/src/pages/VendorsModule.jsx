@@ -452,12 +452,12 @@ export function VendorsPage({ onViewVendor }) {
   const [editVendor, setEditVendor] = React.useState(null);
   const vendors = store?.vendors || [];
   const projectVendorIds = store?.projectVendorIds || new Set();
-  const archivedCount = vendors.filter((v) => v.archived).length;
-  // When showArchived is true, show ONLY archived vendors (separate view)
-  // When false, show only active (non-archived) vendors
+  const archivedCount = vendors.filter((v) => v.archived || v.status === 'inactive').length;
+  // When showArchived is true, show ONLY archived/inactive vendors (separate view)
+  // When false, show only active/pending (non-archived, non-inactive) vendors
   const activeVendors = showArchived
-    ? vendors.filter((v) => v.archived)
-    : vendors.filter((v) => !v.archived);
+    ? vendors.filter((v) => v.archived || v.status === 'inactive')
+    : vendors.filter((v) => !v.archived && v.status !== 'inactive');
   const base = (!showArchived && projectOnly)
     ? activeVendors.filter((v) => projectVendorIds.has(v.id))
     : activeVendors;
@@ -555,11 +555,11 @@ export function VendorsPage({ onViewVendor }) {
               <button
                 className={`btn btn-sm ${showArchived ? 'btn-secondary' : 'btn-ghost'}`}
                 onClick={() => setShowArchived((p) => !p)}
-                title={showArchived ? 'Back to active vendors' : `View ${archivedCount} archived vendor${archivedCount !== 1 ? 's' : ''}`}
+                title={showArchived ? 'Back to active vendors' : `View ${archivedCount} inactive/archived vendor${archivedCount !== 1 ? 's' : ''}`}
                 style={showArchived ? { color: 'var(--signal-neg)' } : { color: 'var(--text-muted)' }}
               >
                 <Icon name="folder" size={12} />
-                {showArchived ? '← Active vendors' : `${archivedCount} archived`}
+                {showArchived ? '← Active vendors' : `${archivedCount} inactive`}
               </button>
             )}
 
