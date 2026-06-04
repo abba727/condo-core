@@ -186,6 +186,23 @@ export const vendorsRouter = router({
       return { success: true };
     }),
 
+  toggleAssignment: publicProcedure
+    .input(z.object({ id: z.number(), assigned: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db
+        .update(vendors)
+        .set({ assignedToProject: input.assigned })
+        .where(eq(vendors.id, input.id));
+      await db.insert(vendorAuditLog).values({
+        vendorId: input.id,
+        action: input.assigned ? "vendor_assigned" : "vendor_unassigned",
+        detail: JSON.stringify({ assigned: input.assigned }),
+      });
+      return { success: true, assigned: input.assigned };
+    }),
+
   updateRating: publicProcedure
     .input(z.object({ id: z.number(), rating: z.number().min(0).max(5) }))
     .mutation(async ({ input }) => {

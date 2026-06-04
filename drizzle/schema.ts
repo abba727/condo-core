@@ -82,6 +82,7 @@ export const vendors = mysqlTable("vendors", {
   contractValue: decimal("contractValue", { precision: 15, scale: 2 }).default("0"),
   coiExpires: varchar("coiExpires", { length: 64 }).default("Not tracked"),
   coiOk: boolean("coiOk").default(true),
+  assignedToProject: boolean("assignedToProject").default(true),
   archived: boolean("archived").default(false),
   archivedAt: timestamp("archivedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

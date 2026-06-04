@@ -54,6 +54,10 @@ export function useVendorsDb() {
     onSuccess: () => utils.vendors.listBids.invalidate(),
   });
 
+  const toggleAssignmentMut = trpc.vendors.toggleAssignment.useMutation({
+    onSuccess: () => utils.vendors.list.invalidate(),
+  });
+
   const addCoiMut = trpc.vendors.addCoi.useMutation({
     onSuccess: () => utils.vendors.list.invalidate(),
   });
@@ -114,11 +118,14 @@ export function useVendorsDb() {
       auditLog: [],
       archived: v.archived ?? false,
       archivedAt: v.archivedAt instanceof Date ? v.archivedAt.toISOString() : (v.archivedAt ? String(v.archivedAt) : null),
+      assignedToProject: v.assignedToProject ?? true,
     };
   });
 
-  // All vendors are project-assigned (seeded with project ID)
-  const projectVendorIds = new Set(vendors.map((v) => v.id));
+  // Only vendors explicitly assigned to the project appear in the active list
+  const projectVendorIds = new Set(
+    vendors.filter((v) => (v as typeof v & { assignedToProject: boolean }).assignedToProject !== false).map((v) => v.id)
+  );
 
   // ─── Actions ──────────────────────────────────────────────────────────────
   const addVendor = useCallback(
@@ -205,11 +212,13 @@ export function useVendorsDb() {
   );
 
   const toggleProjectAssignment = useCallback(
-    (_vendorId: string) => {
-      // All vendors are assigned to the project in the DB model
-      // This is a no-op in the DB-backed model
+    (vendorId: string) => {
+      const vendor = vendors.find((v) => v.id === vendorId);
+      if (!vendor) return;
+      const currentlyAssigned = (vendor as typeof vendor & { assignedToProject: boolean }).assignedToProject !== false;
+      toggleAssignmentMut.mutate({ id: Number(vendorId), assigned: !currentlyAssigned });
     },
-    []
+    [vendors, toggleAssignmentMut]
   );
 
   const addBid = useCallback(

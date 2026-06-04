@@ -293,3 +293,12 @@
 - [x] Invalidate budget.listLines after bid save/delete so Budget tab refreshes automatically
 - [x] Backfill existing approved bid: set committedAmount = 12900 on line 17.02 via SQL
 - [x] All 36 tests pass
+
+# Vendor "Assigned to Project" Button Fix
+- [x] Add assignedToProject boolean column (default true) to vendors table in drizzle/schema.ts
+- [x] Run pnpm db:push to migrate schema
+- [x] Add vendors.toggleAssignment tRPC procedure (flips assignedToProject in DB, logs audit entry)
+- [x] Update useVendorsDb.toggleProjectAssignment to call the tRPC mutation
+- [x] Update projectVendorIds to filter by assignedToProject = true
+- [x] Button shows "Assigned to project" (checked) or "Assign to project" (unchecked) based on DB value
+- [x] All 36 tests pass
