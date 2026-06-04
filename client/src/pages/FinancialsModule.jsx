@@ -1342,7 +1342,7 @@ export function ExpensesTab({ seedExpenses }) {
 // ─── Grouped Budget Select ───────────────────────────────────────────────────
 // Renders budget groups as non-selectable headers and line items as selectable
 // options with their CSI number prefix. Supports search filtering.
-function GroupedBudgetSelect({ value, onChange, budgetGroups, placeholder = 'Select line item…', style, error }) {
+export function GroupedBudgetSelect({ value, onChange, budgetGroups, placeholder = 'Select line item…', style, error }) {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const ref = React.useRef(null);
@@ -1426,7 +1426,7 @@ function GroupedBudgetSelect({ value, onChange, budgetGroups, placeholder = 'Sel
   );
 }
 
-function GroupedBudgetDropdown({ anchor, query, onQuery, filteredGroups, onSelect, selectedValue, inputRef, dropdownRef }) {
+export function GroupedBudgetDropdown({ anchor, query, onQuery, filteredGroups, onSelect, selectedValue, inputRef, dropdownRef }) {
   const [rect, setRect] = React.useState(null);
   React.useEffect(() => {
     if (!anchor) return;

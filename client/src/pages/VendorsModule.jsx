@@ -11,7 +11,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { trpc } from '@/lib/trpc';
-import { CSI_GROUPS, useBudgetStore } from './FinancialsModule.jsx';
+import { CSI_GROUPS, useBudgetStore, GroupedBudgetSelect } from './FinancialsModule.jsx';
 import { useVendorsDb } from '../hooks/useVendorsDb';
 import {
   DRIGGS_712_CONTRACTS,
@@ -1504,7 +1504,7 @@ function useFileUpload(onUpload) {
   return { files, trigger, onPick, remove, setDesc, inputRef };
 }
 
-function BidModal({ open, bid, budgetGroupLabels = [], onClose, onSave, onDelete }) {
+function BidModal({ open, bid, budgetGroups = [], onClose, onSave, onDelete }) {
   const [form, setForm] = React.useState({});
   React.useEffect(() => {
     if (open) setForm(bid || {
@@ -1538,17 +1538,18 @@ function BidModal({ open, bid, budgetGroupLabels = [], onClose, onSave, onDelete
         <Field label="Date"><Input value={form.date} onChange={set('date')} placeholder="May 06, 2024" /></Field>
         <Field label="Bid amount"><Input value={form.amount} onChange={(v) => set('amount')(parseFloat(v) || 0)} type="number" prefix="$" /></Field>
         <Field label="Scope / description" span={2}><Input value={form.scope} onChange={set('scope')} placeholder="Foundation work, Phase 1" /></Field>
-        <Field label="Division / Budget Group" span={2}>
-          <Select
+        <Field label="Division / CSI Line Item" span={2}>
+          <GroupedBudgetSelect
             value={form.division}
             onChange={set('division')}
-            options={[
-              { value: '', label: 'No division assigned' },
-              ...(budgetGroupLabels.length > 0
-                ? budgetGroupLabels.map((label) => ({ value: label, label }))
-                : CSI_GROUPS.map((g) => ({ value: g.label, label: `${g.csi} — ${g.label}` })))
-            ]}
+            budgetGroups={budgetGroups}
+            placeholder="Select CSI line item…"
           />
+          {!form.division && (
+            <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 3 }}>
+              Approved bids will update the committed amount on the selected budget line.
+            </div>
+          )}
         </Field>
         <Field label="Status">
           <Select value={form.status} onChange={set('status')} options={BID_STATUS_OPTS.map((s) => ({ value: s, label: s }))} />
@@ -1562,9 +1563,66 @@ function BidModal({ open, bid, budgetGroupLabels = [], onClose, onSave, onDelete
 function VendorBidsTab({ vendor, store }) {
   const [bidModal, setBidModal] = React.useState({ open: false, bid: null });
   const budgetStore = useBudgetStore();
-  const budgetGroupLabels = React.useMemo(() => {
-    return (budgetStore?.groups || []).map((g) => g.label).filter(Boolean);
+  const adjustCommittedMut = trpc.budget.adjustCommitted.useMutation();
+
+  // Build groups with CSI codes (same logic as BudgetTab) for GroupedBudgetSelect
+  const budgetGroupsWithCsi = React.useMemo(() => {
+    const groups = budgetStore?.groups || [];
+    return groups.map((g, gi) => {
+      const groupCsi = String(gi + 1).padStart(2, '0');
+      const linesWithCsi = (g.lines || []).map((l, li) => ({
+        ...l,
+        csi: l.isContingency
+          ? `${groupCsi}.C${String(li + 1).padStart(2, '0')}`
+          : `${groupCsi}.${String(li + 1).padStart(2, '0')}`,
+      }));
+      return { ...g, csi: groupCsi, lines: linesWithCsi };
+    });
   }, [budgetStore?.groups]);
+
+  // Adjust committed when a bid is approved/contracted or un-approved
+  const handleBidSave = React.useCallback((form, prevBid) => {
+    const isApproved = (s) => s === 'Approved' || s === 'Contracted';
+    const wasApproved = prevBid && isApproved(prevBid.status);
+    const nowApproved = isApproved(form.status);
+    const division = form.division;
+
+    if (division) {
+      if (!wasApproved && nowApproved) {
+        // Newly approved — add bid amount to committed
+        adjustCommittedMut.mutate({ division, delta: Number(form.amount) || 0 });
+      } else if (wasApproved && !nowApproved) {
+        // Un-approved — subtract old bid amount from committed
+        adjustCommittedMut.mutate({ division: prevBid.division || division, delta: -(Number(prevBid.amount) || 0) });
+      } else if (wasApproved && nowApproved) {
+        // Still approved but amount or division changed
+        const oldDiv = prevBid.division || division;
+        const oldAmt = Number(prevBid.amount) || 0;
+        const newAmt = Number(form.amount) || 0;
+        if (oldDiv !== division) {
+          // Division changed — subtract from old, add to new
+          adjustCommittedMut.mutate({ division: oldDiv, delta: -oldAmt });
+          adjustCommittedMut.mutate({ division, delta: newAmt });
+        } else if (oldAmt !== newAmt) {
+          // Same division, amount changed — adjust delta
+          adjustCommittedMut.mutate({ division, delta: newAmt - oldAmt });
+        }
+      }
+    }
+
+    if (prevBid?.id) store?.updateBid(vendor.id, prevBid.id, form);
+    else store?.addBid(vendor.id, form);
+  }, [store, vendor.id, adjustCommittedMut]);
+
+  const handleBidDelete = React.useCallback((id) => {
+    // Find the bid being deleted to reverse its committed contribution
+    const bid = vendor.bids.find((b) => b.id === id);
+    if (bid && (bid.status === 'Approved' || bid.status === 'Contracted') && bid.division) {
+      adjustCommittedMut.mutate({ division: bid.division, delta: -(Number(bid.amount) || 0) });
+    }
+    store?.deleteBid(vendor.id, id);
+  }, [store, vendor.id, vendor.bids, adjustCommittedMut]);
+
   const upload = useFileUpload();
   // Per-bid document state: { [bidId]: File[] }
   const [bidDocs, setBidDocs] = React.useState({});
@@ -1650,6 +1708,7 @@ function VendorBidsTab({ vendor, store }) {
                   <th>Scope</th>
                   <th className="num">Amount</th>
                   <th>Status</th>
+                  <th>Division / CSI</th>
                   <th>Notes</th>
                   <th>Docs</th>
                   <th></th>
@@ -1669,8 +1728,15 @@ function VendorBidsTab({ vendor, store }) {
                       <td className="num mono">{typeof fmtUSD === 'function' ? fmtUSD(b.amount) : '$' + (b.amount || 0).toLocaleString()}</td>
                       <td>
                         <span className={`pill no-dot ${statusCls(b.status)}`}>{b.status}</span>
-                        {b.status === 'Approved' && !b.isContract && (
-                          <span className="muted" style={{ fontSize: 10, marginLeft: 4 }}>→ contract amount</span>
+                        {(b.status === 'Approved' || b.status === 'Contracted') && !b.isContract && (
+                          <span className="muted" style={{ fontSize: 10, marginLeft: 4 }}>→ committed</span>
+                        )}
+                      </td>
+                      <td className="muted" style={{ fontSize: 11, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {b.division ? (
+                          <span title={b.division}>{b.division}</span>
+                        ) : (
+                          <span style={{ color: 'var(--text-faint)', fontStyle: 'italic' }}>No division</span>
                         )}
                       </td>
                       <td className="muted" style={{ fontSize: 12 }}>{b.notes || '—'}</td>
@@ -1740,13 +1806,10 @@ function VendorBidsTab({ vendor, store }) {
       <BidModal
         open={bidModal.open}
         bid={bidModal.bid}
-        budgetGroupLabels={budgetGroupLabels}
+        budgetGroups={budgetGroupsWithCsi}
         onClose={() => setBidModal({ open: false, bid: null })}
-        onSave={(form) => {
-          if (bidModal.bid?.id) store?.updateBid(vendor.id, bidModal.bid.id, form);
-          else store?.addBid(vendor.id, form);
-        }}
-        onDelete={(id) => store?.deleteBid(vendor.id, id)}
+        onSave={(form) => handleBidSave(form, bidModal.bid)}
+        onDelete={handleBidDelete}
       />
     </div>
   );

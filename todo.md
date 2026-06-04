@@ -274,3 +274,13 @@
 - [x] Add document_deleted to AUDIT_ACTION_META
 - [x] Fix test: contingency group not required, expenses test made conditional on rows existing
 - [x] All 36 tests pass
+
+# Vendor Bid — CSI Division Picker + Committed Budget Wiring
+- [x] Replace flat division dropdown in Vendor Bid modal with grouped CSI budget picker (same as Expenses: groups as non-selectable headers, line items selectable with CSI prefix + search)
+- [x] Add budget.adjustCommitted tRPC procedure (matches by CSI line name, increments/decrements committedAmount atomically)
+- [x] When a bid status changes to "approved" or "contracted", add bid amount to committed on the matching budget line
+- [x] When a bid status changes away from "approved" (to rejected/pending), subtract its amount from the budget line committed total
+- [x] Handle division change while approved: subtract from old line, add to new line
+- [x] Handle delete of approved bid: subtract its amount from committed
+- [x] Show Division / CSI column on the bid row in the Bids & Contracts table
+- [x] All 36 tests still pass

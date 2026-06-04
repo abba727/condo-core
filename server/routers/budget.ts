@@ -228,4 +228,56 @@ export const budgetRouter = router({
       }
       return { success: true };
     }),
+
+  /**
+   * Atomically adjust the committedAmount on a budget line identified by its
+   * CSI label (e.g. "01.01 — Temp. Facilities") or group label.
+   * Used when a vendor bid is approved / un-approved.
+   *
+   * delta > 0 → add to committed (bid approved)
+   * delta < 0 → subtract from committed (bid un-approved / deleted)
+   */
+  adjustCommitted: publicProcedure
+    .input(
+      z.object({
+        projectId: z.string().optional(),
+        division: z.string(),   // CSI line label or group label
+        delta: z.number(),      // positive = add, negative = subtract
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const pid = input.projectId ?? PROJECT_ID;
+
+      // 1. Find the matching budget line by name (strip CSI prefix if present)
+      //    CSI labels look like "01.01 — Line Name"; we match on the name part
+      const rawName = input.division.includes(" — ")
+        ? input.division.split(" — ").slice(1).join(" — ").trim()
+        : input.division.trim();
+
+      const lines = await db
+        .select()
+        .from(budgetLines)
+        .where(eq(budgetLines.projectId, pid));
+
+      const match = lines.find((l) => {
+        const lName = (l.name || "").trim();
+        return lName === rawName || lName === input.division.trim();
+      });
+
+      if (!match) {
+        // No matching line — return gracefully (division may be a group label)
+        return { success: false, reason: "no_matching_line", division: input.division };
+      }
+
+      const current = parseFloat(match.committedAmount ?? "0") || 0;
+      const updated = Math.max(0, current + input.delta);
+      await db
+        .update(budgetLines)
+        .set({ committedAmount: String(updated) })
+        .where(eq(budgetLines.id, match.id));
+
+      return { success: true, lineId: match.id, newCommitted: updated };
+    }),
 });
