@@ -1,6 +1,6 @@
 import { eq, asc, desc } from "drizzle-orm";
 import { z } from "zod";
-import { expenses } from "../../drizzle/schema";
+import { expenses, vendorDocuments } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 
@@ -36,6 +36,9 @@ export const expensesRouter = router({
         invoiceNumber: z.string().optional(),
         status: z.enum(["pending", "approved", "paid", "void"]).optional(),
         notes: z.string().optional(),
+        receiptKey: z.string().optional(),
+        receiptUrl: z.string().optional(),
+        receiptName: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -59,7 +62,26 @@ export const expensesRouter = router({
         invoiceNumber: input.invoiceNumber ?? null,
         status: input.status ?? "pending",
         notes: input.notes ?? null,
+        receiptKey: input.receiptKey ?? null,
+        receiptUrl: input.receiptUrl ?? null,
       });
+
+      // Cross-insert into vendor_documents if a receipt was uploaded and vendorId is known
+      if (input.receiptKey && input.receiptUrl && input.vendorId) {
+        await db.insert(vendorDocuments).values({
+          vendorId: input.vendorId,
+          projectId: pid,
+          fileName: input.receiptName ?? input.receiptKey.split('/').pop() ?? 'receipt',
+          fileKey: input.receiptKey,
+          fileUrl: input.receiptUrl,
+          fileSize: 0,
+          mimeType: 'application/octet-stream',
+          description: `Receipt: ${input.description ?? ''}`.trim(),
+          sourceType: 'expense',
+          expenseId: id,
+        });
+      }
+
       return { id };
     }),
 
@@ -78,6 +100,9 @@ export const expensesRouter = router({
         invoiceNumber: z.string().optional(),
         status: z.enum(["pending", "approved", "paid", "void"]).optional(),
         notes: z.string().optional(),
+        receiptKey: z.string().optional(),
+        receiptUrl: z.string().optional(),
+        receiptName: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -96,9 +121,42 @@ export const expensesRouter = router({
       if (rest.invoiceNumber !== undefined) patch.invoiceNumber = rest.invoiceNumber;
       if (rest.status !== undefined) patch.status = rest.status;
       if (rest.notes !== undefined) patch.notes = rest.notes;
+      if (rest.receiptKey !== undefined) patch.receiptKey = rest.receiptKey;
+      if (rest.receiptUrl !== undefined) patch.receiptUrl = rest.receiptUrl;
       if (Object.keys(patch).length > 0) {
         await db.update(expenses).set(patch).where(eq(expenses.id, id));
       }
+
+      // Cross-insert into vendor_documents if a receipt was newly uploaded
+      if (rest.receiptKey && rest.receiptUrl && rest.vendorId) {
+        const pid = PROJECT_ID;
+        // Avoid duplicates: only insert if no existing doc with this expenseId
+        const existing = await db
+          .select({ id: vendorDocuments.id })
+          .from(vendorDocuments)
+          .where(eq(vendorDocuments.expenseId, id))
+          .limit(1);
+        if (existing.length === 0) {
+          await db.insert(vendorDocuments).values({
+            vendorId: rest.vendorId,
+            projectId: pid,
+            fileName: rest.receiptName ?? rest.receiptKey.split('/').pop() ?? 'receipt',
+            fileKey: rest.receiptKey,
+            fileUrl: rest.receiptUrl,
+            fileSize: 0,
+            mimeType: 'application/octet-stream',
+            description: `Receipt: ${rest.description ?? ''}`.trim(),
+            sourceType: 'expense',
+            expenseId: id,
+          });
+        } else {
+          // Update existing doc
+          await db.update(vendorDocuments)
+            .set({ fileKey: rest.receiptKey, fileUrl: rest.receiptUrl })
+            .where(eq(vendorDocuments.expenseId, id));
+        }
+      }
+
       return { success: true };
     }),
 

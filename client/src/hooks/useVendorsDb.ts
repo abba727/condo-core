@@ -55,7 +55,18 @@ export function useVendorsDb() {
   });
 
   const toggleAssignmentMut = trpc.vendors.toggleAssignment.useMutation({
-    onSuccess: () => utils.vendors.list.invalidate(),
+    onMutate: async ({ id, assigned }) => {
+      await utils.vendors.list.cancel();
+      const prev = utils.vendors.list.getData({ projectId: PROJECT_ID });
+      utils.vendors.list.setData({ projectId: PROJECT_ID }, (old) =>
+        old?.map((v) => v.id === id ? { ...v, assignedToProject: assigned } : v)
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) utils.vendors.list.setData({ projectId: PROJECT_ID }, ctx.prev);
+    },
+    onSettled: () => utils.vendors.list.invalidate(),
   });
 
   const addCoiMut = trpc.vendors.addCoi.useMutation({
@@ -119,6 +130,8 @@ export function useVendorsDb() {
       archived: v.archived ?? false,
       archivedAt: v.archivedAt instanceof Date ? v.archivedAt.toISOString() : (v.archivedAt ? String(v.archivedAt) : null),
       assignedToProject: v.assignedToProject ?? true,
+      defaultDivision: v.defaultDivision ?? "",
+      division: v.defaultDivision ?? "",
     };
   });
 
@@ -153,10 +166,12 @@ export function useVendorsDb() {
         contactName: patch.contact as string | undefined,
         email: patch.email as string | undefined,
         phone: patch.phone as string | undefined,
+        address: patch.address as string | undefined,
         trade: patch.trade as string | undefined,
         category: patch.role as string | undefined,
         notes: patch.notes as string | undefined,
         ein: patch.ein as string | undefined,
+        defaultDivision: (patch.division ?? patch.defaultDivision) as string | undefined,
         status:
           patch.status === "Active"
             ? "active"

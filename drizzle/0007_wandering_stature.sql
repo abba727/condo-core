@@ -1,0 +1,1 @@
+ALTER TABLE `vendors` ADD `defaultDivision` varchar(255);

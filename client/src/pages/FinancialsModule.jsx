@@ -1618,6 +1618,49 @@ function ExpenseModal({ open, expense, vendorOptions, budgetGroups, onClose, onS
         </Field>
         <Field label="INVOICE #"><Input value={form.invoice} onChange={set('invoice')} placeholder="INV-0001" /></Field>
         <Field label="NOTES" span={2}><Textarea value={form.notes} onChange={set('notes')} placeholder="Additional notes…" rows={2} /></Field>
+        <Field label="RECEIPT / DOCUMENT" span={2}>
+          {form.receiptUrl ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <a href={form.receiptUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--cc-accent)', textDecoration: 'underline' }}>
+                {form.receiptName || 'View receipt'}
+              </a>
+              <button className="btn btn-ghost btn-sm" style={{ color: 'var(--signal-neg)', padding: '2px 6px', fontSize: 11 }}
+                onClick={() => setForm((f) => ({ ...f, receiptUrl: '', receiptKey: '', receiptName: '' }))}>
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <label style={{ cursor: 'pointer' }}>
+                <input
+                  type="file"
+                  style={{ display: 'none' }}
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setForm((f) => ({ ...f, _receiptUploading: true }));
+                    try {
+                      const fd = new FormData();
+                      fd.append('file', file);
+                      const res = await fetch('/api/upload-document', { method: 'POST', body: fd, credentials: 'include' });
+                      if (!res.ok) throw new Error('Upload failed');
+                      const { key, url } = await res.json();
+                      setForm((f) => ({ ...f, receiptKey: key, receiptUrl: url, receiptName: file.name, _receiptUploading: false }));
+                    } catch {
+                      setForm((f) => ({ ...f, _receiptUploading: false }));
+                      alert('Upload failed. Please try again.');
+                    }
+                  }}
+                />
+                <span className="btn btn-ghost btn-sm" style={{ pointerEvents: 'none' }}>
+                  {form._receiptUploading ? 'Uploading…' : '+ Attach receipt'}
+                </span>
+              </label>
+              <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>PDF, PNG, JPG, DOC, XLS</span>
+            </div>
+          )}
+        </Field>
       </div>
     </Modal>
   );

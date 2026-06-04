@@ -119,6 +119,7 @@ export const vendorsRouter = router({
         status: z.enum(["active", "inactive", "pending"]).optional(),
         notes: z.string().optional(),
         ein: z.string().optional(),
+        defaultDivision: z.string().optional(),
         rating: z.number().optional(),
         paid: z.number().optional(),
         contractValue: z.number().optional(),
@@ -500,6 +501,9 @@ export const vendorsRouter = router({
         fileSize: z.number().optional(),
         mimeType: z.string().optional(),
         description: z.string().optional(),
+        sourceType: z.enum(["vendor", "bid", "expense"]).optional(),
+        bidId: z.number().optional(),
+        expenseId: z.number().optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -515,11 +519,14 @@ export const vendorsRouter = router({
         fileSize: input.fileSize ?? null,
         mimeType: input.mimeType ?? null,
         description: input.description ?? null,
+        sourceType: input.sourceType ?? "vendor",
+        bidId: input.bidId ?? null,
+        expenseId: input.expenseId ?? null,
       });
       await db.insert(vendorAuditLog).values({
         vendorId: input.vendorId,
         action: "document_uploaded",
-        detail: JSON.stringify({ fileName: input.fileName }),
+        detail: JSON.stringify({ fileName: input.fileName, sourceType: input.sourceType ?? "vendor" }),
       });
       return { id: Number((result as any).insertId), success: true };
     }),

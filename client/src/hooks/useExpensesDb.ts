@@ -63,6 +63,9 @@ export function useExpensesDb() {
     reference: row.referenceNumber ?? "",
     notes: row.notes ?? "",
     balance: 0,
+    receiptKey: row.receiptKey ?? "",
+    receiptUrl: row.receiptUrl ?? "",
+    receiptName: row.receiptKey ? (row.receiptKey.split('/').pop() ?? '') : '',
   }));
 
   const addExpense = useCallback(
@@ -93,6 +96,9 @@ export function useExpensesDb() {
         referenceNumber: String(exp.reference ?? ""),
         status: statusMap[String(exp.status ?? "Pending")] ?? "pending",
         notes: String(exp.notes ?? ""),
+        receiptKey: exp.receiptKey ? String(exp.receiptKey) : undefined,
+        receiptUrl: exp.receiptUrl ? String(exp.receiptUrl) : undefined,
+        receiptName: exp.receiptName ? String(exp.receiptName) : undefined,
       });
     },
     [addMut]
@@ -126,6 +132,9 @@ export function useExpensesDb() {
         referenceNumber: patch.reference as string | undefined,
         status: patch.status ? statusMap[String(patch.status)] ?? "pending" : undefined,
         notes: patch.notes as string | undefined,
+        receiptKey: patch.receiptKey as string | undefined,
+        receiptUrl: patch.receiptUrl as string | undefined,
+        receiptName: patch.receiptName as string | undefined,
       });
     },
     [updateMut]

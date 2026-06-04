@@ -50,6 +50,20 @@
       "when": 1780605766163,
       "tag": "0006_milky_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1780606741925,
+      "tag": "0007_wandering_stature",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1780606991246,
+      "tag": "0008_tense_bloodstrike",
+      "breakpoints": true
     }
   ]
 }

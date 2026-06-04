@@ -343,6 +343,18 @@ const DIVISION_OPTIONS = [
 
 function VendorModal({ open, vendor, onClose, onSave }) {
   const [form, setForm] = React.useState({});
+  const budgetStore = useBudgetStore();
+  const budgetGroupsWithCsi = React.useMemo(() => {
+    const groups = budgetStore?.groups || [];
+    return groups.map((g, gi) => ({
+      ...g,
+      lines: (g.lines || []).map((l, li) => ({
+        ...l,
+        csiLabel: `${String(gi + 1).padStart(2, '0')}.${String(li + 1).padStart(2, '0')}`,
+        displayName: `${String(gi + 1).padStart(2, '0')}.${String(li + 1).padStart(2, '0')} — ${l.name}`,
+      }))
+    }));
+  }, [budgetStore?.groups]);
 
   React.useEffect(() => {
     if (open) {
@@ -405,11 +417,12 @@ function VendorModal({ open, vendor, onClose, onSave }) {
         <Field label="EIN / Tax ID">
           <Input value={form.ein} onChange={set('ein')} placeholder="12-3456789" />
         </Field>
-        <Field label="Default division (for expenses)">
-          <Select
-            value={form.division || 'Soft Costs'}
-            onChange={set('division')}
-            options={DIVISION_OPTIONS.map((d) => ({ value: d, label: d }))}
+        <Field label="Default division / CSI line" span={2}>
+          <GroupedBudgetSelect
+            value={form.defaultDivision || form.division || ''}
+            onChange={(v) => { set('defaultDivision')(v); set('division')(v); }}
+            budgetGroups={budgetGroupsWithCsi}
+            placeholder="Select CSI line item…"
           />
         </Field>
         {!isEdit && (
@@ -1167,6 +1180,18 @@ function VendorProfileTab({ vendor, onEdit, onUpdateRating }) {
 function AddTransactionModal({ open, vendor, onClose, onSave }) {
   const today = new Date().toISOString().slice(0, 10);
   const [form, setForm] = React.useState({});
+  const budgetStore = useBudgetStore();
+  const budgetGroupsWithCsi = React.useMemo(() => {
+    const groups = budgetStore?.groups || [];
+    return groups.map((g, gi) => ({
+      ...g,
+      lines: (g.lines || []).map((l, li) => ({
+        ...l,
+        csiLabel: `${String(gi + 1).padStart(2, '0')}.${String(li + 1).padStart(2, '0')}`,
+        displayName: `${String(gi + 1).padStart(2, '0')}.${String(li + 1).padStart(2, '0')} — ${l.name}`,
+      }))
+    }));
+  }, [budgetStore?.groups]);
   React.useEffect(() => {
     if (open) setForm({
       date: today,
@@ -1200,9 +1225,13 @@ function AddTransactionModal({ open, vendor, onClose, onSave }) {
               <Select value={form.type} onChange={set('type')}
                 options={['Wire','ACH','Check','Credit','Card'].map((v) => ({ value: v, label: v }))} />
             </Field>
-            <Field label="Division / Category">
-              <Select value={form.division} onChange={set('division')}
-                options={DIVISION_OPTIONS.map((d) => ({ value: d, label: d }))} />
+            <Field label="Division / CSI line" span={2}>
+              <GroupedBudgetSelect
+                value={form.division || ''}
+                onChange={set('division')}
+                budgetGroups={budgetGroupsWithCsi}
+                placeholder="Select CSI line item…"
+              />
             </Field>
             <Field label="Status">
               <Select value={form.status} onChange={set('status')}
@@ -1564,6 +1593,7 @@ function VendorBidsTab({ vendor, store }) {
   const [bidModal, setBidModal] = React.useState({ open: false, bid: null });
   const budgetStore = useBudgetStore();
   const utils = trpc.useUtils();
+  const vendorIdNum = Number(vendor?.id);
 
   // Build groups with CSI codes (same logic as BudgetTab) for GroupedBudgetSelect
   const budgetGroupsWithCsi = React.useMemo(() => {
@@ -1594,9 +1624,11 @@ function VendorBidsTab({ vendor, store }) {
     setTimeout(() => utils.budget.listLines.invalidate(), 600);
   }, [store, vendor.id, utils]);
 
-  const upload = useFileUpload();
-  // Per-bid document state: { [bidId]: File[] }
-  const [bidDocs, setBidDocs] = React.useState({});
+  // DB-backed bid document upload
+  const addDocMutation = trpc.vendors.addDocument.useMutation({
+    onSuccess: () => utils.vendors.listDocuments.invalidate({ vendorId: vendorIdNum }),
+  });
+  const [uploadingBidId, setUploadingBidId] = React.useState(null);
   const bidFileRef = React.useRef(null);
   const [activeBidForUpload, setActiveBidForUpload] = React.useState(null);
 
@@ -1626,24 +1658,38 @@ function VendorBidsTab({ vendor, store }) {
     return 'neutral';
   };
 
-  const handleBidFileChange = (e) => {
+  const handleBidFileChange = async (e) => {
     const picked = Array.from(e.target.files || []);
     if (!activeBidForUpload || !picked.length) return;
-    setBidDocs((prev) => ({
-      ...prev,
-      [activeBidForUpload]: [
-        ...(prev[activeBidForUpload] || []),
-        ...picked.map((f) => ({
-          id: `bdoc-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          name: f.name,
-          size: f.size,
-          uploadedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-          description: '',
-          url: URL.createObjectURL(f),
-        }))
-      ]
-    }));
-    e.target.value = '';
+    setUploadingBidId(activeBidForUpload);
+    try {
+      for (const file of picked) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/upload-document', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error('Upload failed');
+        const { key, url } = await res.json();
+        // Parse the bid id — activeBidForUpload may be a string or number
+        const bidIdNum = typeof activeBidForUpload === 'string' && activeBidForUpload.startsWith('bid-')
+          ? null // seed/contract row — skip DB save
+          : Number(activeBidForUpload);
+        await addDocMutation.mutateAsync({
+          vendorId: vendorIdNum,
+          fileName: file.name,
+          fileKey: key,
+          fileUrl: url,
+          fileSize: file.size,
+          mimeType: file.type,
+          sourceType: 'bid',
+          bidId: bidIdNum && !isNaN(bidIdNum) ? bidIdNum : undefined,
+        });
+      }
+    } catch (err) {
+      console.error('Bid document upload error:', err);
+    } finally {
+      setUploadingBidId(null);
+      e.target.value = '';
+    }
   };
 
   return (
@@ -1715,18 +1761,15 @@ function VendorBidsTab({ vendor, store }) {
                         <button
                           className="btn btn-ghost btn-sm"
                           style={{ fontSize: 11, padding: '2px 6px' }}
+                          disabled={uploadingBidId === b.id}
                           onClick={() => {
                             setActiveBidForUpload(b.id);
                             setTimeout(() => bidFileRef.current?.click(), 0);
                           }}
                         >
-                          <Icon name="plus" size={11} /> Upload
+                          <Icon name="plus" size={11} />
+                          {uploadingBidId === b.id ? 'Uploading…' : 'Upload'}
                         </button>
-                        {(bidDocs[b.id] || []).length > 0 && (
-                          <span className="pill info no-dot" style={{ fontSize: 10, marginLeft: 4 }}>
-                            {(bidDocs[b.id] || []).length}
-                          </span>
-                        )}
                       </td>
                       <td>
                         {!b.isContract && (
@@ -1736,36 +1779,7 @@ function VendorBidsTab({ vendor, store }) {
                         )}
                       </td>
                     </tr>
-                    {/* Inline document list for this bid */}
-                    {(bidDocs[b.id] || []).map((doc) => (
-                      <tr key={doc.id} style={{ background: 'var(--surface-raised)' }}>
-                        <td colSpan={2} style={{ paddingLeft: 24 }}>
-                          <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--cc-accent)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                            <Icon name="doc" size={11} style={{ flexShrink: 0 }} />{doc.name}
-                          </a>
-                          <span className="muted" style={{ fontSize: 11, marginLeft: 8 }}>{doc.uploadedAt}</span>
-                        </td>
-                        <td colSpan={3}>
-                          <input
-                            value={doc.description}
-                            onChange={(e) => setBidDocs((prev) => ({
-                              ...prev,
-                              [b.id]: (prev[b.id] || []).map((d) => d.id === doc.id ? { ...d, description: e.target.value } : d)
-                            }))}
-                            placeholder="Add description…"
-                            style={{ fontSize: 12, background: 'transparent', border: 'none', outline: 'none', width: '100%', color: 'var(--text)' }}
-                          />
-                        </td>
-                        <td colSpan={2} style={{ textAlign: 'right' }}>
-                          <button className="iconbtn" onClick={() => setBidDocs((prev) => ({
-                            ...prev,
-                            [b.id]: (prev[b.id] || []).filter((d) => d.id !== doc.id)
-                          }))}>
-                            <Icon name="trash" size={12} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {/* Bid documents are shown in the Documents tab */}
                   </React.Fragment>
                 ))}
               </tbody>
@@ -2063,18 +2077,19 @@ function VendorDocumentsTab({ vendor }) {
   const [uploading, setUploading] = React.useState(false);
   const [deleteConfirm, setDeleteConfirm] = React.useState(null);
   const utils = trpc.useUtils();
+  const vendorIdNum = Number(vendor?.id);
 
   const docsQuery = trpc.vendors.listDocuments.useQuery(
-    { vendorId: vendor.id },
-    { enabled: !!vendor?.id }
+    { vendorId: vendorIdNum },
+    { enabled: !!vendorIdNum && !isNaN(vendorIdNum) }
   );
   const docs = docsQuery.data || [];
 
   const addDocMutation = trpc.vendors.addDocument.useMutation({
-    onSuccess: () => utils.vendors.listDocuments.invalidate({ vendorId: vendor.id }),
+    onSuccess: () => utils.vendors.listDocuments.invalidate({ vendorId: vendorIdNum }),
   });
   const deleteDocMutation = trpc.vendors.deleteDocument.useMutation({
-    onSuccess: () => utils.vendors.listDocuments.invalidate({ vendorId: vendor.id }),
+    onSuccess: () => utils.vendors.listDocuments.invalidate({ vendorId: vendorIdNum }),
   });
 
   const fmtBytes = (b) => {
@@ -2101,7 +2116,7 @@ function VendorDocumentsTab({ vendor }) {
         if (!res.ok) throw new Error('Upload failed');
         const { key, url } = await res.json();
         await addDocMutation.mutateAsync({
-          vendorId: vendor.id,
+          vendorId: vendorIdNum,
           fileName: file.name,
           fileKey: key,
           fileUrl: url,
@@ -2118,7 +2133,7 @@ function VendorDocumentsTab({ vendor }) {
   };
 
   const handleDelete = async (doc) => {
-    await deleteDocMutation.mutateAsync({ id: doc.id, vendorId: vendor.id });
+    await deleteDocMutation.mutateAsync({ id: doc.id, vendorId: vendorIdNum });
     setDeleteConfirm(null);
   };
 
@@ -2160,10 +2175,18 @@ function VendorDocumentsTab({ vendor }) {
               {docs.map((doc) => (
                 <tr key={doc.id}>
                   <td>
-                    <a href={doc.fileUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--cc-accent)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                      <Icon name="doc" size={13} style={{ flexShrink: 0 }} />
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.fileName}</span>
-                    </a>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                      <a href={doc.fileUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--cc-accent)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                        <Icon name="doc" size={13} style={{ flexShrink: 0 }} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.fileName}</span>
+                      </a>
+                      {doc.sourceType === 'bid' && (
+                        <span className="pill info no-dot" style={{ fontSize: 10, flexShrink: 0 }}>Bid</span>
+                      )}
+                      {doc.sourceType === 'expense' && (
+                        <span className="pill neutral no-dot" style={{ fontSize: 10, flexShrink: 0 }}>Expense</span>
+                      )}
+                    </div>
                   </td>
                   <td className="muted" style={{ fontSize: 12 }}>{doc.description || '—'}</td>
                   <td className="muted" style={{ fontSize: 12 }}>{fmtDate(doc.uploadedAt)}</td>
@@ -2208,6 +2231,8 @@ const AUDIT_ACTION_META = {
   coi_deleted:       { label: 'COI deleted',            icon: 'trash',   color: 'var(--signal-neg)' },
   document_uploaded: { label: 'Document uploaded',      icon: 'doc',     color: 'var(--cc-accent)' },
   document_deleted:  { label: 'Document deleted',       icon: 'trash',   color: 'var(--signal-neg)' },
+  vendor_assigned:   { label: 'Assigned to project',    icon: 'check',   color: 'var(--signal-pos)' },
+  vendor_unassigned: { label: 'Removed from project',   icon: 'x',       color: 'var(--signal-neg)' },
 };
 function auditDetail(entry) {
   const { action, detail } = entry;

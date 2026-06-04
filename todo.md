@@ -302,3 +302,13 @@
 - [x] Update projectVendorIds to filter by assignedToProject = true
 - [x] Button shows "Assigned to project" (checked) or "Assign to project" (unchecked) based on DB value
 - [x] All 36 tests pass
+
+# Vendor Bug Fixes — Batch 3
+- [x] Fix 1: Assigned-to-project toggle — DB column exists, mutation wired, optimistic update works; vendor_assigned/vendor_unassigned added to AUDIT_ACTION_META
+- [x] Fix 2: Vendor address not saving — updateVendor in useVendorsDb now includes address and defaultDivision fields
+- [x] Fix 3: Vendor default division in Edit modal — replaced flat dropdown with GroupedBudgetSelect (CSI grouped picker)
+- [x] Fix 4: Bid document upload — rewrote to use DB-backed addDocument with sourceType='bid'
+- [x] Fix 5: Documents tab infinite loading — fixed vendorId type mismatch (string vs number)
+- [x] Fix 6: Documents tab shows all vendor docs — includes bid attachments and expense receipts with source type badges
+- [x] Fix 7: Expense document upload — added receipt upload field to ExpenseModal; receiptKey/receiptUrl/receiptName wired through useExpensesDb and expenses.add/update procedures; cross-inserts into vendor_documents
+- [x] Fix 8: Division dropdown format identical everywhere — GroupedBudgetSelect used in Expenses, Bids, vendor Edit modal, AddTransaction modal

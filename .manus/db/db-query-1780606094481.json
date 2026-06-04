@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE budget_lines SET committedAmount = 12900.00 WHERE id = 'line-1780598412656-z59f';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute UPDATE budget_lines SET committedAmount = 12900.00 WHERE id = 'line-1780598412656-z59f';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 270
+}

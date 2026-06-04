@@ -1,0 +1,60 @@
+{
+  "query": "SELECT id, companyName, assignedToProject FROM vendors WHERE projectId = '712-driggs' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute SELECT id, companyName, assignedToProject FROM vendors WHERE projectId = '712-driggs' LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "companyName": "Stroh Engineering Services",
+      "assignedToProject": "1"
+    },
+    {
+      "id": "2",
+      "companyName": "International Office of Architects",
+      "assignedToProject": "1"
+    },
+    {
+      "id": "3",
+      "companyName": "Yaker Engineering",
+      "assignedToProject": "1"
+    },
+    {
+      "id": "4",
+      "companyName": "WJY MEP Consulting Services, Inc",
+      "assignedToProject": "1"
+    },
+    {
+      "id": "5",
+      "companyName": "Middleton Environmental",
+      "assignedToProject": "1"
+    },
+    {
+      "id": "6",
+      "companyName": "Boyd Consulting",
+      "assignedToProject": "1"
+    },
+    {
+      "id": "7",
+      "companyName": "5 Borough Mapping NY",
+      "assignedToProject": "1"
+    },
+    {
+      "id": "8",
+      "companyName": "Preferred Bank",
+      "assignedToProject": "1"
+    },
+    {
+      "id": "9",
+      "companyName": "DGM CPA",
+      "assignedToProject": "1"
+    },
+    {
+      "id": "10",
+      "companyName": "Marcus Attorneys PLLC",
+      "assignedToProject": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcompanyName\tassignedToProject\n1\tStroh Engineering Services\t1\n2\tInternational Office of Architects\t1\n3\tYaker Engineering\t1\n4\tWJY MEP Consulting Services, Inc\t1\n5\tMiddleton Environmental\t1\n6\tBoyd Consulting\t1\n7\t5 Borough Mapping NY\t1\n8\tPreferred Bank\t1\n9\tDGM CPA\t1\n10\tMarcus Attorneys PLLC\t1\n",
+  "stderr": "",
+  "execution_time_ms": 271
+}

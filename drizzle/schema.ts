@@ -82,6 +82,7 @@ export const vendors = mysqlTable("vendors", {
   contractValue: decimal("contractValue", { precision: 15, scale: 2 }).default("0"),
   coiExpires: varchar("coiExpires", { length: 64 }).default("Not tracked"),
   coiOk: boolean("coiOk").default(true),
+  defaultDivision: varchar("defaultDivision", { length: 255 }),
   assignedToProject: boolean("assignedToProject").default(true),
   archived: boolean("archived").default(false),
   archivedAt: timestamp("archivedAt"),
@@ -520,6 +521,10 @@ export const vendorDocuments = mysqlTable("vendor_documents", {
   fileSize: int("fileSize"),
   mimeType: varchar("mimeType", { length: 255 }),
   description: varchar("description", { length: 1000 }),
+  // Source tracking — which entity this document is attached to
+  sourceType: mysqlEnum("sourceType", ["vendor", "bid", "expense"]).default("vendor").notNull(),
+  bidId: int("bidId"),       // set when sourceType = 'bid'
+  expenseId: int("expenseId"), // set when sourceType = 'expense'
   uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (t) => [
