@@ -1,6 +1,6 @@
-import { eq, asc, and } from "drizzle-orm";
+import { eq, asc, and, desc } from "drizzle-orm";
 import { z } from "zod";
-import { vendors, vendorBids, vendorCois, vendorAuditLog } from "../../drizzle/schema";
+import { vendors, vendorBids, vendorCois, vendorAuditLog, vendorDocuments } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 
@@ -364,6 +364,68 @@ export const vendorsRouter = router({
       await db.insert(vendorAuditLog).values({
         vendorId: input.vendorId,
         action: "coi_deleted",
+        detail: JSON.stringify({ id: input.id }),
+      });
+      return { success: true };
+    }),
+
+  // ─── Vendor Documents ──────────────────────────────────────────────────────
+  listDocuments: publicProcedure
+    .input(z.object({ vendorId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select()
+        .from(vendorDocuments)
+        .where(eq(vendorDocuments.vendorId, input.vendorId))
+        .orderBy(desc(vendorDocuments.uploadedAt));
+    }),
+
+  addDocument: publicProcedure
+    .input(
+      z.object({
+        vendorId: z.number(),
+        projectId: z.string().optional(),
+        fileName: z.string(),
+        fileKey: z.string().optional(),
+        fileUrl: z.string().optional(),
+        fileSize: z.number().optional(),
+        mimeType: z.string().optional(),
+        description: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const pid = input.projectId ?? PROJECT_ID;
+      const result = await db.insert(vendorDocuments).values({
+        vendorId: input.vendorId,
+        projectId: pid,
+        fileName: input.fileName,
+        fileKey: input.fileKey ?? null,
+        fileUrl: input.fileUrl ?? null,
+        fileSize: input.fileSize ?? null,
+        mimeType: input.mimeType ?? null,
+        description: input.description ?? null,
+      });
+      await db.insert(vendorAuditLog).values({
+        vendorId: input.vendorId,
+        action: "document_uploaded",
+        detail: JSON.stringify({ fileName: input.fileName }),
+      });
+      return { id: Number((result as any).insertId), success: true };
+    }),
+
+  deleteDocument: publicProcedure
+    .input(z.object({ id: z.number(), vendorId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db.delete(vendorDocuments).where(eq(vendorDocuments.id, input.id));
+      await db.insert(vendorAuditLog).values({
+        vendorId: input.vendorId,
+        action: "document_deleted",
         detail: JSON.stringify({ id: input.id }),
       });
       return { success: true };

@@ -1067,7 +1067,7 @@ export function VendorDetailPage({ vendorId, onBack }) {
         {tab === '1099' && <Vendor1099Tab vendor={vendor} />}
         {tab === 'bids' && <VendorBidsTab vendor={vendor} store={store} />}
         {tab === 'cois' && <VendorCoisTab vendor={vendor} store={store} />}
-        {tab === 'documents' && <VendorDocumentsTab vendor={vendor} store={store} />}
+        {tab === 'documents' && <VendorDocumentsTab vendor={vendor} />}
         {tab === 'activity' && <VendorActivityTab vendor={vendor} />}
       </div>
 
@@ -2024,9 +2024,23 @@ function VendorCoisTab({ vendor, store }) {
 }
 
 // ── Documents Tab ─────────────────────────────────────────────
-function VendorDocumentsTab({ vendor, store }) {
-  const upload = useFileUpload((fileName) => {
-    store?.addDocumentAudit?.(vendor.id, fileName);
+function VendorDocumentsTab({ vendor }) {
+  const inputRef = React.useRef(null);
+  const [uploading, setUploading] = React.useState(false);
+  const [deleteConfirm, setDeleteConfirm] = React.useState(null);
+  const utils = trpc.useUtils();
+
+  const docsQuery = trpc.vendors.listDocuments.useQuery(
+    { vendorId: vendor.id },
+    { enabled: !!vendor?.id }
+  );
+  const docs = docsQuery.data || [];
+
+  const addDocMutation = trpc.vendors.addDocument.useMutation({
+    onSuccess: () => utils.vendors.listDocuments.invalidate({ vendorId: vendor.id }),
+  });
+  const deleteDocMutation = trpc.vendors.deleteDocument.useMutation({
+    onSuccess: () => utils.vendors.listDocuments.invalidate({ vendorId: vendor.id }),
   });
 
   const fmtBytes = (b) => {
@@ -2036,23 +2050,63 @@ function VendorDocumentsTab({ vendor, store }) {
     return `${(b / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const fmtDate = (ts) => {
+    if (!ts) return '';
+    return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+  };
+
+  const handlePick = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploading(true);
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/upload-document', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error('Upload failed');
+        const { key, url } = await res.json();
+        await addDocMutation.mutateAsync({
+          vendorId: vendor.id,
+          fileName: file.name,
+          fileKey: key,
+          fileUrl: url,
+          fileSize: file.size,
+          mimeType: file.type,
+        });
+      }
+    } catch (err) {
+      console.error('Document upload error:', err);
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
+  const handleDelete = async (doc) => {
+    await deleteDocMutation.mutateAsync({ id: doc.id, vendorId: vendor.id });
+    setDeleteConfirm(null);
+  };
+
   return (
     <div className="card">
       <div className="card-head">
         <div>
           <span style={{ fontWeight: 600, fontSize: 13 }}>Documents</span>
-          <span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>{upload.files.length} file{upload.files.length !== 1 ? 's' : ''}</span>
+          <span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>{docs.length} file{docs.length !== 1 ? 's' : ''}</span>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={upload.trigger}>
-          <Icon name="plus" size={12} /> Upload document
+        <button className="btn btn-primary btn-sm" onClick={() => inputRef.current?.click()} disabled={uploading}>
+          <Icon name="plus" size={12} /> {uploading ? 'Uploading…' : 'Upload document'}
         </button>
       </div>
-      <input ref={upload.inputRef} type="file" multiple style={{ display: 'none' }} onChange={upload.onPick} />
+      <input ref={inputRef} type="file" multiple style={{ display: 'none' }} onChange={handlePick} />
       <div className="card-body-flush">
-        {upload.files.length === 0 ? (
+        {docsQuery.isLoading ? (
+          <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>Loading…</div>
+        ) : docs.length === 0 ? (
           <div
             style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13, cursor: 'pointer' }}
-            onClick={upload.trigger}
+            onClick={() => inputRef.current?.click()}
           >
             <Icon name="folder" size={24} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
             No documents uploaded yet. Click to upload files.
@@ -2069,28 +2123,28 @@ function VendorDocumentsTab({ vendor, store }) {
               </tr>
             </thead>
             <tbody>
-              {upload.files.map((f) => (
-                <tr key={f.id}>
+              {docs.map((doc) => (
+                <tr key={doc.id}>
                   <td>
-                    <a href={f.url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--cc-accent)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                    <a href={doc.fileUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--cc-accent)', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
                       <Icon name="doc" size={13} style={{ flexShrink: 0 }} />
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.fileName}</span>
                     </a>
                   </td>
+                  <td className="muted" style={{ fontSize: 12 }}>{doc.description || '—'}</td>
+                  <td className="muted" style={{ fontSize: 12 }}>{fmtDate(doc.uploadedAt)}</td>
+                  <td className="num mono muted" style={{ fontSize: 12 }}>{fmtBytes(doc.fileSize)}</td>
                   <td>
-                    <input
-                      value={f.description}
-                      onChange={(e) => upload.setDesc(f.id, e.target.value)}
-                      placeholder="Add description…"
-                      style={{ fontSize: 12, background: 'transparent', border: 'none', outline: 'none', width: '100%', color: 'var(--text)' }}
-                    />
-                  </td>
-                  <td className="muted" style={{ fontSize: 12 }}>{f.uploadedAt}</td>
-                  <td className="num mono muted" style={{ fontSize: 12 }}>{fmtBytes(f.size)}</td>
-                  <td>
-                    <button className="iconbtn" onClick={() => upload.remove(f.id)}>
-                      <Icon name="trash" size={13} />
-                    </button>
+                    {deleteConfirm === doc.id ? (
+                      <span style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                        <button className="btn btn-ghost" style={{ fontSize: 11, padding: '2px 6px', color: 'var(--signal-neg)' }} onClick={() => handleDelete(doc)}>Delete</button>
+                        <button className="btn btn-ghost" style={{ fontSize: 11, padding: '2px 6px' }} onClick={() => setDeleteConfirm(null)}>Cancel</button>
+                      </span>
+                    ) : (
+                      <button className="iconbtn" onClick={() => setDeleteConfirm(doc.id)}>
+                        <Icon name="trash" size={13} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -2119,6 +2173,7 @@ const AUDIT_ACTION_META = {
   coi_updated:       { label: 'COI updated',            icon: 'shield',  color: 'var(--signal-info)' },
   coi_deleted:       { label: 'COI deleted',            icon: 'trash',   color: 'var(--signal-neg)' },
   document_uploaded: { label: 'Document uploaded',      icon: 'doc',     color: 'var(--cc-accent)' },
+  document_deleted:  { label: 'Document deleted',       icon: 'trash',   color: 'var(--signal-neg)' },
 };
 function auditDetail(entry) {
   const { action, detail } = entry;
@@ -2142,6 +2197,7 @@ function auditDetail(entry) {
   if (action === 'coi_updated') return [detail.type, detail.status].filter(Boolean).join(' · ');
   if (action === 'coi_deleted') return detail.type || '';
   if (action === 'document_uploaded') return detail.name || '';
+  if (action === 'document_deleted') return detail.name || '';
   return '';
 }
 function fmtAuditTime(iso) {

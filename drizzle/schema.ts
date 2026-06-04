@@ -505,3 +505,25 @@ export const drawLineItems = mysqlTable("draw_line_items", {
 
 export type DrawLineItem = typeof drawLineItems.$inferSelect;
 export type InsertDrawLineItem = typeof drawLineItems.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VENDOR DOCUMENTS
+// ─────────────────────────────────────────────────────────────────────────────
+export const vendorDocuments = mysqlTable("vendor_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  vendorId: int("vendorId").notNull(),
+  projectId: varchar("projectId", { length: 64 }).notNull(),
+  fileName: varchar("fileName", { length: 500 }).notNull(),
+  fileKey: varchar("fileKey", { length: 1000 }),
+  fileUrl: varchar("fileUrl", { length: 2000 }),
+  fileSize: int("fileSize"),
+  mimeType: varchar("mimeType", { length: 255 }),
+  description: varchar("description", { length: 1000 }),
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => [
+  index("vendor_docs_vendor_idx").on(t.vendorId),
+  index("vendor_docs_project_idx").on(t.projectId),
+]);
+export type VendorDocument = typeof vendorDocuments.$inferSelect;
+export type InsertVendorDocument = typeof vendorDocuments.$inferInsert;

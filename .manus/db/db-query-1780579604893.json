@@ -1,0 +1,160 @@
+{
+  "query": "SELECT id, name, budgetAmount, committedAmount FROM budget_lines WHERE projectId = '712-driggs' AND id LIKE 'line-178%' ORDER BY id LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute SELECT id, name, budgetAmount, committedAmount FROM budget_lines WHERE projectId = '712-driggs' AND id LIKE 'line-178%' ORDER BY id LIMIT 30;",
+  "rows": [
+    {
+      "id": "line-1780205355611-v4w1",
+      "name": "Interest Reserve",
+      "budgetAmount": "758000.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780205372551-dbcj",
+      "name": "Loan Fee",
+      "budgetAmount": "22000.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780235247992-fujy",
+      "name": "Interest Charges",
+      "budgetAmount": "0.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780235270752-7z46",
+      "name": "Broker Fees",
+      "budgetAmount": "0.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780512985106-xau7",
+      "name": "Building Materials",
+      "budgetAmount": "600000.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513006392-trmn",
+      "name": "Trucking and Misk",
+      "budgetAmount": "150000.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513038816-bkse",
+      "name": "Carting",
+      "budgetAmount": "64369.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513081852-d80l",
+      "name": "Drywells",
+      "budgetAmount": "23964.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513141677-im8j",
+      "name": "Fence",
+      "budgetAmount": "10000.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513203693-nevv",
+      "name": "Carpeting",
+      "budgetAmount": "17000.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513246501-bnoe",
+      "name": "Gate/Pavement Markings",
+      "budgetAmount": "22076.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513268978-64ly",
+      "name": "Competent Person",
+      "budgetAmount": "93305.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513369156-05et",
+      "name": "Kitchen Countertops",
+      "budgetAmount": "96387.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513420696-izdc",
+      "name": "Mail Boxes",
+      "budgetAmount": "5685.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513491824-onc2",
+      "name": "Sidewalk",
+      "budgetAmount": "96605.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513506482-myh0",
+      "name": "Street Paving",
+      "budgetAmount": "31687.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513616318-rciu",
+      "name": "Plumbing",
+      "budgetAmount": "395000.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513647220-jt24",
+      "name": "Plumbing Supplies",
+      "budgetAmount": "78382.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513813939-rwxx",
+      "name": "Steel",
+      "budgetAmount": "80000.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513826426-yxvj",
+      "name": "Outside Stairs",
+      "budgetAmount": "130000.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513871816-0tgr",
+      "name": "Trees",
+      "budgetAmount": "24000.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513915460-abca",
+      "name": "Utilities",
+      "budgetAmount": "11240.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780513978426-enj0",
+      "name": "Elevator",
+      "budgetAmount": "240000.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780514020814-eme3",
+      "name": "Handicap Lift",
+      "budgetAmount": "0.00",
+      "committedAmount": "0.00"
+    },
+    {
+      "id": "line-1780514258728-pxc3",
+      "name": "Construction Management",
+      "budgetAmount": "300000.00",
+      "committedAmount": "0.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tbudgetAmount\tcommittedAmount\nline-1780205355611-v4w1\tInterest Reserve\t758000.00\t0.00\nline-1780205372551-dbcj\tLoan Fee\t22000.00\t0.00\nline-1780235247992-fujy\tInterest Charges\t0.00\t0.00\nline-1780235270752-7z46\tBroker Fees\t0.00\t0.00\nline-1780512985106-xau7\tBuilding Materials\t600000.00\t0.00\nline-1780513006392-trmn\tTrucking and Misk\t150000.00\t0.00\nline-1780513038816-bkse\tCarting\t64369.00\t0.00\nline-1780513081852-d80l\tDrywells\t23964.00\t0.00\nline-1780513141677-im8j\tFence\t10000.00\t0.00\nline-1780513203693-nevv\tCarpeting\t17000.00\t0.00\nline-1780513246501-bnoe\tGate/Pavement Markings\t22076.00\t0.00\nline-1780513268978-64ly\tCompetent Person\t93305.00\t0.00\nline-1780513369156-05et\tKitchen Countertops\t96387.00\t0.00\nline-1780513420696-izdc\tMail Boxes\t5685.00\t0.00\nline-1780513491824-onc2\tSidewalk\t96605.00\t0.00\nline-1780513506482-myh0\tStreet Paving\t31687.00\t0.00\nline-1780513616318-rciu\tPlumbing\t395000.00\t0.00\nline-1780513647220-jt24\tPlumbing Supplies\t78382.00\t0.00\nline-1780513813939-rwxx\tSteel\t80000.00\t0.00\nline-1780513826426-yxvj\tOutside Stairs\t130000.00\t0.00\nline-1780513871816-0tgr\tTrees\t24000.00\t0.00\nline-1780513915460-abca\tUtilities\t11240.00\t0.00\nline-1780513978426-enj0\tElevator\t240000.00\t0.00\nline-1780514020814-eme3\tHandicap Lift\t0.00\t0.00\nline-1780514258728-pxc3\tConstruction Management\t300000.00\t0.00\n",
+  "stderr": "",
+  "execution_time_ms": 269
+}

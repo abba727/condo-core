@@ -1,0 +1,37 @@
+{
+  "query": "SELECT \n  SUM(CAST(committedAmount AS DECIMAL(15,2))) as total_committed,\n  SUM(CASE WHEN committedAmount > 0 THEN 1 ELSE 0 END) as has_committed,\n  SUM(CASE WHEN committedAmount = '0' OR committedAmount = '0.00' THEN 1 ELSE 0 END) as zero_committed\nFROM budget_lines WHERE projectId = '712-driggs';\n\nSELECT id, name, budgetAmount, committedAmount FROM budget_lines WHERE projectId = '712-driggs' AND CAST(committedAmount AS DECIMAL) > 0 LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute SELECT \n  SUM(CAST(committedAmount AS DECIMAL(15,2))) as total_committed,\n  SUM(CASE WHEN committedAmount > 0 THEN 1 ELSE 0 END) as has_committed,\n  SUM(CASE WHEN committedAmount = '0' OR committedAmount = '0.00' THEN 1 ELSE 0 END) as zero_committed\nFROM budget_lines WHERE projectId = '712-driggs';\n\nSELECT id, name, budgetAmount, committedAmount FROM budget_lines WHERE projectId = '712-driggs' AND CAST(committedAmount AS DECIMAL) > 0 LIMIT 20;",
+  "rows": [
+    {
+      "total_committed": "12918134.00",
+      "has_committed": "47",
+      "zero_committed": "39"
+    }
+  ],
+  "messages": [
+    "id\tname\tbudgetAmount\tcommittedAmount",
+    "line-seed-10-1\tHVAC Equipment\t320000.00\t200000.00",
+    "line-seed-10-2\tDuctwork and Distribution\t0.00\t100000.00",
+    "line-seed-11-1\tUnderground, Temporary, Deckwork\t0.00\t20000.00",
+    "line-seed-11-2\tCommon Area\t400000.00\t20000.00",
+    "line-seed-11-3\tService Work and Risers\t0.00\t60000.00",
+    "line-seed-11-4\tApartment Branch, Panels and Feeders\t0.00\t100000.00",
+    "line-seed-11-6\tFire Alarm\t0.00\t21000.00",
+    "line-seed-12-1\tFlatwork\t0.00\t20000.00",
+    "line-seed-12-2\tLandscaping\t60000.00\t10000.00",
+    "line-seed-12-3\tRear Yard\t0.00\t41000.00",
+    "line-seed-13-1\tTrash Compactor and Chutes\t25000.00\t28000.00",
+    "line-seed-14-1\tKitchen Cabinets\t125000.00\t150000.00",
+    "line-seed-14-2\tAppliances\t250000.00\t100000.00",
+    "line-seed-14-3\tShower Doors\t37617.00\t20000.00",
+    "line-seed-15-1\tOverhead & Profit\t0.00\t450000.00",
+    "line-seed-17-1\tLand Costs\t0.00\t5800000.00",
+    "line-seed-18-1\tSoft Costs\t0.00\t1605134.00",
+    "line-seed-2-1\tDemolition\t0.00\t225000.00",
+    "line-seed-2-2\tShoring\t0.00\t190000.00",
+    "line-seed-2-3\tExcavation & Soil Disposal\t0.00\t220000.00"
+  ],
+  "stdout": "total_committed\thas_committed\tzero_committed\n12918134.00\t47\t39\nid\tname\tbudgetAmount\tcommittedAmount\nline-seed-10-1\tHVAC Equipment\t320000.00\t200000.00\nline-seed-10-2\tDuctwork and Distribution\t0.00\t100000.00\nline-seed-11-1\tUnderground, Temporary, Deckwork\t0.00\t20000.00\nline-seed-11-2\tCommon Area\t400000.00\t20000.00\nline-seed-11-3\tService Work and Risers\t0.00\t60000.00\nline-seed-11-4\tApartment Branch, Panels and Feeders\t0.00\t100000.00\nline-seed-11-6\tFire Alarm\t0.00\t21000.00\nline-seed-12-1\tFlatwork\t0.00\t20000.00\nline-seed-12-2\tLandscaping\t60000.00\t10000.00\nline-seed-12-3\tRear Yard\t0.00\t41000.00\nline-seed-13-1\tTrash Compactor and Chutes\t25000.00\t28000.00\nline-seed-14-1\tKitchen Cabinets\t125000.00\t150000.00\nline-seed-14-2\tAppliances\t250000.00\t100000.00\nline-seed-14-3\tShower Doors\t37617.00\t20000.00\nline-seed-15-1\tOverhead & Profit\t0.00\t450000.00\nline-seed-17-1\tLand Costs\t0.00\t5800000.00\nline-seed-18-1\tSoft Costs\t0.00\t1605134.00\nline-seed-2-1\tDemolition\t0.00\t225000.00\nline-seed-2-2\tShoring\t0.00\t190000.00\nline-seed-2-3\tExcavation & Soil Disposal\t0.00\t220000.00\n",
+  "stderr": "",
+  "execution_time_ms": 277
+}

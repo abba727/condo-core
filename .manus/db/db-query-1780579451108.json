@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  COUNT(*) as total,\n  SUM(CASE WHEN budgetAmount IS NULL THEN 1 ELSE 0 END) as null_count,\n  SUM(CASE WHEN budgetAmount = '0' OR budgetAmount = '0.00' THEN 1 ELSE 0 END) as zero_count,\n  SUM(CASE WHEN budgetAmount > 0 THEN 1 ELSE 0 END) as has_value_count,\n  SUM(CAST(budgetAmount AS DECIMAL(15,2))) as total_budget\nFROM budget_lines WHERE projectId = '712-driggs';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute SELECT \n  COUNT(*) as total,\n  SUM(CASE WHEN budgetAmount IS NULL THEN 1 ELSE 0 END) as null_count,\n  SUM(CASE WHEN budgetAmount = '0' OR budgetAmount = '0.00' THEN 1 ELSE 0 END) as zero_count,\n  SUM(CASE WHEN budgetAmount > 0 THEN 1 ELSE 0 END) as has_value_count,\n  SUM(CAST(budgetAmount AS DECIMAL(15,2))) as total_budget\nFROM budget_lines WHERE projectId = '712-driggs';",
+  "rows": [
+    {
+      "total": "86",
+      "null_count": "0",
+      "zero_count": "45",
+      "has_value_count": "41",
+      "total_budget": "8332014.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tnull_count\tzero_count\thas_value_count\ttotal_budget\n86\t0\t45\t41\t8332014.00\n",
+  "stderr": "",
+  "execution_time_ms": 908
+}

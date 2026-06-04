@@ -1,0 +1,22 @@
+{
+  "query": "SELECT DISTINCT useCategory FROM budget_groups WHERE projectId = '712-driggs' ORDER BY useCategory;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute SELECT DISTINCT useCategory FROM budget_groups WHERE projectId = '712-driggs' ORDER BY useCategory;",
+  "rows": [
+    {
+      "useCategory": "land_acquisition"
+    },
+    {
+      "useCategory": "hard_costs"
+    },
+    {
+      "useCategory": "soft_costs"
+    },
+    {
+      "useCategory": "financing_carry"
+    }
+  ],
+  "messages": [],
+  "stdout": "useCategory\nland_acquisition\nhard_costs\nsoft_costs\nfinancing_carry\n",
+  "stderr": "",
+  "execution_time_ms": 259
+}
