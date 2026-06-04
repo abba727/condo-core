@@ -237,6 +237,7 @@ export function useVendorsDb() {
     (_vendorId: string, bidId: string, patch: Record<string, unknown>) => {
       updateBidMut.mutate({
         id: Number(bidId),
+        projectId: PROJECT_ID,
         division: patch.division as string | undefined,
         scope: patch.scope as string | undefined,
         bidAmount: patch.amount as number | undefined,
@@ -257,7 +258,7 @@ export function useVendorsDb() {
 
   const deleteBid = useCallback(
     (_vendorId: string, bidId: string) => {
-      deleteBidMut.mutate({ id: Number(bidId) });
+      deleteBidMut.mutate({ id: Number(bidId), projectId: PROJECT_ID });
     },
     [deleteBidMut]
   );

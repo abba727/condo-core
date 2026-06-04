@@ -1,10 +1,45 @@
 import { eq, asc, and, desc } from "drizzle-orm";
 import { z } from "zod";
-import { vendors, vendorBids, vendorCois, vendorAuditLog, vendorDocuments } from "../../drizzle/schema";
+import { vendors, vendorBids, vendorCois, vendorAuditLog, vendorDocuments, budgetLines } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 
 const PROJECT_ID = "712-driggs"; // TODO: make dynamic when multi-project
+
+/**
+ * Atomically adjust committedAmount on the budget line matching the given
+ * CSI-prefixed division label (e.g. "17.02 — Architect's Report / DOF Tax Maps").
+ * Strips the CSI prefix before matching by line name.
+ * Returns silently if no matching line is found.
+ */
+async function adjustCommittedForBid(
+  db: Awaited<ReturnType<typeof getDb>>,
+  projectId: string,
+  division: string | null | undefined,
+  delta: number
+): Promise<void> {
+  if (!db || !division || delta === 0) return;
+  const rawName = division.includes(" \u2014 ")
+    ? division.split(" \u2014 ").slice(1).join(" \u2014 ").trim()
+    : division.trim();
+  const lines = await db
+    .select()
+    .from(budgetLines)
+    .where(eq(budgetLines.projectId, projectId));
+  const match = lines.find((l) => {
+    const lName = (l.name || "").trim();
+    return lName === rawName || lName === division.trim();
+  });
+  if (!match) return; // division may be a group label — skip silently
+  const current = parseFloat(match.committedAmount ?? "0") || 0;
+  const updated = Math.max(0, current + delta);
+  await db
+    .update(budgetLines)
+    .set({ committedAmount: String(updated) })
+    .where(eq(budgetLines.id, match.id));
+}
+
+const APPROVED_STATUSES = new Set(["approved", "contracted"]);
 
 export const vendorsRouter = router({
   // ─── Vendors ───────────────────────────────────────────────────────────────
@@ -236,6 +271,10 @@ export const vendorsRouter = router({
         expiryDate: input.expiryDate ?? null,
         notes: input.notes ?? null,
       });
+      // If the new bid is already approved/contracted, add to committed immediately
+      if (APPROVED_STATUSES.has(input.status ?? "")) {
+        await adjustCommittedForBid(db, pid, input.division, Number(input.bidAmount ?? 0));
+      }
       return { id: Number(result[0].insertId) };
     }),
 
@@ -243,6 +282,7 @@ export const vendorsRouter = router({
     .input(
       z.object({
         id: z.number(),
+        projectId: z.string().optional(),
         vendorName: z.string().optional(),
         division: z.string().optional(),
         scope: z.string().optional(),
@@ -256,7 +296,15 @@ export const vendorsRouter = router({
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const { id, ...rest } = input;
+      const pid = input.projectId ?? PROJECT_ID;
+      const { id, projectId: _pid, ...rest } = input;
+
+      // Fetch the current bid state before updating
+      const [existing] = await db
+        .select()
+        .from(vendorBids)
+        .where(eq(vendorBids.id, id));
+
       const patch: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(rest)) {
         if (v !== undefined) {
@@ -266,15 +314,57 @@ export const vendorsRouter = router({
       if (Object.keys(patch).length > 0) {
         await db.update(vendorBids).set(patch).where(eq(vendorBids.id, id));
       }
+
+      // Adjust committed based on status / amount / division transitions
+      if (existing) {
+        const wasApproved = APPROVED_STATUSES.has(existing.status ?? "");
+        const newStatus = input.status ?? existing.status ?? "";
+        const nowApproved = APPROVED_STATUSES.has(newStatus);
+        const oldDiv = existing.division;
+        const newDiv = input.division !== undefined ? input.division : oldDiv;
+        const oldAmt = parseFloat(existing.bidAmount ?? "0") || 0;
+        const newAmt = input.bidAmount !== undefined ? Number(input.bidAmount) : oldAmt;
+
+        if (!wasApproved && nowApproved) {
+          // Newly approved — add to committed
+          await adjustCommittedForBid(db, pid, newDiv, newAmt);
+        } else if (wasApproved && !nowApproved) {
+          // Un-approved — remove from committed
+          await adjustCommittedForBid(db, pid, oldDiv, -oldAmt);
+        } else if (wasApproved && nowApproved) {
+          // Still approved — handle division or amount changes
+          if (oldDiv !== newDiv) {
+            await adjustCommittedForBid(db, pid, oldDiv, -oldAmt);
+            await adjustCommittedForBid(db, pid, newDiv, newAmt);
+          } else if (oldAmt !== newAmt) {
+            await adjustCommittedForBid(db, pid, newDiv, newAmt - oldAmt);
+          }
+        }
+      }
+
       return { success: true };
     }),
 
   deleteBid: publicProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.number(), projectId: z.string().optional() }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+      const pid = input.projectId ?? PROJECT_ID;
+
+      // Fetch before deleting so we can reverse committed if needed
+      const [existing] = await db
+        .select()
+        .from(vendorBids)
+        .where(eq(vendorBids.id, input.id));
+
       await db.delete(vendorBids).where(eq(vendorBids.id, input.id));
+
+      if (existing && APPROVED_STATUSES.has(existing.status ?? "")) {
+        const amt = parseFloat(existing.bidAmount ?? "0") || 0;
+        await adjustCommittedForBid(db, pid, existing.division, -amt);
+      }
+
       return { success: true };
     }),
 

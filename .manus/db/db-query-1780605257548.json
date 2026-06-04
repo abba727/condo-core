@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, vendorId, division, scope, bidAmount, status FROM vendor_bids ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute SELECT id, vendorId, division, scope, bidAmount, status FROM vendor_bids ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "vendorId": "30001",
+      "division": "17.02 — Architect's Report / DOF Tax Maps",
+      "scope": "Architect's Report and DOC Tax Maps",
+      "bidAmount": "12900.00",
+      "status": "approved"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tvendorId\tdivision\tscope\tbidAmount\tstatus\n1\t30001\t17.02 — Architect's Report / DOF Tax Maps\tArchitect's Report and DOC Tax Maps\t12900.00\tapproved\n",
+  "stderr": "",
+  "execution_time_ms": 264
+}

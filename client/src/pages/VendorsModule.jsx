@@ -1563,7 +1563,7 @@ function BidModal({ open, bid, budgetGroups = [], onClose, onSave, onDelete }) {
 function VendorBidsTab({ vendor, store }) {
   const [bidModal, setBidModal] = React.useState({ open: false, bid: null });
   const budgetStore = useBudgetStore();
-  const adjustCommittedMut = trpc.budget.adjustCommitted.useMutation();
+  const utils = trpc.useUtils();
 
   // Build groups with CSI codes (same logic as BudgetTab) for GroupedBudgetSelect
   const budgetGroupsWithCsi = React.useMemo(() => {
@@ -1580,48 +1580,19 @@ function VendorBidsTab({ vendor, store }) {
     });
   }, [budgetStore?.groups]);
 
-  // Adjust committed when a bid is approved/contracted or un-approved
+  // Committed adjustment is now handled server-side in addBid/updateBid/deleteBid.
+  // After saving, invalidate budget queries so the Budget tab reflects the new committed total.
   const handleBidSave = React.useCallback((form, prevBid) => {
-    const isApproved = (s) => s === 'Approved' || s === 'Contracted';
-    const wasApproved = prevBid && isApproved(prevBid.status);
-    const nowApproved = isApproved(form.status);
-    const division = form.division;
-
-    if (division) {
-      if (!wasApproved && nowApproved) {
-        // Newly approved — add bid amount to committed
-        adjustCommittedMut.mutate({ division, delta: Number(form.amount) || 0 });
-      } else if (wasApproved && !nowApproved) {
-        // Un-approved — subtract old bid amount from committed
-        adjustCommittedMut.mutate({ division: prevBid.division || division, delta: -(Number(prevBid.amount) || 0) });
-      } else if (wasApproved && nowApproved) {
-        // Still approved but amount or division changed
-        const oldDiv = prevBid.division || division;
-        const oldAmt = Number(prevBid.amount) || 0;
-        const newAmt = Number(form.amount) || 0;
-        if (oldDiv !== division) {
-          // Division changed — subtract from old, add to new
-          adjustCommittedMut.mutate({ division: oldDiv, delta: -oldAmt });
-          adjustCommittedMut.mutate({ division, delta: newAmt });
-        } else if (oldAmt !== newAmt) {
-          // Same division, amount changed — adjust delta
-          adjustCommittedMut.mutate({ division, delta: newAmt - oldAmt });
-        }
-      }
-    }
-
     if (prevBid?.id) store?.updateBid(vendor.id, prevBid.id, form);
     else store?.addBid(vendor.id, form);
-  }, [store, vendor.id, adjustCommittedMut]);
+    // Invalidate budget lines so committed column refreshes
+    setTimeout(() => utils.budget.listLines.invalidate(), 600);
+  }, [store, vendor.id, utils]);
 
   const handleBidDelete = React.useCallback((id) => {
-    // Find the bid being deleted to reverse its committed contribution
-    const bid = vendor.bids.find((b) => b.id === id);
-    if (bid && (bid.status === 'Approved' || bid.status === 'Contracted') && bid.division) {
-      adjustCommittedMut.mutate({ division: bid.division, delta: -(Number(bid.amount) || 0) });
-    }
     store?.deleteBid(vendor.id, id);
-  }, [store, vendor.id, vendor.bids, adjustCommittedMut]);
+    setTimeout(() => utils.budget.listLines.invalidate(), 600);
+  }, [store, vendor.id, utils]);
 
   const upload = useFileUpload();
   // Per-bid document state: { [bidId]: File[] }

@@ -284,3 +284,12 @@
 - [x] Handle delete of approved bid: subtract its amount from committed
 - [x] Show Division / CSI column on the bid row in the Bids & Contracts table
 - [x] All 36 tests still pass
+
+# Committed Budget Fix — Move Logic Server-Side
+- [x] Diagnose: existing approved bid ($12,900) not reflected in committed because bid was saved before wiring existed
+- [x] Investigate $12.9M committed total — confirmed it is seed data from original workbook (lines with Status != Open)
+- [x] Move adjustCommittedForBid helper fully server-side into addBid/updateBid/deleteBid procedures in vendors.ts
+- [x] Remove redundant client-side adjustCommitted calls from VendorBidsTab
+- [x] Invalidate budget.listLines after bid save/delete so Budget tab refreshes automatically
+- [x] Backfill existing approved bid: set committedAmount = 12900 on line 17.02 via SQL
+- [x] All 36 tests pass

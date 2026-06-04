@@ -1,0 +1,130 @@
+{
+  "query": "SELECT bl.name, bl.committedAmount, bl.budgetAmount, bg.label as groupLabel FROM budget_lines bl JOIN budget_groups bg ON bl.groupId = bg.id WHERE bl.committedAmount > 0 ORDER BY bl.committedAmount DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 32vg9AA5sxnibhR.22427ce7133e --database ZQdGAya5T2keEhhUG4xk5Q --execute SELECT bl.name, bl.committedAmount, bl.budgetAmount, bg.label as groupLabel FROM budget_lines bl JOIN budget_groups bg ON bl.groupId = bg.id WHERE bl.committedAmount > 0 ORDER BY bl.committedAmount DESC LIMIT 20;",
+  "rows": [
+    {
+      "name": "Land Costs",
+      "committedAmount": "5800000.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Land Costs"
+    },
+    {
+      "name": "Soft Costs",
+      "committedAmount": "1605134.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Soft Costs"
+    },
+    {
+      "name": "Concrete Superstructure",
+      "committedAmount": "935000.00",
+      "budgetAmount": "1550000.00",
+      "groupLabel": "Superstructure"
+    },
+    {
+      "name": "Overhead & Profit",
+      "committedAmount": "450000.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Overhead & Profit"
+    },
+    {
+      "name": "Interior Carpentry",
+      "committedAmount": "400000.00",
+      "budgetAmount": "992000.00",
+      "groupLabel": "Carpentry"
+    },
+    {
+      "name": "Footings, foundation Walls",
+      "committedAmount": "265000.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Foundation Site Work"
+    },
+    {
+      "name": "Demolition",
+      "committedAmount": "225000.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Foundation Site Work"
+    },
+    {
+      "name": "Excavation & Soil Disposal",
+      "committedAmount": "220000.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Foundation Site Work"
+    },
+    {
+      "name": "Exterior and Rough Framing",
+      "committedAmount": "213000.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Carpentry"
+    },
+    {
+      "name": "HVAC Equipment",
+      "committedAmount": "200000.00",
+      "budgetAmount": "320000.00",
+      "groupLabel": "HVAC"
+    },
+    {
+      "name": "Shoring",
+      "committedAmount": "190000.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Foundation Site Work"
+    },
+    {
+      "name": "Plumbing Underground and Risers",
+      "committedAmount": "180000.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Plumbing and Sprinkler"
+    },
+    {
+      "name": "Hardwood",
+      "committedAmount": "154000.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Carpentry"
+    },
+    {
+      "name": "Windows & Exterior Doors",
+      "committedAmount": "150000.00",
+      "budgetAmount": "350000.00",
+      "groupLabel": "Windows and Storefront"
+    },
+    {
+      "name": "Kitchen Cabinets",
+      "committedAmount": "150000.00",
+      "budgetAmount": "125000.00",
+      "groupLabel": "Kitchen, Bathrooms and Fixtures"
+    },
+    {
+      "name": "Block and Brick",
+      "committedAmount": "140000.00",
+      "budgetAmount": "230000.00",
+      "groupLabel": "Masonry and Stucco"
+    },
+    {
+      "name": "Taping & Painting",
+      "committedAmount": "129000.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Carpentry"
+    },
+    {
+      "name": "Controls, Microprocessor, etc.",
+      "committedAmount": "100000.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Elevator"
+    },
+    {
+      "name": "Appliances",
+      "committedAmount": "100000.00",
+      "budgetAmount": "250000.00",
+      "groupLabel": "Kitchen, Bathrooms and Fixtures"
+    },
+    {
+      "name": "Tile",
+      "committedAmount": "100000.00",
+      "budgetAmount": "0.00",
+      "groupLabel": "Carpentry"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\tcommittedAmount\tbudgetAmount\tgroupLabel\nLand Costs\t5800000.00\t0.00\tLand Costs\nSoft Costs\t1605134.00\t0.00\tSoft Costs\nConcrete Superstructure\t935000.00\t1550000.00\tSuperstructure\nOverhead & Profit\t450000.00\t0.00\tOverhead & Profit\nInterior Carpentry\t400000.00\t992000.00\tCarpentry\nFootings, foundation Walls\t265000.00\t0.00\tFoundation Site Work\nDemolition\t225000.00\t0.00\tFoundation Site Work\nExcavation & Soil Disposal\t220000.00\t0.00\tFoundation Site Work\nExterior and Rough Framing\t213000.00\t0.00\tCarpentry\nHVAC Equipment\t200000.00\t320000.00\tHVAC\nShoring\t190000.00\t0.00\tFoundation Site Work\nPlumbing Underground and Risers\t180000.00\t0.00\tPlumbing and Sprinkler\nHardwood\t154000.00\t0.00\tCarpentry\nWindows & Exterior Doors\t150000.00\t350000.00\tWindows and Storefront\nKitchen Cabinets\t150000.00\t125000.00\tKitchen, Bathrooms and Fixtures\nBlock and Brick\t140000.00\t230000.00\tMasonry and Stucco\nTaping & Painting\t129000.00\t0.00\tCarpentry\nControls, Microprocessor, etc.\t100000.00\t0.00\tElevator\nAppliances\t100000.00\t250000.00\tKitchen, Bathrooms and Fixtures\nTile\t100000.00\t0.00\tCarpentry\n",
+  "stderr": "",
+  "execution_time_ms": 263
+}
