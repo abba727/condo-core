@@ -312,3 +312,11 @@
 - [x] Fix 6: Documents tab shows all vendor docs — includes bid attachments and expense receipts with source type badges
 - [x] Fix 7: Expense document upload — added receipt upload field to ExpenseModal; receiptKey/receiptUrl/receiptName wired through useExpensesDb and expenses.add/update procedures; cross-inserts into vendor_documents
 - [x] Fix 8: Division dropdown format identical everywhere — GroupedBudgetSelect used in Expenses, Bids, vendor Edit modal, AddTransaction modal
+
+# Vendor Bug Fixes — Batch 4
+- [ ] Fix 1: Auto-select division in Add Expense modal when vendor is selected (use vendor.defaultDivision to pre-fill GroupedBudgetSelect)
+- [ ] Fix 2: Show bid-linked documents on the Bids tab (each bid row should show its attached documents inline or via a DOCS indicator)
+
+# Vendor Bug Fixes — Batch 4
+- [x] Fix 1: Auto-select division from vendor — when vendor is selected in ExpenseModal, auto-populate Division/Category from vendor's defaultDivision (only if division is not already set)
+- [x] Fix 2: Bid documents shown on Bids tab — VendorBidsTab now queries listDocuments and shows inline links per bid row; upload button shows "Add" when docs exist

@@ -1325,6 +1325,7 @@ export function ExpensesTab({ seedExpenses }) {
           open={!!expModal}
           expense={expModal === 'new' ? null : expModal}
           vendorOptions={vendorOptions}
+          projectVendors={projectVendors}
           budgetGroups={budgetStore?.groups || []}
           onClose={() => setExpModal(null)}
           onSave={(exp) => {
@@ -1510,7 +1511,7 @@ export function GroupedBudgetDropdown({ anchor, query, onQuery, filteredGroups, 
 }
 
 // ─── Expense Modal ───────────────────────────────────────────────────────────
-function ExpenseModal({ open, expense, vendorOptions, budgetGroups, onClose, onSave, onDelete }) {
+function ExpenseModal({ open, expense, vendorOptions, projectVendors, budgetGroups, onClose, onSave, onDelete }) {
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
   const [form, setForm] = React.useState({});
   const [confirmDelete, setConfirmDelete] = React.useState(false);
@@ -1589,7 +1590,19 @@ function ExpenseModal({ open, expense, vendorOptions, budgetGroups, onClose, onS
         <Field label={<>VENDOR <RequiredMark /></>} span={2}>
           <SearchableSelect
             value={form.vendor}
-            onChange={(v) => { set('vendor')(v); setErrors((e) => ({ ...e, vendor: v ? '' : 'Vendor is required.' })); }}
+            onChange={(v) => {
+              set('vendor')(v);
+              setErrors((e) => ({ ...e, vendor: v ? '' : 'Vendor is required.' }));
+              // Auto-select division from vendor's defaultDivision if division is not yet set
+              if (v && projectVendors) {
+                const matched = projectVendors.find((pv) => pv.name === v);
+                if (matched && matched.defaultDivision && matched.defaultDivision.trim()) {
+                  setForm((f) => ({ ...f, vendor: v, division: f.division && f.division.trim() ? f.division : matched.defaultDivision }));
+                  setErrors((e) => ({ ...e, vendor: v ? '' : 'Vendor is required.', division: '' }));
+                  return;
+                }
+              }
+            }}
             options={[{ value: '', label: '— Select vendor —' }, ...vendorOptions]}
             placeholder="Select vendor…"
             style={errors.vendor ? { borderColor: 'var(--signal-neg)' } : {}}

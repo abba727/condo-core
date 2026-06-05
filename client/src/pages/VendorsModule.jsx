@@ -1595,6 +1595,13 @@ function VendorBidsTab({ vendor, store }) {
   const utils = trpc.useUtils();
   const vendorIdNum = Number(vendor?.id);
 
+  // Fetch documents so we can show bid-linked docs inline in the Bids table
+  const docsQuery = trpc.vendors.listDocuments.useQuery(
+    { vendorId: vendorIdNum },
+    { enabled: !!vendorIdNum && !isNaN(vendorIdNum) }
+  );
+  const allDocs = docsQuery.data || [];
+
   // Build groups with CSI codes (same logic as BudgetTab) for GroupedBudgetSelect
   const budgetGroupsWithCsi = React.useMemo(() => {
     const groups = budgetStore?.groups || [];
@@ -1757,19 +1764,40 @@ function VendorBidsTab({ vendor, store }) {
                         )}
                       </td>
                       <td className="muted" style={{ fontSize: 12 }}>{b.notes || '—'}</td>
-                      <td>
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          style={{ fontSize: 11, padding: '2px 6px' }}
-                          disabled={uploadingBidId === b.id}
-                          onClick={() => {
-                            setActiveBidForUpload(b.id);
-                            setTimeout(() => bidFileRef.current?.click(), 0);
-                          }}
-                        >
-                          <Icon name="plus" size={11} />
-                          {uploadingBidId === b.id ? 'Uploading…' : 'Upload'}
-                        </button>
+                      <td style={{ minWidth: 120 }}>
+                        {/* Inline bid documents */}
+                        {(() => {
+                          const bidIdNum = Number(b.id);
+                          const bidDocs = allDocs.filter((d) => d.sourceType === 'bid' && Number(d.bidId) === bidIdNum);
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                              {bidDocs.map((doc) => (
+                                <a
+                                  key={doc.id}
+                                  href={doc.fileUrl || '#'}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{ fontSize: 11, color: 'var(--cc-accent)', textDecoration: 'underline', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160, display: 'block' }}
+                                  title={doc.fileName}
+                                >
+                                  {doc.fileName}
+                                </a>
+                              ))}
+                              <button
+                                className="btn btn-ghost btn-sm"
+                                style={{ fontSize: 11, padding: '2px 6px', alignSelf: 'flex-start', marginTop: bidDocs.length ? 2 : 0 }}
+                                disabled={uploadingBidId === b.id}
+                                onClick={() => {
+                                  setActiveBidForUpload(b.id);
+                                  setTimeout(() => bidFileRef.current?.click(), 0);
+                                }}
+                              >
+                                <Icon name="plus" size={11} />
+                                {uploadingBidId === b.id ? 'Uploading…' : bidDocs.length ? 'Add' : 'Upload'}
+                              </button>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td>
                         {!b.isContract && (
@@ -1779,7 +1807,6 @@ function VendorBidsTab({ vendor, store }) {
                         )}
                       </td>
                     </tr>
-                    {/* Bid documents are shown in the Documents tab */}
                   </React.Fragment>
                 ))}
               </tbody>
