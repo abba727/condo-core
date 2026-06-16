@@ -1501,7 +1501,7 @@ NOTE: This is a summary for review only. File the official IRS Form 1099-NEC.
 }
 
 // ── Bids Tab ─────────────────────────────────────────────────
-const BID_STATUS_OPTS = ['Submitted', 'Under review', 'Approved', 'Contracted', 'Declined', 'Withdrawn'];
+const BID_STATUS_OPTS = ['Pending', 'Received', 'Approved', 'Contracted', 'Rejected'];
 
 // Simulated file upload — stores file metadata in state
 function useFileUpload(onUpload) {
@@ -1538,7 +1538,7 @@ function BidModal({ open, bid, budgetGroups = [], onClose, onSave, onDelete }) {
   React.useEffect(() => {
     if (open) setForm(bid || {
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-      scope: '', amount: 0, status: 'Submitted', notes: '', division: '',
+      scope: '', amount: 0, status: 'Pending', notes: '', division: '',
     });
   }, [open, bid]);
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
@@ -1660,8 +1660,8 @@ function VendorBidsTab({ vendor, store }) {
 
   const statusCls = (s) => {
     if (s === 'Contracted' || s === 'Approved') return 'pos';
-    if (s === 'Declined' || s === 'Withdrawn') return 'neutral';
-    if (s === 'Submitted') return 'info';
+    if (s === 'Rejected') return 'neg';
+    if (s === 'Received') return 'info';
     return 'neutral';
   };
 
@@ -1708,9 +1708,9 @@ function VendorBidsTab({ vendor, store }) {
             <span style={{ fontWeight: 600, fontSize: 13 }}>Bids & Contracts</span>
             <span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>
               {allRows.filter((r) => r.status === 'Contracted').length} contracted
-              {vendor.bids.filter((b) => b.status === 'Approved').length > 0 && (
+              {vendor.bids.filter((b) => b.status === 'Approved' || b.status === 'Contracted').length > 0 && (
                 <span style={{ color: 'var(--signal-pos)', marginLeft: 6 }}>
-                  · {vendor.bids.filter((b) => b.status === 'Approved').length} approved
+                  · {vendor.bids.filter((b) => b.status === 'Approved' || b.status === 'Contracted').length} approved
                 </span>
               )}
             </span>
