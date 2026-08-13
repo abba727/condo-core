@@ -322,6 +322,7 @@
 - [x] Fix 2: Bid documents shown on Bids tab — VendorBidsTab now queries listDocuments and shows inline links per bid row; upload button shows "Add" when docs exist
 
 # Google Cloud Migration
+- [x] Remove the unused right-side gutter on wide screens by making the shared application workspace use the full available viewport width without breaking narrower layouts; added a client layout regression test and 37 tests now pass.
 - [x] Audit runtime configuration, database contents, file-storage references, and Google Cloud authentication for project `condo-core-505419`.
 - [x] Remove Manus OAuth and deploy the initial Cloud Run service without an application login layer; document authentication as a deferred hardening task.
 - [x] Update the legacy logout test to reflect the intentionally deferred authentication and removed session-cookie behavior.
@@ -331,5 +332,6 @@
 - [x] Configure a Cloud Build trigger for GitHub `abba727/condo-core` main-branch pushes, deploying a new Cloud Run revision after each successful build (trigger `condocore-main`, ID `c4bc4bce-4c7d-47d6-8301-e44bba8cf8bd`).
 - [x] Provision and validate a Google Cloud external HTTP load balancer with a serverless NEG targeting Cloud Run; public health check at `http://136.68.220.42/healthz` returns `200 {"ok":true}`.
 - [ ] Attach a user-controlled domain and Google-managed TLS certificate to upgrade the verified load-balancer endpoint from HTTP to HTTPS.
+- [ ] Evaluate and, if supported, configure a temporary no-cost hostname with Google-managed TLS until a custom domain is available.
 - [ ] Validate the deployed Google Cloud application, record the service URL and recovery procedures, and complete final cutover away from the managed environment.
 - [ ] Recover or replace two source-store document objects that return HTTP 403 (`documents/fKkSlo-p7Bvg.pdf` and `documents/u0q7_7M5C7we.pdf`) before declaring the file migration complete.

@@ -570,8 +570,9 @@ a {
 
 .page {
   padding: 28px 32px 80px;
-  max-width: 1600px;
   width: 100%;
+  min-width: 0;
+  flex: 1;
 }
 
 .page-head {
