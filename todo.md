@@ -329,5 +329,7 @@
 - [x] Create Cloud Run, Cloud SQL, Cloud Storage, Artifact Registry, service-account, and least-privilege IAM configuration in Google Cloud.
 - [ ] Export and migrate the full database and file inventory from the current environment to Google Cloud, then validate row counts and file accessibility.
 - [x] Configure a Cloud Build trigger for GitHub `abba727/condo-core` main-branch pushes, deploying a new Cloud Run revision after each successful build (trigger `condocore-main`, ID `c4bc4bce-4c7d-47d6-8301-e44bba8cf8bd`).
+- [x] Provision and validate a Google Cloud external HTTP load balancer with a serverless NEG targeting Cloud Run; public health check at `http://136.68.220.42/healthz` returns `200 {"ok":true}`.
+- [ ] Attach a user-controlled domain and Google-managed TLS certificate to upgrade the verified load-balancer endpoint from HTTP to HTTPS.
 - [ ] Validate the deployed Google Cloud application, record the service URL and recovery procedures, and complete final cutover away from the managed environment.
 - [ ] Recover or replace two source-store document objects that return HTTP 403 (`documents/fKkSlo-p7Bvg.pdf` and `documents/u0q7_7M5C7we.pdf`) before declaring the file migration complete.
