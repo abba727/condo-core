@@ -1,0 +1,11 @@
+.gcloudignore
+.git
+.gitignore
+node_modules/
+dist/
+.manus-logs/
+migration-artifacts/
+coverage/
+*.log
+.env
+.env.*

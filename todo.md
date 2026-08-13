@@ -314,9 +314,20 @@
 - [x] Fix 8: Division dropdown format identical everywhere — GroupedBudgetSelect used in Expenses, Bids, vendor Edit modal, AddTransaction modal
 
 # Vendor Bug Fixes — Batch 4
-- [ ] Fix 1: Auto-select division in Add Expense modal when vendor is selected (use vendor.defaultDivision to pre-fill GroupedBudgetSelect)
-- [ ] Fix 2: Show bid-linked documents on the Bids tab (each bid row should show its attached documents inline or via a DOCS indicator)
+- [x] Fix 1: Auto-select division in Add Expense modal when vendor is selected (use vendor.defaultDivision to pre-fill GroupedBudgetSelect)
+- [x] Fix 2: Show bid-linked documents on the Bids tab (each bid row should show its attached documents inline or via a DOCS indicator)
 
 # Vendor Bug Fixes — Batch 4
 - [x] Fix 1: Auto-select division from vendor — when vendor is selected in ExpenseModal, auto-populate Division/Category from vendor's defaultDivision (only if division is not already set)
 - [x] Fix 2: Bid documents shown on Bids tab — VendorBidsTab now queries listDocuments and shows inline links per bid row; upload button shows "Add" when docs exist
+
+# Google Cloud Migration
+- [x] Audit runtime configuration, database contents, file-storage references, and Google Cloud authentication for project `condo-core-505419`.
+- [x] Remove Manus OAuth and deploy the initial Cloud Run service without an application login layer; document authentication as a deferred hardening task.
+- [x] Update the legacy logout test to reflect the intentionally deferred authentication and removed session-cookie behavior.
+- [x] Replace Manus-specific runtime integrations with portable Google Cloud configuration for Cloud Run, Cloud SQL, Cloud Storage, and authentication.
+- [x] Create Cloud Run, Cloud SQL, Cloud Storage, Artifact Registry, service-account, and least-privilege IAM configuration in Google Cloud.
+- [ ] Export and migrate the full database and file inventory from the current environment to Google Cloud, then validate row counts and file accessibility.
+- [x] Configure a Cloud Build trigger for GitHub `abba727/condo-core` main-branch pushes, deploying a new Cloud Run revision after each successful build (trigger `condocore-main`, ID `c4bc4bce-4c7d-47d6-8301-e44bba8cf8bd`).
+- [ ] Validate the deployed Google Cloud application, record the service URL and recovery procedures, and complete final cutover away from the managed environment.
+- [ ] Recover or replace two source-store document objects that return HTTP 403 (`documents/fKkSlo-p7Bvg.pdf` and `documents/u0q7_7M5C7we.pdf`) before declaring the file migration complete.

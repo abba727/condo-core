@@ -4381,9 +4381,9 @@ const PAGES = {
 };
 
 const PAGE_ASSETS = {
-  blueprint: "/manus-storage/condocore-hero-blueprint_6f2f5977.png",
-  finance: "/manus-storage/condocore-finance-ledger_2611f913.png",
-  vault: "/manus-storage/condocore-document-vault_04fdc28d.png",
+  blueprint: "/api/files/condocore-hero-blueprint_6f2f5977.png",
+  finance: "/api/files/condocore-finance-ledger_2611f913.png",
+  vault: "/api/files/condocore-document-vault_04fdc28d.png",
 };
 
 function PageAssetBanner({ asset, route }) {
