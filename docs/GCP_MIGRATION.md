@@ -27,3 +27,9 @@ The Google Cloud Build GitHub App installation is configured with **only selecte
 The first GitHub-triggered build completed successfully on **2026-08-13**. Trigger `condocore-main` executed build `2f460451-e103-4326-a403-8ec95e88d814` for commit `d22fd92af5aab6f02f9274ae2bb245669594ae2e`, created the Cloud Run image in Artifact Registry, and completed the deployment step.
 
 Cloud Run’s generated `run.app` URLs returned a Google-branded 404 before requests reached the revision, despite a ready, public service. The workaround is the external application load balancer at **`136.68.220.42`**, backed by the global URL map `condocore-url-map`, backend service `condocore-run-backend`, and serverless NEG `condocore-run-neg`. Both `GET /` and the database-backed `budget.listGroups` tRPC endpoint return HTTP 200 through this load balancer. A user-controlled DNS name is still needed to provision a Google-managed TLS certificate and expose this endpoint over HTTPS.
+
+## Validation and recovery
+
+The application is validated through the public load balancer at `http://136.68.220.42`: `GET /healthz` returns `200 {"ok":true}` and the database-backed `budget.listGroups` tRPC request returns HTTP 200. The active Cloud Run revision is `condocore-00005-25z`; the most recent main-branch Cloud Build deployment completed successfully on 2026-08-14. The private Cloud Storage bucket contains the three retrievable migrated objects.
+
+For recovery, Cloud Run revisions and Cloud Build build history remain available in project `condo-core-505419`, while the GitHub `main` branch is the deployment source of truth. The public IP is reserved as `condocore-lb-ip`. The legacy managed-environment data should not be destroyed until the owner explicitly approves final decommissioning; authentication and a custom-domain HTTPS frontend are intentionally deferred.

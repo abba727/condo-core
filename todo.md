@@ -328,12 +328,13 @@
 - [x] Update the legacy logout test to reflect the intentionally deferred authentication and removed session-cookie behavior.
 - [x] Replace Manus-specific runtime integrations with portable Google Cloud configuration for Cloud Run, Cloud SQL, Cloud Storage, and authentication.
 - [x] Create Cloud Run, Cloud SQL, Cloud Storage, Artifact Registry, service-account, and least-privilege IAM configuration in Google Cloud.
-- [ ] Export and migrate the full database and file inventory from the current environment to Google Cloud, then validate row counts and file accessibility.
+- [x] Export and migrate the full database and all retrievable file inventory from the current environment to Google Cloud; two inaccessible bid attachments were owner-approved as preserved unavailable records with broken links removed.
 - [x] Configure a Cloud Build trigger for GitHub `abba727/condo-core` main-branch pushes, deploying a new Cloud Run revision after each successful build (trigger `condocore-main`, ID `c4bc4bce-4c7d-47d6-8301-e44bba8cf8bd`).
 - [x] Provision and validate a Google Cloud external HTTP load balancer with a serverless NEG targeting Cloud Run; public health check at `http://136.68.220.42/healthz` returns `200 {"ok":true}`.
 - [ ] Attach a user-controlled domain and Google-managed TLS certificate to upgrade the verified load-balancer endpoint from HTTP to HTTPS.
-- [ ] Evaluate and, if supported, configure a temporary no-cost hostname with Google-managed TLS until a custom domain is available.
-- [ ] Validate the deployed Google Cloud application, record the service URL and recovery procedures, and complete final cutover away from the managed environment.
+- [x] Evaluate a temporary no-cost hostname (`136.68.220.42.nip.io`) with Google-managed TLS; owner elected to leave the verified HTTP IP endpoint in place for now.
+- [x] Validate the deployed Google Cloud application, record the public endpoint and recovery procedures, and defer destructive managed-environment decommissioning until owner approval.
+- [ ] Decommission the remaining managed-environment deployment and source database/storage only after explicit owner approval of irreversible deletion.
 - [x] Resolve the two source-store document objects that returned HTTP 403 by preserving document names and bid history while clearing their broken source-storage links with owner approval.
 - [x] Identify the database records, document names, vendors, bids, or expenses associated with the two inaccessible storage keys: Doma Architect PC approved $12,900 Architect's Report proposal and Edge Concrete pending $1.6M Concrete Superstructure proposal.
 - [x] Clear only the broken file key and URL fields on the two inaccessible bid attachments, retaining their document names and all linked bid records.
