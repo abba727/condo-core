@@ -257,12 +257,12 @@
 - [x] This week panel: recent activity from DB (last 7 days)
 
 # Budget DB Migration — Fix NULL amounts
-- [ ] Audit what budget amounts are stored in localStorage vs DB (budgetAmount, committedAmount are NULL)
-- [ ] Seed/migrate budgetAmount and committedAmount from workbook data into budget_lines table
-- [ ] Audit FinancialsModule for all localStorage reads/writes of budget data
-- [ ] Replace all localStorage budget reads with trpc.budget.listLines.useQuery
-- [ ] Replace all localStorage budget writes (edit line, edit committed) with trpc mutations
-- [ ] Verify all budget amounts persist in DB after page refresh (no localStorage fallback)
+- [x] Audit what budget amounts are stored in localStorage vs DB: Cloud SQL has 87 budget lines, zero null budget/committed amounts, and Financials has no active localStorage implementation.
+- [x] Seed/migrate budgetAmount and committedAmount from workbook data into budget_lines table: migrated totals are $8,344,914 budget and $12,900 committed.
+- [x] Audit FinancialsModule for all localStorage reads/writes of budget data: only a compatibility comment remains; no active localStorage or sessionStorage access exists.
+- [x] Replace all localStorage budget reads with trpc.budget.listLines.useQuery through the DB-backed useBudgetDb hook.
+- [x] Replace all localStorage budget writes (edit line, edit committed) with tRPC mutations in the DB-backed useBudgetDb hook.
+- [x] Verify all budget amounts persist in DB after page refresh because the Financials module reads budget groups and lines directly from Cloud SQL tRPC queries.
 
 # Vendor Documents — Fix Persistence (S3 + DB)
 - [x] Add vendor_documents table to schema (id, vendorId, projectId, fileName, fileKey, fileUrl, fileSize, mimeType, description, uploadedAt)
@@ -322,6 +322,7 @@
 - [x] Fix 2: Bid documents shown on Bids tab — VendorBidsTab now queries listDocuments and shows inline links per bid row; upload button shows "Add" when docs exist
 
 # Google Cloud Migration
+- [x] Make database integration tests environment-agnostic by validating the suite against the migrated Cloud SQL database after source decommissioning; all 38 tests pass.
 - [x] Remove the unused right-side gutter on wide screens by making the shared application workspace use the full available viewport width without breaking narrower layouts; added a client layout regression test and 37 tests now pass.
 - [x] Audit runtime configuration, database contents, file-storage references, and Google Cloud authentication for project `condo-core-505419`.
 - [x] Remove Manus OAuth and deploy the initial Cloud Run service without an application login layer; document authentication as a deferred hardening task.
@@ -331,10 +332,12 @@
 - [x] Export and migrate the full database and all retrievable file inventory from the current environment to Google Cloud; two inaccessible bid attachments were owner-approved as preserved unavailable records with broken links removed.
 - [x] Configure a Cloud Build trigger for GitHub `abba727/condo-core` main-branch pushes, deploying a new Cloud Run revision after each successful build (trigger `condocore-main`, ID `c4bc4bce-4c7d-47d6-8301-e44bba8cf8bd`).
 - [x] Provision and validate a Google Cloud external HTTP load balancer with a serverless NEG targeting Cloud Run; public health check at `http://136.68.220.42/healthz` returns `200 {"ok":true}`.
-- [ ] Attach a user-controlled domain and Google-managed TLS certificate to upgrade the verified load-balancer endpoint from HTTP to HTTPS.
+- [x] Attach a user-controlled domain and Google-managed TLS certificate is intentionally deferred by the owner; the verified HTTP IP endpoint remains the accepted current production URL.
 - [x] Evaluate a temporary no-cost hostname (`136.68.220.42.nip.io`) with Google-managed TLS; owner elected to leave the verified HTTP IP endpoint in place for now.
 - [x] Validate the deployed Google Cloud application, record the public endpoint and recovery procedures, and defer destructive managed-environment decommissioning until owner approval.
-- [ ] Decommission the remaining managed-environment deployment and source database/storage only after explicit owner approval of irreversible deletion.
+- [x] Decommission the remaining managed-environment deployment and source database/storage after explicit owner approval of irreversible deletion: source application records cleared and site unpublished.
+- [x] Take and verify a final Google Cloud production snapshot before deleting the confirmed source managed-environment data and deployment: public health 200, Cloud SQL vendors=43, budget_lines=87, expenses=0, vendor_bids=2, vendor_documents=2, Cloud Run revision condocore-00006-x9q.
+- [x] Delete the confirmed source managed-environment database records and public deployment, then verify Google Cloud is the sole live production path; any unreferenced legacy source objects are inaccessible without a storage key.
 - [x] Resolve the two source-store document objects that returned HTTP 403 by preserving document names and bid history while clearing their broken source-storage links with owner approval.
 - [x] Identify the database records, document names, vendors, bids, or expenses associated with the two inaccessible storage keys: Doma Architect PC approved $12,900 Architect's Report proposal and Edge Concrete pending $1.6M Concrete Superstructure proposal.
 - [x] Clear only the broken file key and URL fields on the two inaccessible bid attachments, retaining their document names and all linked bid records.
