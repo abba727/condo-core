@@ -1771,10 +1771,10 @@ function VendorBidsTab({ vendor, store }) {
                           const bidDocs = allDocs.filter((d) => d.sourceType === 'bid' && Number(d.bidId) === bidIdNum);
                           return (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                              {bidDocs.map((doc) => (
+                              {bidDocs.map((doc) => doc.fileUrl ? (
                                 <a
                                   key={doc.id}
-                                  href={doc.fileUrl || '#'}
+                                  href={doc.fileUrl}
                                   target="_blank"
                                   rel="noreferrer"
                                   style={{ fontSize: 11, color: 'var(--cc-accent)', textDecoration: 'underline', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160, display: 'block' }}
@@ -1782,6 +1782,14 @@ function VendorBidsTab({ vendor, store }) {
                                 >
                                   {doc.fileName}
                                 </a>
+                              ) : (
+                                <span
+                                  key={doc.id}
+                                  style={{ fontSize: 11, color: 'var(--text-faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160, display: 'block' }}
+                                  title={`${doc.fileName} — attachment unavailable`}
+                                >
+                                  {doc.fileName} <em style={{ fontStyle: 'normal' }}>(unavailable)</em>
+                                </span>
                               ))}
                               <button
                                 className="btn btn-ghost btn-sm"

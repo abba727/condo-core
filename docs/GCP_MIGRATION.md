@@ -11,7 +11,14 @@ The target project is **`condo-core-505419`** in **`us-east4`**. The initial pub
 | Secret Manager | `condocore-db-password` | Cloud Run database password stored and mounted as `DB_PASSWORD`. |
 | GitHub App | Google Cloud Build installation | `abba727/condo-core` is already selected in the GitHub App’s repository-access configuration. |
 
-The exported source database contains 22 tables. Two legacy source document references (`documents/fKkSlo-p7Bvg.pdf` and `documents/u0q7_7M5C7we.pdf`) return HTTP 403 from the source storage service and remain explicitly tracked as unrecoverable until source access can be restored or replacement files are supplied.
+The exported source database contains 22 tables. Two legacy source document references returned HTTP 403 from the source storage service:
+
+| Storage key | Attached bid | Business context |
+|---|---|---|
+| `documents/fKkSlo-p7Bvg.pdf` | **Doma Architect PC** — bid ID 1 | `PROPOSAL 20260604_712 DRIGGS AVENUE - Architect's Report.pdf`; approved **$12,900** proposal for **17.02 — Architect's Report / DOF Tax Maps**, dated June 4, 2026. |
+| `documents/u0q7_7M5C7we.pdf` | **Edge Concrete** — bid ID 30001 | `712 Driggs Ave Proposal 06.04.26.pdf`; pending **$1,600,000** proposal for **03.01 — Concrete Superstructure**, dated June 17, 2026. |
+
+With the owner’s approval, their `fileKey` and `fileUrl` references were cleared in Cloud SQL. The original document names, bid links, amounts, statuses, and an explicit migration-unavailable note remain, so the business record is preserved without any broken dependency on the source storage service.
 
 The Cloud Build configuration lives in `cloudbuild.yaml`. Its deployment path is Cloud Build → Artifact Registry → Cloud Run, with Cloud Run attached to Cloud SQL and the private storage bucket. After the repository mapping is refreshed in Cloud Build, create the `main` push trigger using the configuration in that file.
 

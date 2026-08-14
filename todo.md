@@ -334,4 +334,7 @@
 - [ ] Attach a user-controlled domain and Google-managed TLS certificate to upgrade the verified load-balancer endpoint from HTTP to HTTPS.
 - [ ] Evaluate and, if supported, configure a temporary no-cost hostname with Google-managed TLS until a custom domain is available.
 - [ ] Validate the deployed Google Cloud application, record the service URL and recovery procedures, and complete final cutover away from the managed environment.
-- [ ] Recover or replace two source-store document objects that return HTTP 403 (`documents/fKkSlo-p7Bvg.pdf` and `documents/u0q7_7M5C7we.pdf`) before declaring the file migration complete.
+- [x] Resolve the two source-store document objects that returned HTTP 403 by preserving document names and bid history while clearing their broken source-storage links with owner approval.
+- [x] Identify the database records, document names, vendors, bids, or expenses associated with the two inaccessible storage keys: Doma Architect PC approved $12,900 Architect's Report proposal and Edge Concrete pending $1.6M Concrete Superstructure proposal.
+- [x] Clear only the broken file key and URL fields on the two inaccessible bid attachments, retaining their document names and all linked bid records.
+- [x] Render bid attachments without a file URL as an explicit unavailable state rather than a broken clickable link; added a regression test and 38 tests pass.
