@@ -1,0 +1,1 @@
+ALTER TABLE `vendor_contacts` ADD `isPrimary` boolean DEFAULT false NOT NULL;

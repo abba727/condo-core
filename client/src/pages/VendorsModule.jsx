@@ -1156,12 +1156,16 @@ function VendorContactsSection({ vendor, onEditPrimary }) {
   const invalidate = () => {
     utils.vendors.listContacts.invalidate({ vendorId });
     utils.vendors.listAuditLog.invalidate({ vendorId });
+    utils.vendors.list.invalidate();
   };
   const addContactMut = trpc.vendors.addContact.useMutation({ onSuccess: invalidate });
   const updateContactMut = trpc.vendors.updateContact.useMutation({ onSuccess: invalidate });
   const deleteContactMut = trpc.vendors.deleteContact.useMutation({ onSuccess: invalidate });
+  const promoteContactMut = trpc.vendors.promoteContact.useMutation({ onSuccess: invalidate });
   const contacts = contactsQuery.data || [];
-  const hasPrimary = [vendor.contact, vendor.email, vendor.phone].some((value) => value && value !== '—');
+  const primaryContact = contacts.find((contact) => contact.isPrimary);
+  const additionalContacts = contacts.filter((contact) => !contact.isPrimary);
+  const hasLegacyPrimary = !primaryContact && [vendor.contact, vendor.email, vendor.phone].some((value) => value && value !== '—');
 
   const saveContact = (form) => {
     if (contactModal.contact?.id) updateContactMut.mutate({ id: contactModal.contact.id, vendorId, ...form });
@@ -1173,7 +1177,7 @@ function VendorContactsSection({ vendor, onEditPrimary }) {
       <div className="card-head">
         <div>
           <span style={{ fontWeight: 600, fontSize: 13 }}>Contacts</span>
-          <span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>{contacts.length} additional contact{contacts.length === 1 ? '' : 's'}</span>
+          <span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>{contacts.length} saved contact{contacts.length === 1 ? '' : 's'}</span>
         </div>
         <button className="btn btn-primary btn-sm" onClick={() => setContactModal({ open: true, contact: null })}>
           <Icon name="plus" size={12} /> Add contact
@@ -1186,7 +1190,16 @@ function VendorContactsSection({ vendor, onEditPrimary }) {
           <table className="table">
             <thead><tr><th>Contact</th><th>Role</th><th>Email</th><th>Phone</th><th></th></tr></thead>
             <tbody>
-              {hasPrimary && (
+              {primaryContact && (
+                <tr>
+                  <td style={{ fontWeight: 500 }}>{primaryContact.name} <span className="pill pos no-dot" style={{ fontSize: 10, marginLeft: 6 }}>Primary</span></td>
+                  <td className="muted">{primaryContact.role || 'Primary contact'}</td>
+                  <td>{primaryContact.email ? <a href={`mailto:${primaryContact.email}`} style={{ color: 'var(--cc-accent)' }}>{primaryContact.email}</a> : <span className="muted">—</span>}</td>
+                  <td className="mono muted" style={{ fontSize: 12 }}>{formatContactPhone(primaryContact.phone)}</td>
+                  <td><button className="iconbtn" title={`Edit ${primaryContact.name}`} onClick={() => setContactModal({ open: true, contact: primaryContact })}><Icon name="edit" size={13} /></button></td>
+                </tr>
+              )}
+              {hasLegacyPrimary && (
                 <tr>
                   <td style={{ fontWeight: 500 }}>{vendor.contact || 'Primary contact'} <span className="pill info no-dot" style={{ fontSize: 10, marginLeft: 6 }}>Primary</span></td>
                   <td className="muted">Primary contact</td>
@@ -1195,17 +1208,20 @@ function VendorContactsSection({ vendor, onEditPrimary }) {
                   <td><button className="iconbtn" title="Edit primary contact" onClick={onEditPrimary}><Icon name="edit" size={13} /></button></td>
                 </tr>
               )}
-              {contacts.map((contact) => (
+              {additionalContacts.map((contact) => (
                 <tr key={contact.id}>
                   <td style={{ fontWeight: 500 }}>{contact.name}</td>
                   <td className="muted">{contact.role || '—'}</td>
                   <td>{contact.email ? <a href={`mailto:${contact.email}`} style={{ color: 'var(--cc-accent)' }}>{contact.email}</a> : <span className="muted">—</span>}</td>
                   <td className="mono muted" style={{ fontSize: 12 }}>{formatContactPhone(contact.phone)}</td>
-                  <td><button className="iconbtn" title={`Edit ${contact.name}`} onClick={() => setContactModal({ open: true, contact })}><Icon name="edit" size={13} /></button></td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <button className="btn btn-ghost btn-sm" style={{ fontSize: 11, padding: '2px 6px', marginRight: 4 }} onClick={() => promoteContactMut.mutate({ id: contact.id, vendorId })}>Make primary</button>
+                    <button className="iconbtn" title={`Edit ${contact.name}`} onClick={() => setContactModal({ open: true, contact })}><Icon name="edit" size={13} /></button>
+                  </td>
                 </tr>
               ))}
-              {!hasPrimary && contacts.length === 0 && <tr><td colSpan={5} style={{ padding: '28px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>No contacts on record. Click "Add contact" to create one.</td></tr>}
-              {hasPrimary && contacts.length === 0 && <tr><td colSpan={5} style={{ padding: '14px 16px', color: 'var(--text-faint)', fontSize: 12 }}>Add another contact for accounting, field coordination, or executive escalation.</td></tr>}
+              {!hasLegacyPrimary && !primaryContact && contacts.length === 0 && <tr><td colSpan={5} style={{ padding: '28px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>No contacts on record. Click "Add contact" to create one.</td></tr>}
+              {(hasLegacyPrimary || primaryContact) && additionalContacts.length === 0 && <tr><td colSpan={5} style={{ padding: '14px 16px', color: 'var(--text-faint)', fontSize: 12 }}>Add another contact for accounting, field coordination, or executive escalation.</td></tr>}
             </tbody>
           </table>
         )}
@@ -1343,7 +1359,7 @@ function AddTransactionModal({ open, vendor, onClose, onSave }) {
   };
   if (!open) return null;
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" style={{ maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <span>Add transaction</span>
@@ -2399,6 +2415,7 @@ const AUDIT_ACTION_META = {
   coi_deleted:       { label: 'COI deleted',            icon: 'trash',   color: 'var(--signal-neg)' },
   contact_added:     { label: 'Contact added',          icon: 'plus',    color: 'var(--signal-pos)' },
   contact_updated:   { label: 'Contact updated',        icon: 'edit',    color: 'var(--signal-info)' },
+  contact_promoted:  { label: 'Primary contact changed', icon: 'check',  color: 'var(--signal-pos)' },
   contact_deleted:   { label: 'Contact removed',        icon: 'trash',   color: 'var(--signal-neg)' },
   document_uploaded: { label: 'Document uploaded',      icon: 'doc',     color: 'var(--cc-accent)' },
   document_deleted:  { label: 'Document deleted',       icon: 'trash',   color: 'var(--signal-neg)' },
@@ -2428,6 +2445,7 @@ function auditDetail(entry) {
   if (action === 'coi_deleted') return detail.type || '';
   if (action === 'contact_added') return [detail.name, detail.role].filter(Boolean).join(' · ');
   if (action === 'contact_updated') return detail.name || '';
+  if (action === 'contact_promoted') return [detail.name, detail.role].filter(Boolean).join(' · ');
   if (action === 'contact_deleted') return detail.name || '';
   if (action === 'document_uploaded') return detail.name || '';
   if (action === 'document_deleted') return detail.name || '';

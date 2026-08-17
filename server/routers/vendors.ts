@@ -310,25 +310,67 @@ export const vendorsRouter = router({
         if (value !== undefined) patch[key] = value === "" ? null : value;
       }
       if (phone !== undefined) patch.phone = normalizePhone(phone);
+      const contact = await db
+        .select({ vendorId: vendorContacts.vendorId, isPrimary: vendorContacts.isPrimary })
+        .from(vendorContacts)
+        .where(eq(vendorContacts.id, id))
+        .limit(1);
+      if (!contact.length || contact[0].vendorId !== vendorId) {
+        throw new Error("Contact not found for this vendor");
+      }
       if (Object.keys(patch).length > 0) {
-        const existing = await db
-          .select({ id: vendorContacts.id })
-          .from(vendorContacts)
-          .where(eq(vendorContacts.id, id))
-          .limit(1);
-        if (!existing.length) throw new Error("Contact not found");
-        const contact = await db
-          .select({ vendorId: vendorContacts.vendorId })
-          .from(vendorContacts)
-          .where(eq(vendorContacts.id, id))
-          .limit(1);
-        if (contact[0]?.vendorId !== vendorId) throw new Error("Contact does not belong to this vendor");
         await db.update(vendorContacts).set(patch).where(eq(vendorContacts.id, id));
+        if (contact[0].isPrimary) {
+          const primaryPatch: Record<string, unknown> = {};
+          if ("name" in patch) primaryPatch.contactName = patch.name;
+          if ("email" in patch) primaryPatch.email = patch.email;
+          if ("phone" in patch) primaryPatch.phone = patch.phone;
+          if (Object.keys(primaryPatch).length > 0) {
+            await db.update(vendors).set(primaryPatch).where(eq(vendors.id, vendorId));
+          }
+        }
       }
       await db.insert(vendorAuditLog).values({
         vendorId,
         action: "contact_updated",
         detail: JSON.stringify({ id, name: input.name || "" }),
+      });
+      return { success: true };
+    }),
+
+  promoteContact: publicProcedure
+    .input(z.object({ id: z.number(), vendorId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const contact = await db
+        .select({
+          id: vendorContacts.id,
+          vendorId: vendorContacts.vendorId,
+          name: vendorContacts.name,
+          email: vendorContacts.email,
+          phone: vendorContacts.phone,
+          role: vendorContacts.role,
+        })
+        .from(vendorContacts)
+        .where(eq(vendorContacts.id, input.id))
+        .limit(1);
+      if (!contact.length || contact[0].vendorId !== input.vendorId) {
+        throw new Error("Contact not found for this vendor");
+      }
+      await db.transaction(async (tx) => {
+        await tx.update(vendorContacts).set({ isPrimary: false }).where(eq(vendorContacts.vendorId, input.vendorId));
+        await tx.update(vendorContacts).set({ isPrimary: true }).where(eq(vendorContacts.id, input.id));
+        await tx.update(vendors).set({
+          contactName: contact[0].name,
+          email: contact[0].email,
+          phone: contact[0].phone,
+        }).where(eq(vendors.id, input.vendorId));
+      });
+      await db.insert(vendorAuditLog).values({
+        vendorId: input.vendorId,
+        action: "contact_promoted",
+        detail: JSON.stringify({ id: input.id, name: contact[0].name, role: contact[0].role || "" }),
       });
       return { success: true };
     }),

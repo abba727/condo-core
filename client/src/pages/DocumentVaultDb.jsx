@@ -74,7 +74,6 @@ function UploadModal({ open, onClose, onUpload, isUploading }) {
         background: 'rgba(0,0,0,0.5)',
         alignItems: 'center', justifyContent: 'center',
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{
         background: 'var(--bg)',
@@ -539,7 +538,6 @@ export function DocumentVaultDb() {
             background: 'rgba(0,0,0,0.5)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
-          onClick={(e) => { if (e.target === e.currentTarget) setConfirmDelete(null); }}
         >
           <div style={{
             background: 'var(--bg)',

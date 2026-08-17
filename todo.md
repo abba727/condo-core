@@ -322,10 +322,14 @@
 - [x] Fix 2: Bid documents shown on Bids tab — VendorBidsTab now queries listDocuments and shows inline links per bid row; upload button shows "Add" when docs exist
 
 # Google Cloud Migration
+- [x] Add a vendor contact promotion action that atomically updates the vendor’s primary name, email, and phone from a selected contact; the primary marker is stored in Cloud SQL.
+- [x] Show a Make primary action in the vendor Contacts section and refresh the profile and activity data after promotion.
+- [x] Prevent backdrop clicks from closing every shared overlay form while retaining explicit close, cancel, and Escape-key behavior.
+- [ ] Add regression tests, checkpoint the changes, and deploy the interaction updates through the GitHub main-branch Cloud Build pipeline.
 - [x] Add a database-backed vendor contacts table with name, phone, email, role, vendor linkage, and ordering metadata; migrated to active Cloud SQL.
 - [x] Add vendor contact list, create, update, and delete procedures with input validation and vendor activity logging.
 - [x] Add a Contacts section to the vendor Profile tab with add, edit, and remove controls for multiple contacts.
-- [ ] Test multi-contact vendor management, checkpoint it, and deploy it through the GitHub main-branch Cloud Build pipeline.
+- [x] Test multi-contact vendor management, checkpoint it, and deploy it through the GitHub main-branch Cloud Build pipeline: 39 tests and production build pass; Cloud Build release 055903d8-76f8-4651-b521-5643496af0d7 succeeded; deployed listContacts returns HTTP 200.
 - [x] Make database integration tests environment-agnostic by validating the suite against the migrated Cloud SQL database after source decommissioning; all 38 tests pass.
 - [x] Remove the unused right-side gutter on wide screens by making the shared application workspace use the full available viewport width without breaking narrower layouts; added a client layout regression test and 37 tests now pass.
 - [x] Audit runtime configuration, database contents, file-storage references, and Google Cloud authentication for project `condo-core-505419`.

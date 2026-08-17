@@ -91,7 +91,7 @@ function Modal({ open, onClose, title, subtitle, children, footer, width = 560 }
   }, [open, onClose]);
   if (!open) return null;
   return ReactDOM.createPortal(
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" style={{ maxWidth: width }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <div>

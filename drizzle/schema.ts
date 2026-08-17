@@ -102,6 +102,7 @@ export const vendorContacts = mysqlTable("vendor_contacts", {
   id: int("id").autoincrement().primaryKey(),
   vendorId: int("vendorId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
+  isPrimary: boolean("isPrimary").default(false).notNull(),
   role: varchar("role", { length: 128 }),
   email: varchar("email", { length: 320 }),
   phone: varchar("phone", { length: 32 }),

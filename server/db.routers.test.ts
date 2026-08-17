@@ -240,6 +240,7 @@ describe("Vendor contacts", () => {
     if (contacts.length > 0) {
       expect(contacts[0]).toHaveProperty("vendorId");
       expect(contacts[0]).toHaveProperty("name");
+      expect(contacts[0]).toHaveProperty("isPrimary");
       expect(contacts[0]).toHaveProperty("role");
       expect(contacts[0]).toHaveProperty("email");
       expect(contacts[0]).toHaveProperty("phone");

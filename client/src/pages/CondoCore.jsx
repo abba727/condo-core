@@ -533,7 +533,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, width 
 
   if (!open) return null;
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop">
       <div className="modal" style={{ maxWidth: width }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <div>
