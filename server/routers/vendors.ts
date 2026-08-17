@@ -1,6 +1,6 @@
 import { eq, asc, and, desc } from "drizzle-orm";
 import { z } from "zod";
-import { vendors, vendorBids, vendorCois, vendorAuditLog, vendorDocuments, budgetLines } from "../../drizzle/schema";
+import { vendors, vendorBids, vendorCois, vendorAuditLog, vendorDocuments, vendorContacts, budgetLines } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 
@@ -40,6 +40,12 @@ async function adjustCommittedForBid(
 }
 
 const APPROVED_STATUSES = new Set(["approved", "contracted"]);
+
+function normalizePhone(value: string | undefined): string | null {
+  if (!value) return null;
+  const digits = value.replace(/\D/g, "").slice(0, 10);
+  return digits || null;
+}
 
 export const vendorsRouter = router({
   // ─── Vendors ───────────────────────────────────────────────────────────────
@@ -242,6 +248,111 @@ export const vendorsRouter = router({
         .from(vendorAuditLog)
         .where(eq(vendorAuditLog.vendorId, input.vendorId))
         .orderBy(asc(vendorAuditLog.createdAt));
+    }),
+
+  // ─── Contacts ──────────────────────────────────────────────────────────────
+  listContacts: publicProcedure
+    .input(z.object({ vendorId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select()
+        .from(vendorContacts)
+        .where(eq(vendorContacts.vendorId, input.vendorId))
+        .orderBy(asc(vendorContacts.sortOrder), asc(vendorContacts.name));
+    }),
+
+  addContact: publicProcedure
+    .input(z.object({
+      vendorId: z.number(),
+      name: z.string().trim().min(1).max(255),
+      role: z.string().trim().max(128).optional(),
+      email: z.string().trim().max(320).optional(),
+      phone: z.string().trim().max(64).optional(),
+      sortOrder: z.number().int().min(0).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const result = await db.insert(vendorContacts).values({
+        vendorId: input.vendorId,
+        name: input.name,
+        role: input.role || null,
+        email: input.email || null,
+        phone: normalizePhone(input.phone),
+        sortOrder: input.sortOrder ?? 0,
+      });
+      await db.insert(vendorAuditLog).values({
+        vendorId: input.vendorId,
+        action: "contact_added",
+        detail: JSON.stringify({ name: input.name, role: input.role || "" }),
+      });
+      return { id: Number(result[0].insertId) };
+    }),
+
+  updateContact: publicProcedure
+    .input(z.object({
+      id: z.number(),
+      vendorId: z.number(),
+      name: z.string().trim().min(1).max(255).optional(),
+      role: z.string().trim().max(128).optional(),
+      email: z.string().trim().max(320).optional(),
+      phone: z.string().trim().max(64).optional(),
+      sortOrder: z.number().int().min(0).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const { id, vendorId, phone, ...rest } = input;
+      const patch: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(rest)) {
+        if (value !== undefined) patch[key] = value === "" ? null : value;
+      }
+      if (phone !== undefined) patch.phone = normalizePhone(phone);
+      if (Object.keys(patch).length > 0) {
+        const existing = await db
+          .select({ id: vendorContacts.id })
+          .from(vendorContacts)
+          .where(eq(vendorContacts.id, id))
+          .limit(1);
+        if (!existing.length) throw new Error("Contact not found");
+        const contact = await db
+          .select({ vendorId: vendorContacts.vendorId })
+          .from(vendorContacts)
+          .where(eq(vendorContacts.id, id))
+          .limit(1);
+        if (contact[0]?.vendorId !== vendorId) throw new Error("Contact does not belong to this vendor");
+        await db.update(vendorContacts).set(patch).where(eq(vendorContacts.id, id));
+      }
+      await db.insert(vendorAuditLog).values({
+        vendorId,
+        action: "contact_updated",
+        detail: JSON.stringify({ id, name: input.name || "" }),
+      });
+      return { success: true };
+    }),
+
+  deleteContact: publicProcedure
+    .input(z.object({ id: z.number(), vendorId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const contact = await db
+        .select({ id: vendorContacts.id, name: vendorContacts.name, vendorId: vendorContacts.vendorId })
+        .from(vendorContacts)
+        .where(eq(vendorContacts.id, input.id))
+        .limit(1);
+      if (!contact.length || contact[0].vendorId !== input.vendorId) {
+        throw new Error("Contact not found for this vendor");
+      }
+      await db.delete(vendorContacts).where(eq(vendorContacts.id, input.id));
+      await db.insert(vendorAuditLog).values({
+        vendorId: input.vendorId,
+        action: "contact_deleted",
+        detail: JSON.stringify({ id: input.id, name: contact[0].name }),
+      });
+      return { success: true };
     }),
 
   // ─── Bids ──────────────────────────────────────────────────────────────────

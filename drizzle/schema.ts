@@ -96,6 +96,26 @@ export type Vendor = typeof vendors.$inferSelect;
 export type InsertVendor = typeof vendors.$inferInsert;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// VENDOR CONTACTS
+// ─────────────────────────────────────────────────────────────────────────────
+export const vendorContacts = mysqlTable("vendor_contacts", {
+  id: int("id").autoincrement().primaryKey(),
+  vendorId: int("vendorId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  role: varchar("role", { length: 128 }),
+  email: varchar("email", { length: 320 }),
+  phone: varchar("phone", { length: 32 }),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => [
+  index("contacts_vendor_idx").on(t.vendorId),
+]);
+
+export type VendorContact = typeof vendorContacts.$inferSelect;
+export type InsertVendorContact = typeof vendorContacts.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // VENDOR BIDS
 // ─────────────────────────────────────────────────────────────────────────────
 export const vendorBids = mysqlTable("vendor_bids", {

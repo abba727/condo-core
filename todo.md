@@ -322,6 +322,10 @@
 - [x] Fix 2: Bid documents shown on Bids tab — VendorBidsTab now queries listDocuments and shows inline links per bid row; upload button shows "Add" when docs exist
 
 # Google Cloud Migration
+- [x] Add a database-backed vendor contacts table with name, phone, email, role, vendor linkage, and ordering metadata; migrated to active Cloud SQL.
+- [x] Add vendor contact list, create, update, and delete procedures with input validation and vendor activity logging.
+- [x] Add a Contacts section to the vendor Profile tab with add, edit, and remove controls for multiple contacts.
+- [ ] Test multi-contact vendor management, checkpoint it, and deploy it through the GitHub main-branch Cloud Build pipeline.
 - [x] Make database integration tests environment-agnostic by validating the suite against the migrated Cloud SQL database after source decommissioning; all 38 tests pass.
 - [x] Remove the unused right-side gutter on wide screens by making the shared application workspace use the full available viewport width without breaking narrower layouts; added a client layout regression test and 37 tests now pass.
 - [x] Audit runtime configuration, database contents, file-storage references, and Google Cloud authentication for project `condo-core-505419`.

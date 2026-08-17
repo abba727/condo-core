@@ -1090,6 +1090,137 @@ export function VendorDetailPage({ vendorId, onBack }) {
 }
 
 // ── Profile Tab ──────────────────────────────────────────────
+function formatContactPhone(value) {
+  const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
+  return digits.length === 10
+    ? `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+    : value || '—';
+}
+
+function ContactModal({ open, contact, onClose, onSave, onDelete }) {
+  const [form, setForm] = React.useState({});
+  const [error, setError] = React.useState('');
+
+  React.useEffect(() => {
+    if (open) {
+      setForm(contact || { name: '', role: '', email: '', phone: '' });
+      setError('');
+    }
+  }, [open, contact]);
+
+  const set = (key) => (value) => setForm((current) => ({ ...current, [key]: value }));
+  const save = () => {
+    const name = String(form.name || '').trim();
+    const email = String(form.email || '').trim();
+    if (!name) return setError('Contact name is required.');
+    if (email && !/^\S+@\S+\.\S+$/.test(email)) return setError('Enter a valid email address.');
+    onSave({ ...form, name, role: String(form.role || '').trim(), email, phone: String(form.phone || '').trim() });
+    onClose();
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={contact?.id ? 'Edit contact' : 'Add contact'}
+      subtitle="Vendor contact details"
+      width={560}
+      footer={
+        <>
+          {contact?.id && (
+            <button className="btn btn-ghost" style={{ color: 'var(--signal-neg)', marginRight: 'auto' }} onClick={() => { onDelete(contact.id); onClose(); }}>
+              <Icon name="trash" size={13} /> Remove contact
+            </button>
+          )}
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={save}>{contact?.id ? 'Save changes' : 'Add contact'}</button>
+        </>
+      }
+    >
+      <div className="form-grid">
+        <Field label="Contact name" required><Input value={form.name || ''} onChange={set('name')} placeholder="Full name" /></Field>
+        <Field label="Role"><Input value={form.role || ''} onChange={set('role')} placeholder="Project manager" /></Field>
+        <Field label="Email"><Input value={form.email || ''} onChange={set('email')} placeholder="name@company.com" /></Field>
+        <Field label="Phone"><Input value={form.phone || ''} onChange={set('phone')} placeholder="(212) 555-0123" /></Field>
+      </div>
+      {error && <div style={{ marginTop: 12, fontSize: 12, color: 'var(--signal-neg)' }}>{error}</div>}
+    </Modal>
+  );
+}
+
+function VendorContactsSection({ vendor, onEditPrimary }) {
+  const utils = trpc.useUtils();
+  const vendorId = Number(vendor.id);
+  const [contactModal, setContactModal] = React.useState({ open: false, contact: null });
+  const contactsQuery = trpc.vendors.listContacts.useQuery({ vendorId });
+  const invalidate = () => {
+    utils.vendors.listContacts.invalidate({ vendorId });
+    utils.vendors.listAuditLog.invalidate({ vendorId });
+  };
+  const addContactMut = trpc.vendors.addContact.useMutation({ onSuccess: invalidate });
+  const updateContactMut = trpc.vendors.updateContact.useMutation({ onSuccess: invalidate });
+  const deleteContactMut = trpc.vendors.deleteContact.useMutation({ onSuccess: invalidate });
+  const contacts = contactsQuery.data || [];
+  const hasPrimary = [vendor.contact, vendor.email, vendor.phone].some((value) => value && value !== '—');
+
+  const saveContact = (form) => {
+    if (contactModal.contact?.id) updateContactMut.mutate({ id: contactModal.contact.id, vendorId, ...form });
+    else addContactMut.mutate({ vendorId, ...form, sortOrder: contacts.length });
+  };
+
+  return (
+    <div className="card">
+      <div className="card-head">
+        <div>
+          <span style={{ fontWeight: 600, fontSize: 13 }}>Contacts</span>
+          <span className="muted" style={{ fontSize: 12, marginLeft: 8 }}>{contacts.length} additional contact{contacts.length === 1 ? '' : 's'}</span>
+        </div>
+        <button className="btn btn-primary btn-sm" onClick={() => setContactModal({ open: true, contact: null })}>
+          <Icon name="plus" size={12} /> Add contact
+        </button>
+      </div>
+      <div className="card-body-flush">
+        {contactsQuery.isLoading ? (
+          <div style={{ padding: '28px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>Loading contacts…</div>
+        ) : (
+          <table className="table">
+            <thead><tr><th>Contact</th><th>Role</th><th>Email</th><th>Phone</th><th></th></tr></thead>
+            <tbody>
+              {hasPrimary && (
+                <tr>
+                  <td style={{ fontWeight: 500 }}>{vendor.contact || 'Primary contact'} <span className="pill info no-dot" style={{ fontSize: 10, marginLeft: 6 }}>Primary</span></td>
+                  <td className="muted">Primary contact</td>
+                  <td>{vendor.email ? <a href={`mailto:${vendor.email}`} style={{ color: 'var(--cc-accent)' }}>{vendor.email}</a> : <span className="muted">—</span>}</td>
+                  <td className="mono muted" style={{ fontSize: 12 }}>{formatContactPhone(vendor.phone)}</td>
+                  <td><button className="iconbtn" title="Edit primary contact" onClick={onEditPrimary}><Icon name="edit" size={13} /></button></td>
+                </tr>
+              )}
+              {contacts.map((contact) => (
+                <tr key={contact.id}>
+                  <td style={{ fontWeight: 500 }}>{contact.name}</td>
+                  <td className="muted">{contact.role || '—'}</td>
+                  <td>{contact.email ? <a href={`mailto:${contact.email}`} style={{ color: 'var(--cc-accent)' }}>{contact.email}</a> : <span className="muted">—</span>}</td>
+                  <td className="mono muted" style={{ fontSize: 12 }}>{formatContactPhone(contact.phone)}</td>
+                  <td><button className="iconbtn" title={`Edit ${contact.name}`} onClick={() => setContactModal({ open: true, contact })}><Icon name="edit" size={13} /></button></td>
+                </tr>
+              ))}
+              {!hasPrimary && contacts.length === 0 && <tr><td colSpan={5} style={{ padding: '28px 16px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>No contacts on record. Click "Add contact" to create one.</td></tr>}
+              {hasPrimary && contacts.length === 0 && <tr><td colSpan={5} style={{ padding: '14px 16px', color: 'var(--text-faint)', fontSize: 12 }}>Add another contact for accounting, field coordination, or executive escalation.</td></tr>}
+            </tbody>
+          </table>
+        )}
+      </div>
+      <ContactModal
+        open={contactModal.open}
+        contact={contactModal.contact}
+        onClose={() => setContactModal({ open: false, contact: null })}
+        onSave={saveContact}
+        onDelete={(id) => deleteContactMut.mutate({ id, vendorId })}
+      />
+    </div>
+  );
+}
+
 function VendorProfileTab({ vendor, onEdit, onUpdateRating }) {
   const row = (label, value) => (
     <div className="vendor-profile-row" key={label}>
@@ -1102,7 +1233,8 @@ function VendorProfileTab({ vendor, onEdit, onUpdateRating }) {
   const currentRating = vendor.rating || 0;
 
   return (
-    <div className="row" style={{ gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="row" style={{ gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
       <div className="card" style={{ flex: '1 1 340px' }}>
         <div className="card-head">
           <span style={{ fontWeight: 600, fontSize: 13 }}>Contact information</span>
@@ -1171,7 +1303,8 @@ function VendorProfileTab({ vendor, onEdit, onUpdateRating }) {
           </>
         )}
       </div>
-
+      </div>
+      <VendorContactsSection vendor={vendor} onEditPrimary={onEdit} />
     </div>
   );
 }
@@ -2264,6 +2397,9 @@ const AUDIT_ACTION_META = {
   coi_added:         { label: 'COI added',              icon: 'shield',  color: 'var(--cc-accent)' },
   coi_updated:       { label: 'COI updated',            icon: 'shield',  color: 'var(--signal-info)' },
   coi_deleted:       { label: 'COI deleted',            icon: 'trash',   color: 'var(--signal-neg)' },
+  contact_added:     { label: 'Contact added',          icon: 'plus',    color: 'var(--signal-pos)' },
+  contact_updated:   { label: 'Contact updated',        icon: 'edit',    color: 'var(--signal-info)' },
+  contact_deleted:   { label: 'Contact removed',        icon: 'trash',   color: 'var(--signal-neg)' },
   document_uploaded: { label: 'Document uploaded',      icon: 'doc',     color: 'var(--cc-accent)' },
   document_deleted:  { label: 'Document deleted',       icon: 'trash',   color: 'var(--signal-neg)' },
   vendor_assigned:   { label: 'Assigned to project',    icon: 'check',   color: 'var(--signal-pos)' },
@@ -2290,6 +2426,9 @@ function auditDetail(entry) {
   if (action === 'coi_added') return [detail.type, detail.carrier, detail.expires].filter(Boolean).join(' · ');
   if (action === 'coi_updated') return [detail.type, detail.status].filter(Boolean).join(' · ');
   if (action === 'coi_deleted') return detail.type || '';
+  if (action === 'contact_added') return [detail.name, detail.role].filter(Boolean).join(' · ');
+  if (action === 'contact_updated') return detail.name || '';
+  if (action === 'contact_deleted') return detail.name || '';
   if (action === 'document_uploaded') return detail.name || '';
   if (action === 'document_deleted') return detail.name || '';
   return '';

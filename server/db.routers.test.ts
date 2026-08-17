@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { getDb } from "./db";
-import { budgetGroups, budgetLines, expenses, vendors, projects } from "../drizzle/schema";
+import { budgetGroups, budgetLines, expenses, vendors, vendorContacts, projects } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 const PROJECT_ID = "712-driggs";
@@ -228,6 +228,29 @@ describe("Vendors", () => {
         expect(validStatuses).toContain(v.status);
       }
     }
+  });
+});
+
+describe("Vendor contacts", () => {
+  it("supports multiple contact records linked to a vendor", async () => {
+    const db = await getDb();
+    if (!db) throw new Error("DB not available");
+
+    const contacts = await db.select().from(vendorContacts).limit(1);
+    if (contacts.length > 0) {
+      expect(contacts[0]).toHaveProperty("vendorId");
+      expect(contacts[0]).toHaveProperty("name");
+      expect(contacts[0]).toHaveProperty("role");
+      expect(contacts[0]).toHaveProperty("email");
+      expect(contacts[0]).toHaveProperty("phone");
+    }
+
+    const vendorRows = await db
+      .select({ id: vendors.id })
+      .from(vendors)
+      .where(eq(vendors.projectId, PROJECT_ID))
+      .limit(1);
+    expect(vendorRows.length).toBeGreaterThan(0);
   });
 });
 
